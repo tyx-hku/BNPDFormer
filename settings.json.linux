@@ -7,6 +7,11 @@
   ],
   "spellright.notificationClass": "hint",
 
+  "[latex]": {
+    "editor.wordWrap": "on",
+    "editor.wrappingIndent": "same"
+  },
+
   "latex-workshop.latex.autoBuild.run": "onSave",
   "latex-workshop.latex.recipe.default": "latexmk",
   "latex-workshop.latex.outDir": "%DIR%/build",
