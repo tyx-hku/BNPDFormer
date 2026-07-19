@@ -38,5 +38,10 @@
 
   "files.associate": {
     "*.tex": "latex"
+  },
+
+  "[latex]": {
+    "editor.wordWrap": "on",
+    "editor.wrappingIndent": "same"
   }
 }

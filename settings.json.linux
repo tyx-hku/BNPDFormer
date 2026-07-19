@@ -39,5 +39,9 @@
 
   "latex-workshop.view.pdf.viewer": "tab",
   "latex-workshop.synctex.afterBuild.enabled": true,
-  "latex-workshop.view.pdf.internal.synctex.keybinding": "ctrl-click"
+  "latex-workshop.view.pdf.internal.synctex.keybinding": "ctrl-click",
+
+  "files.associate": {
+    "*.tex": "latex"
+  }
 }

@@ -99,12 +99,23 @@ Modular Integrated Construction \sep Human-centric Manufacturing \sep Factory Si
 \section{Introduction} \label{sec:intro}
 %% ========================================================================
 
-Modular Integrated Construction (MiC) is a promising off-site manufacturing approach. By moving much on-site work into production-part factories, it can improve productivity and quality and shorten project schedules~\cite{gibb1999off}.
+Modular Integrated Construction (MiC) is a promising off-site construction paradigm. By moving much on-site work into production-part factories, it can improve productivity and quality and shorten project schedules~\cite{gibb1999off}.
 Under Industry~5.0, human-centric manufacturing places greater emphasis on human--robot collaboration (HRC) in MiC factories~\cite{fu2024human}.
 However, smooth HRC remains difficult: coordination must consider multiple factors, including product needs, human well-being, and safety.
-Task planning and allocation (TPA) is a key decision layer for supporting HRC, it decide when to do whata manufacturing task and allocates tasks to suitable human and/or robot, and guide the excution of corresp1 subtasks. ~\cite{cheng2019task,banziger2020optimizing,xue2026safe}.
+Task planning and allocation (TPA) is a key decision layer for supporting HRC, it decide when to do what task and allocates tasks to suitable human and/or robot, and guide the excution of corresponding subtasks. ~\cite{cheng2019task,banziger2020optimizing,xue2026safe}.
 
-Despite substantial progress on TPA algorithms, most line-level studies treat human identity and operational states as fully observable inputs.
+Despite substantial progress on TPA algorithms, integrating perception with TPA in large-scale settings---with multiple humans, robots, and machines---remains challenging and is still largely missing in the literature.
+Existing studies can be grouped into two categories:
+(i)~methods that focus on the TPA algorithm itself and treat perception as ideal information; and
+(ii)~methods that include perception, but only for small-scale problems, such as a single robot and a single machine, or a narrow task type (mainly assembly).
+The lack of work that couples perception and TPA at line scale is mainly due to limited experimental data:
+deploying and validating such systems in real factories is costly and difficult, and large-scale manufacturing simulation platforms for this purpose are still scarce.
+
+To address these gaps, we develop a large-scale factory simulation of an MiC production line.
+Under ideal perception and a rule-based TPA controller, we build a closed-loop data generation pipeline that produces labeled perception data for training and evaluating models that recover the human-centric states required by TPA, including human identity and the subtask currently performed by each worker.
+Experiments show that the trained models achieve high accuracy in the simulated environment and exhibit good generalization.
+
+
 In other words, the controller is assumed to know \emph{who} is present in each work zone and \emph{what} subtask each worker is currently performing.
 This omniscient assumption simplifies algorithmic evaluation, yet it leaves a critical sensing gap between simulated decision policies and real factories, where such information must be recovered from cameras or other sensors~\cite{jahanmahin2022human,semeraro2023human}.
 Without a perception module that can estimate human identity and subtask progress, TPA remains incomplete as a deployable closed-loop system.
