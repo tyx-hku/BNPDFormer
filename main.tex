@@ -65,10 +65,10 @@
 \let\WriteBookmarks\relax
 \def\floatpagepagefraction{1}
 \def\textpagefraction{.001}
-\shorttitle{Simulating an MIC production line by task planning and allocation to enable multi-view human identity and subtask recognition}
+\shorttitle{Simulating an MiC production line by task planning and allocation to enable multi-view human identity and subtask recognition}
 \shortauthors{Jintao Xue et~al.}
 
-\title [mode = title]{Simulating an MIC production line by task planning and allocation to enable multi-view human identity and subtask recognition}                 
+\title [mode = title]{Simulating an MiC production line by task planning and allocation to enable multi-view human identity and subtask recognition}                 
 
 \author[1]{Jintao Xue}[]
 \author[1]{Xiao Li}[orcid=0000-0001-9702-4153]
@@ -84,7 +84,7 @@
 
 
 \begin{abstract}
-    Modular Integrated Construction (MIC) production-part factories depend on task planning and allocation (TPA) to coordinate human–robot collaboration (HRC) on the shop floor. In most line-level TPA studies, however, human identity and operational states are treated as fully observable, while perception is omitted. This full-observability assumption limits system completeness and hinders the deployment and robustness of TPA in real factories. At the same time, large-scale multi-view perception datasets that are consistent with manufacturing process dynamics remain scarce, making it difficult to train and iterate perception models for industrial settings. To address these gaps, we develop a photorealistic simulation of a real MIC production line in which a rule-based TPA controller executes the end-to-end manufacturing workflow among humans, material-handling equipment, and machines. The closed-loop process simulation continuously drives synchronized multi-camera observations and automatically provides ground-truth labels, thereby serving as a scalable data engine for perception learning. On the generated data, we study two complementary multi-view tasks: (i) human identity recognition—determining which humans appear in each camera view; and (ii) human subtask recognition—inferring the current subtask of a working human and whether it has been completed. Experiments demonstrate that models trained in the proposed simulator can estimate human identity and subtask states with promising accuracy throughout manufacturing operations. The results suggest that TPA-driven MIC line simulation is an effective pathway to generate process-consistent multi-view data and to enable perception modules that are essential for more complete and deployable HRC systems.
+    Modular Integrated Construction (MiC) production-part factories depend on task planning and allocation (TPA) to coordinate human–robot collaboration (HRC) on the shop floor. In most line-level TPA studies, however, human identity and operational states are treated as fully observable, while perception is omitted. This full-observability assumption limits system completeness and hinders the deployment and robustness of TPA in real factories. At the same time, large-scale multi-view perception datasets that are consistent with manufacturing process dynamics remain scarce, making it difficult to train and iterate perception models for industrial settings. To address these gaps, we develop a photorealistic simulation of a real MiC production line in which a rule-based TPA controller executes the end-to-end manufacturing workflow among humans, material-handling equipment, and machines. The closed-loop process simulation continuously drives synchronized multi-camera observations and automatically provides ground-truth labels, thereby serving as a scalable data engine for perception learning. On the generated data, we study two complementary multi-view tasks: (i) human identity recognition—determining which humans appear in each camera view; and (ii) human subtask recognition—inferring the current subtask of a working human and whether it has been completed. Experiments demonstrate that models trained in the proposed simulator can estimate human identity and subtask states with promising accuracy throughout manufacturing operations. The results suggest that TPA-driven MiC line simulation is an effective pathway to generate process-consistent multi-view data and to enable perception modules that are essential for more complete and deployable HRC systems.
 \end{abstract}
 
 \begin{keywords}
@@ -99,8 +99,10 @@ Modular Integrated Construction \sep Human-centric Manufacturing \sep Factory Si
 \section{Introduction} \label{sec:intro}
 %% ========================================================================
 
-Modular Integrated Construction (MIC) shifts substantial on-site work into off-site production-part factories, where humans, material-handling equipment, and processing machines must be tightly coordinated to meet cycle-time and quality requirements~\cite{leng2022industry}.
-Task planning and allocation (TPA) is a core decision layer for such human–robot collaboration (HRC) settings: it assigns manufacturing tasks, sequences subtasks across agents, and adapts execution as the shop-floor state evolves~\cite{cheng2019task,banziger2020optimizing,mukherjee2022survey}.
+Modular Integrated Construction (MiC) is a promising off-site manufacturing approach. By moving much on-site work into production-part factories, it can improve productivity and quality and shorten project schedules~\cite{gibb1999off}.
+Under Industry~5.0, human-centric manufacturing places greater emphasis on human--robot collaboration (HRC) in MiC factories~\cite{fu2024human}.
+However, smooth HRC remains difficult: coordination must consider multiple factors, including product needs, human well-being, and safety.
+Task planning and allocation (TPA) is a key decision layer for supporting HRC, it decide when to do whata manufacturing task and allocates tasks to suitable human and/or robot, and guide the excution of corresp1 subtasks. ~\cite{cheng2019task,banziger2020optimizing,xue2026safe}.
 
 Despite substantial progress on TPA algorithms, most line-level studies treat human identity and operational states as fully observable inputs.
 In other words, the controller is assumed to know \emph{who} is present in each work zone and \emph{what} subtask each worker is currently performing.
@@ -109,20 +111,20 @@ Without a perception module that can estimate human identity and subtask progres
 
 A complementary obstacle is data scarcity.
 Training industrial multi-view perception models requires large amounts of synchronized images whose labels are consistent with manufacturing process dynamics (task graphs, agent coupling, and temporal subtask transitions).
-Collecting and annotating such data on a live MIC line is costly, disruptive, and difficult to scale.
+Collecting and annotating such data on a live MiC line is costly, disruptive, and difficult to scale.
 Photorealistic factory simulation offers a promising alternative~\cite{banziger2020optimizing}, but only if the simulated process itself is driven by the same TPA logic that would operate on the shop floor; otherwise, the generated visual streams may not reflect realistic agent interactions.
 
-To address these gaps, this paper develops a photorealistic MIC production-line simulation in which a rule-based TPA controller executes the end-to-end manufacturing workflow.
+To address these gaps, this paper develops a photorealistic MiC production-line simulation in which a rule-based TPA controller executes the end-to-end manufacturing workflow.
 The closed-loop process continuously drives synchronized multi-camera observations and automatically emits ground-truth labels for human presence and subtask states, thereby serving as a scalable data engine for perception learning.
 On the generated dataset, we study two complementary multi-view tasks:
 \begin{enumerate}
     \item \textbf{Human identity recognition}: for each calibrated camera, predict which humans appear in the view (multi-label classification over a fixed human vocabulary).
-    \item \textbf{Human subtask recognition}: for each working human, infer the current subtask class and a binary completion flag from multi-camera images conditioned on the assigned process task.
+    \item \textbf{Human subtask recognition}: for each working human, infer the current subtask class and a binary completion flag from multi-camera images conditioned on the allocated process task.
 \end{enumerate}
 
 The main contributions are summarized as follows.
 \begin{itemize}
-    \item We couple rule-based TPA with a photorealistic MIC line simulation so that process execution, multi-view imaging, and ground-truth labeling form a closed data-generation loop.
+    \item We couple rule-based TPA with a photorealistic MiC line simulation so that process execution, multi-view imaging, and ground-truth labeling form a closed data-generation loop.
     \item We formalize two perception problems that recover the human-centric observability required by line-level TPA: per-view human identity and working-human subtask/done estimation.
     \item We demonstrate that models trained purely on simulator-generated data achieve high identity accuracy and strong subtask recognition performance across manufacturing episodes, supporting the feasibility of perception-enabled HRC stacks.
 \end{itemize}
@@ -141,7 +143,7 @@ Section~\ref{sec:exp} reports experiments, and Section~\ref{sec:conclusion} conc
 \subsection{Task planning and allocation in human--robot collaboration}
 \label{sec:review_tpa}
 
-TPA in manufacturing allocates tasks among humans and automation assets under productivity, safety, and ergonomic constraints~\cite{cheng2019task,banziger2020optimizing}.
+TPA in manufacturing allocates tasks among humans and automation assets under productivity, safety, and ergonoMiC constraints~\cite{cheng2019task,banziger2020optimizing}.
 In HRC, allocation must further account for human behavior variability and interaction modes~\cite{mukherjee2022survey,semeraro2023human,cherubini2016collaborative}.
 Many line-level formulations, however, consume privileged state variables---agent locations, task progress, and completion flags---as if they were directly observed.
 This practice is reasonable for algorithmic benchmarking, but it postpones the sensing problem that dominates real deployments.
@@ -169,14 +171,14 @@ The literature reveals three coupled gaps:
 (1)~line-level TPA studies often omit perception and assume omniscient human states;
 (2)~industrial multi-view datasets that are consistent with manufacturing process dynamics are limited; and
 (3)~existing simulators rarely use an executable TPA controller as the driver of both process execution and automatic label generation.
-This work targets these gaps by treating TPA-driven MIC simulation as a data engine for multi-view human identity and subtask recognition.
+This work targets these gaps by treating TPA-driven MiC simulation as a data engine for multi-view human identity and subtask recognition.
 
 
 %% ========================================================================
 \section{Problem Formulation}\label{sec:problem}
 %% ========================================================================
 
-Consider an MIC production line with a set of humans $\mathcal{H}=\{h_1,\ldots,h_{N_h}\}$, material-handling agents, and processing machines.
+Consider an MiC production line with a set of humans $\mathcal{H}=\{h_1,\ldots,h_{N_h}\}$, material-handling agents, and processing machines.
 A rule-based TPA controller maintains ongoing task records and, for each working human $h\in\mathcal{H}$, exposes a process task $y^{\mathrm{task}}_h$ and a human-column subtask $y^{\mathrm{sub}}_h\in\mathcal{S}$, where $\mathcal{S}$ is a finite vocabulary of operational subtasks (e.g., travel to material, control gantry, wait).
 A binary flag $y^{\mathrm{done}}_h\in\{0,1\}$ indicates whether the current human subtask has finished according to the process coupling rules.
 
@@ -199,7 +201,7 @@ f\!\left(
 y^{\mathrm{task}}_{h,t}
 \right),
 \end{equation}
-where $f$ is a multi-view network that fuses camera features with an embedding of the assigned process task.
+where $f$ is a multi-view network that fuses camera features with an embedding of the allocated process task.
 The learning objective combines multi-class cross-entropy on $\mathcal{S}$ with binary cross-entropy on the done flag.
 
 Together, Tasks~A and~B provide the missing perception interface between visual sensing and TPA: \emph{who} is in each view, and \emph{what} each working human is currently doing (and whether that subtask is complete).
@@ -209,10 +211,10 @@ Together, Tasks~A and~B provide the missing perception interface between visual 
 \section{Research method} \label{sec:method}
 %% ========================================================================
 
-\subsection{TPA-driven MIC line simulation}
+\subsection{TPA-driven MiC line simulation}
 \label{sec:method_sim}
 
-We reproduce a real MIC production-part factory in a photorealistic simulator built on NVIDIA Isaac Sim / Isaac Lab.
+We reproduce a real MiC production-part factory in a photorealistic simulator built on NVIDIA Isaac Sim / Isaac Lab.
 The scene includes storage areas, gantries, robots, processing machines (e.g., welding, cutting, and grooving stations), workbenches, and multiple human workers.
 Manufacturing products such as water-pipe assemblies progress through a process task gallery; each process task decomposes into coupled subtasks across human, gantry, machine, and robot columns.
 
@@ -230,7 +232,7 @@ At each logged step, human floor positions are tested by point-in-polygon querie
 Highrise overview cameras may capture RGB for context while being excluded from identity labeling when footprints are not calibrated.
 
 Subtask ground truth is read directly from the TPA progress manager:
-for each non-free human, the ongoing human-column subtask name and finished flag are serialized together with the assigned process task identifier.
+for each non-free human, the ongoing human-column subtask name and finished flag are serialized together with the allocated process task identifier.
 Synchronized RGB frames from all cameras are saved alongside a compact environment record, yielding one JSONL sample per simulation step.
 
 \subsection{Perception learning pipelines}
@@ -315,17 +317,17 @@ These results suggest that TPA-driven simulation can supply process-consistent s
 Two observations follow.
 First, identity recognition benefits from geometric footprint labels that are cheap to calibrate once camera poses are fixed; the visual classifier then amortizes that calibration across long episodes.
 Second, subtask recognition still leaves headroom---especially for visually subtle transitions (e.g., wait versus control) and for done-flag prediction, which depends on partner-agent states that may be only partially visible.
-Future work includes stronger temporal models, explicit cross-agent relational features, and sim-to-real transfer evaluation on the physical MIC line.
+Future work includes stronger temporal models, explicit cross-agent relational features, and sim-to-real transfer evaluation on the physical MiC line.
 
 
 %% ========================================================================
 \section{Conclusion} \label{sec:conclusion}
 %% ========================================================================
 
-This paper addressed the perception gap in line-level TPA for MIC production-part factories.
-By coupling a rule-based TPA controller with a photorealistic multi-camera simulation of a real MIC line, we constructed a scalable data engine that jointly generates process-consistent images and ground-truth labels.
+This paper addressed the perception gap in line-level TPA for MiC production-part factories.
+By coupling a rule-based TPA controller with a photorealistic multi-camera simulation of a real MiC line, we constructed a scalable data engine that jointly generates process-consistent images and ground-truth labels.
 On the resulting dataset, multi-view models achieved high accuracy for human identity recognition and promising accuracy for human subtask and completion estimation.
-The findings indicate that TPA-driven MIC line simulation is an effective pathway toward perception modules that make HRC decision stacks more complete and deployable.
+The findings indicate that TPA-driven MiC line simulation is an effective pathway toward perception modules that make HRC decision stacks more complete and deployable.
 Closing the loop---feeding estimated identity and subtask states back into online TPA---and validating sim-to-real transfer remain important next steps.
 
 
