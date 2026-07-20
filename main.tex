@@ -104,12 +104,12 @@ Under Industry~5.0, human-centric manufacturing places greater emphasis on human
 However, smooth HRC remains difficult: coordination must consider multiple factors, including product needs, human well-being, and safety.
 Task planning and allocation (TPA) is a key decision layer for supporting HRC, it decide when to do what task and allocates tasks to suitable human and/or robot, and guide the excution of corresponding subtasks. ~\cite{cheng2019task,banziger2020optimizing,xue2026safe}.
 
-Despite substantial progress on TPA algorithms, integrating perception with TPA in large-scale settings---with multiple humans, robots, and machines---remains challenging and is still largely missing in the literature.
-Existing studies can be grouped into two categories:
-(i)~methods that focus on the TPA algorithm itself and treat perception as ideal information; and
-(ii)~methods that include perception, but only for small-scale problems, such as a single robot and a single machine, or a narrow task type (mainly assembly).
-The lack of work that couples perception and TPA at line scale is mainly due to limited experimental data:
-deploying and validating such systems in real factories is costly and difficult, and large-scale manufacturing simulation platforms for this purpose are still scarce.
+Despite substantial progress on TPA algorithms, integrating perception with TPA in large-scale settings with multiple humans, robots, and machines remains challenging and is still largely absent in the literature.
+Existing studies fall into two broad categories:
+(i)~methods that focus on the TPA algorithm itself and treat perception as ideal or fully observable information, sometimes at relatively large problem scales~\cite{cai2023task,asadayoobi2023optimising,ye2024two, ren2023decision, yasari2025ergonomics, jia2025flexible}; and
+(ii)~methods that incorporate perception, but only for small-scale settings, such as a single robot paired with a single machine, or a narrow task type (mainly assembly)~\cite{lou2024human,wang2025transfer,merlo2023ergonomic,lee2022digital,zhao2025safety}.
+The scarcity of work that jointly couples perception and TPA at line scale is largely attributable to limited experimental data:
+deploying and validating such systems in real factories is costly and difficult, and large-scale manufacturing simulation platforms for this purpose remain scarce.
 
 To address these gaps, we develop a large-scale factory simulation of an MiC production line.
 Under ideal perception and a rule-based TPA controller, we build a closed-loop data generation pipeline that produces labeled perception data for training and evaluating models that recover the human-centric states required by TPA, including human identity and the subtask currently performed by each worker.

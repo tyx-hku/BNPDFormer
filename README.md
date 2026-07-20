@@ -30,7 +30,7 @@ Includes perception, but only for a single robotic arm.
 
 **An ergonomic role allocation framework for dynamic human–robot collaborative tasks**  
 *Journal of Manufacturing Systems*, 2023  
-No perception module.
+have perception module, but single arm
 
 **Dynamic muscle fatigue assessment using s-EMG technology towards human-centric human-robot collaboration**  
 *Journal of Manufacturing Systems*, 2023  
