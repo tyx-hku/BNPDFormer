@@ -1,11 +1,19 @@
-# Research idea
+# code path
+/home/xue/work/isaac_factory/source/isaaclab_tasks/isaaclab_tasks/direct/hc_factory
 
-This study is set in the context of Modular integrated Construction (MiC) and human-centric manufacturing. We focus on a Task Planning and Allocation (TPA) method for MiC production, and we take into account the limits of perception systems as well as the difficulty of collecting training data for perception models.
+# Research idea 
 
-We build a simulation of a real MiC production line. A rule-based TPA method keeps the production process running in a stable way and also generates data. This data is then used to train perception models for multi-view human identity and subtask recognition.
+This study is set in the context of modular construction (MC) and human-centric manufacturing. We focus on a Task Planning and Allocation (TPA) method for MC production, and we take into account the limits of perception systems as well as the difficulty of collecting training data for perception models.
+
+We build a simulation of a real MC production line. A rule-based TPA method keeps the production process running in a stable way and also generates data. This data is then used to train perception models for multi-view human identity and subtask recognition.
 
 
 # Related work
+review的话 分为 mc manufacturing
+
+task planning allocation
+
+simulation and perception
 
 **Digital twin-driven deep reinforcement learning for adaptive task allocation in robotic construction**  
 *Advanced Engineering Informatics*, 2022  
