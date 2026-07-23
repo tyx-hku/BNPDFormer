@@ -165,27 +165,36 @@ Consequently, work that jointly couples perception and TPA at line scale remains
 \subsection{Factory simulation and synthetic perception data}
 \label{sec:review_sim}
 
-Manufacturing simulation has long supported offline evaluation of schedules, layouts, and human--robot task allocation~\cite{banziger2020optimizing,ferjani2017simulation,pascual2024development}, and workstation digital twins now combine physics-based rendering with ergonomics and safety analysis~\cite{wang2025design,lee2022digital}.
-Recent reviews further highlight synthetic data for manufacturing vision, but existing pipelines mainly address defect detection or assembly perception at single-station granularity~\cite{shafiee2026synthetic}; line-level simulators with multi-agent logistics and process-synchronized multi-camera labels remain scarce.
+Manufacturing simulation has long been used to evaluate schedules, layouts, and human--robot task allocation offline~\cite{banziger2020optimizing,ferjani2017simulation,pascual2024development}.
+Workstation digital twins further combine physics-based rendering with ergonomics and safety analysis~\cite{wang2025design,lee2022digital}.
+Recent reviews also emphasize synthetic data for manufacturing vision, yet most pipelines target defect detection or assembly perception at single-station scale~\cite{shafiee2026synthetic}.
+Line-level simulators that couple multi-agent logistics with process-synchronized multi-camera labels remain scarce.
 
-NVIDIA's Physical AI stack, including Isaac Sim/Lab, NuRec, SAGE, and Factory assembly benchmarks, promises integrated real-to-sim-to-train workflows with photorealistic rendering and scalable GPU simulation~\cite{isaacsim2026,liang2018gpu,nurec2026,xia2026sage,narang2022factory}.
-Nevertheless, public datasets and tools still skew toward autonomous driving, warehousing, and manipulation; NuRec and SAGE offer visual or layout control rather than process-controllable shop-floor equipment.
-Process-consistent labeling under a line-level TPA controller therefore remains an open need for MC manufacturing HRC.
+Recent Physical AI platforms, such as NVIDIA Isaac Sim, NuRec, SAGE, and Factory assembly benchmarks, enable photorealistic rendering and scalable GPU simulation for real-to-sim-to-train workflows~\cite{isaacsim2026,liang2018gpu,nurec2026,xia2026sage,narang2022factory}.
+SAGE, for instance, generates simulator-ready 3D scenes from a user-specified embodied task through generator--critic refinement of semantic, visual, and physical validity~\cite{xia2026sage}.
+However, these tools and public datasets still focus mainly on autonomous driving, warehousing, and manipulation.
+NuRec and SAGE provide strong visual or layout control, but they do not offer process-controllable shop-floor equipment under a line-level TPA controller.
+Process-consistent labeling for MC manufacturing HRC therefore remains an open need.
 
 \subsection{Vision-based human state estimation in industrial settings}
 \label{sec:review_vision}
 
 Vision methods for human behavior modeling in manufacturing range from pose estimation and action recognition to intent prediction~\cite{jahanmahin2022human,semeraro2023human}.
+Recent human-centric digital twin studies further recover operator status from RGB or RGB-D cameras and synchronize it into collaborative work-cell models.
+Skeleton-based pipelines support safety distancing and motion or action recognition~\cite{li2022framework,choi2022integrated,wang2021digital}, while vision-based human digital twins estimate posture, intention, ergonomic risk, and fatigue-aware operations~\cite{fan2023vision,yao2024virtual,zhang2024enabling,chand2024vision}.
+Wang et al.~\cite{wang2025design} construct a customized high-fidelity mesh human from a short RGB video and use transformers for real-time motion tracking and procedure recognition under occlusion.
+These advances confirm that vision is a practical sensing channel for human-centric manufacturing.
+However, most systems remain at single work-cell or station scale and mainly estimate local motion or procedure states, rather than the line-level observability required by TPA: multi-view human identity and process-coupled subtask completion.
 
 
 \subsection{Research gaps}
 \label{sec:gaps}
 
-The literature reveals three coupled gaps:
-(1)~line-level TPA studies often omit perception and assume omniscient human states;
-(2)~industrial multi-view datasets that are consistent with manufacturing process dynamics are limited; and
-(3)~existing simulators rarely use an executable TPA controller as the driver of both process execution and automatic label generation.
-This work targets these gaps by treating TPA-driven MC simulation as a data engine for multi-view human identity and subtask recognition.
+Drawing on the above review, three coupled gaps remain.
+First, line-scale TPA for MC production with multiple humans, robots, and machines is rarely studied together with perception.
+Second, many TPA methods assume omniscient human states (\emph{who} is present and \emph{what} subtask is ongoing), leaving a sensing gap for deployable closed-loop systems.
+Third, process-consistent multi-view training data are scarce, and existing simulators seldom couple an executable TPA controller with automatic camera labeling.
+This work addresses these gaps via a TPA-driven MC line simulation that serves as a data engine for multi-view human identity and subtask recognition.
 
 
 %% ========================================================================
