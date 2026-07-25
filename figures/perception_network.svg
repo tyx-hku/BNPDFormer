@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="720" viewBox="0 0 980 720">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 1 L9 5 L0 9 z" fill="#1E2A44"/>
+    </marker>
+    <style>
+      .title { font: 700 16px Helvetica, Arial, sans-serif; fill: #1E2A44; }
+      .sub { font: 12px Helvetica, Arial, sans-serif; fill: #4A5568; }
+      .boxText { font: 600 12px Helvetica, Arial, sans-serif; fill: #1E2A44; }
+      .boxSub { font: 11px Helvetica, Arial, sans-serif; fill: #4A5568; }
+      .panel { fill: #F7FAFC; stroke: #CBD5E0; stroke-width: 1.2; }
+      .box { fill: #FFFFFF; stroke: #2B6CB0; stroke-width: 1.4; }
+      .boxAccent { fill: #EBF8FF; stroke: #2B6CB0; stroke-width: 1.6; }
+      .boxGreen { fill: #F0FFF4; stroke: #2F855A; stroke-width: 1.4; }
+      .boxOrange { fill: #FFFAF0; stroke: #C05621; stroke-width: 1.4; }
+      .line { stroke: #1E2A44; stroke-width: 1.4; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <text x="24" y="28" class="title">hc_factory Perception Networks (perception.py)</text>
+  <text x="24" y="48" class="sub">Shared idea: ResNet-18 ImageNet backbone; Task A single-view ID; Task B multi-view + process-task embedding</text>
+
+  <!-- Task A panel -->
+  <rect x="20" y="70" width="940" height="150" rx="8" class="panel"/>
+  <text x="36" y="96" class="title">Task A: HumanIdModel (multi-label)</text>
+  <text x="36" y="116" class="sub">Input: one station RGB  |  Output: multi-hot over HumanIdVocab (5)  |  Loss: BCEWithLogits</text>
+
+  <rect x="50" y="140" width="110" height="50" rx="6" class="boxAccent"/>
+  <text x="105" y="160" text-anchor="middle" class="boxText">RGB image</text>
+  <text x="105" y="176" text-anchor="middle" class="boxSub">3x224x224</text>
+
+  <line x1="160" y1="165" x2="200" y2="165" class="line"/>
+
+  <rect x="200" y="140" width="130" height="50" rx="6" class="box"/>
+  <text x="265" y="160" text-anchor="middle" class="boxText">ResNet-18</text>
+  <text x="265" y="176" text-anchor="middle" class="boxSub">children[:-1]</text>
+
+  <line x1="330" y1="165" x2="370" y2="165" class="line"/>
+
+  <rect x="370" y="140" width="100" height="50" rx="6" class="box"/>
+  <text x="420" y="160" text-anchor="middle" class="boxText">feat</text>
+  <text x="420" y="176" text-anchor="middle" class="boxSub">512-d</text>
+
+  <line x1="470" y1="165" x2="510" y2="165" class="line"/>
+
+  <rect x="510" y="140" width="110" height="50" rx="6" class="box"/>
+  <text x="565" y="160" text-anchor="middle" class="boxText">Linear</text>
+  <text x="565" y="176" text-anchor="middle" class="boxSub">512 -&gt; 5</text>
+
+  <line x1="620" y1="165" x2="660" y2="165" class="line"/>
+
+  <rect x="660" y="140" width="140" height="50" rx="6" class="boxAccent"/>
+  <text x="730" y="160" text-anchor="middle" class="boxText">ID logits</text>
+  <text x="730" y="176" text-anchor="middle" class="boxSub">multi-label (B,5)</text>
+
+  <!-- Task B panel -->
+  <rect x="20" y="240" width="940" height="450" rx="8" class="panel"/>
+  <text x="36" y="266" class="title">Task B: HumanSubtaskModel (multi-view + task conditioning)</text>
+  <text x="36" y="286" class="sub">Input: N camera RGBs + process task_id  |  Output: 9-way subtask + done  |  Loss: CE + BCE  |  N = #CAMERA_POSES (10)</text>
+
+  <!-- cameras -->
+  <rect x="50" y="310" width="70" height="40" rx="5" class="boxAccent"/>
+  <text x="85" y="328" text-anchor="middle" class="boxText">Cam1</text>
+  <text x="85" y="342" text-anchor="middle" class="boxSub">RGB</text>
+  <rect x="130" y="310" width="70" height="40" rx="5" class="boxAccent"/>
+  <text x="165" y="328" text-anchor="middle" class="boxText">Cam2</text>
+  <text x="165" y="342" text-anchor="middle" class="boxSub">RGB</text>
+  <rect x="210" y="310" width="70" height="40" rx="5" class="boxAccent"/>
+  <text x="245" y="328" text-anchor="middle" class="boxText">&amp;</text>
+  <text x="245" y="342" text-anchor="middle" class="boxSub">CamN</text>
+
+  <rect x="320" y="310" width="120" height="40" rx="5" class="boxOrange"/>
+  <text x="380" y="328" text-anchor="middle" class="boxText">task_id</text>
+  <text x="380" y="342" text-anchor="middle" class="boxSub">Embedding 16-&gt;32</text>
+
+  <!-- shared backbone note -->
+  <text x="50" y="375" class="sub">Shared ResNet-18 (weight-tied across cameras)</text>
+
+  <!-- per-cam towers -->
+  <rect x="50" y="390" width="70" height="36" rx="5" class="box"/>
+  <text x="85" y="412" text-anchor="middle" class="boxText">R18-&gt;512</text>
+  <rect x="130" y="390" width="70" height="36" rx="5" class="box"/>
+  <text x="165" y="412" text-anchor="middle" class="boxText">R18-&gt;512</text>
+  <rect x="210" y="390" width="70" height="36" rx="5" class="box"/>
+  <text x="245" y="412" text-anchor="middle" class="boxText">R18-&gt;512</text>
+
+  <line x1="85" y1="350" x2="85" y2="390" class="line"/>
+  <line x1="165" y1="350" x2="165" y2="390" class="line"/>
+  <line x1="245" y1="350" x2="245" y2="390" class="line"/>
+  <line x1="380" y1="350" x2="380" y2="470" class="line"/>
+
+  <rect x="50" y="445" width="70" height="36" rx="5" class="boxGreen"/>
+  <text x="85" y="467" text-anchor="middle" class="boxText">-&gt;128</text>
+  <rect x="130" y="445" width="70" height="36" rx="5" class="boxGreen"/>
+  <text x="165" y="467" text-anchor="middle" class="boxText">-&gt;128</text>
+  <rect x="210" y="445" width="70" height="36" rx="5" class="boxGreen"/>
+  <text x="245" y="467" text-anchor="middle" class="boxText">-&gt;128</text>
+
+  <line x1="85" y1="426" x2="85" y2="445" class="line"/>
+  <line x1="165" y1="426" x2="165" y2="445" class="line"/>
+  <line x1="245" y1="426" x2="245" y2="445" class="line"/>
+
+  <!-- cam_enc label -->
+  <text x="290" y="468" class="sub">cam_enc: Linear(512,128)</text>
+
+  <!-- fuse -->
+  <line x1="85" y1="481" x2="85" y2="510" class="line"/>
+  <line x1="165" y1="481" x2="165" y2="510" class="line"/>
+  <line x1="245" y1="481" x2="245" y2="510" class="line"/>
+  <line x1="85" y1="510" x2="380" y2="510" stroke="#1E2A44" stroke-width="1.4" fill="none"/>
+  <line x1="380" y1="510" x2="380" y2="530" class="line"/>
+
+  <rect x="300" y="530" width="160" height="44" rx="6" class="boxAccent"/>
+  <text x="380" y="548" text-anchor="middle" class="boxText">fused = concat</text>
+  <text x="380" y="564" text-anchor="middle" class="boxSub">128*N + 32</text>
+
+  <!-- dual heads -->
+  <line x1="340" y1="574" x2="200" y2="610" class="line"/>
+  <line x1="420" y1="574" x2="560" y2="610" class="line"/>
+
+  <rect x="120" y="610" width="160" height="58" rx="6" class="boxGreen"/>
+  <text x="200" y="630" text-anchor="middle" class="boxText">head_sub</text>
+  <text x="200" y="646" text-anchor="middle" class="boxSub">Linear-&gt;128-&gt;ReLU-&gt;9</text>
+  <text x="200" y="660" text-anchor="middle" class="boxSub">subtask logits (CE)</text>
+
+  <rect x="480" y="610" width="160" height="58" rx="6" class="boxOrange"/>
+  <text x="560" y="630" text-anchor="middle" class="boxText">head_done</text>
+  <text x="560" y="646" text-anchor="middle" class="boxSub">Linear-&gt;64-&gt;ReLU-&gt;1</text>
+  <text x="560" y="660" text-anchor="middle" class="boxSub">done logit (BCE)</text>
+
+  <text x="700" y="640" class="sub">Vocab (9): go_to_material, material_on_gantry,</text>
+  <text x="700" y="656" class="sub">control_gantry, material_on_robot, go_to_goal_area,</text>
+  <text x="700" y="672" class="sub">material_on_goal_area, go_to_processing_machine,</text>
+  <text x="700" y="688" class="sub">control_machine, wait</text>
+</svg>
