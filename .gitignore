@@ -17,7 +17,7 @@ build/
 
 # PDF：忽略根目录等产物，保留 figs/ 中的图
 *.pdf
-!figs/*.pdf
+!figures/*.pdf
 
 # 编辑器（保留 .vscode/settings.json 以便跨机同步）
 .idea/
