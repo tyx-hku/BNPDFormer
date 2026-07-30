@@ -66,10 +66,10 @@
 \let\WriteBookmarks\relax
 \def\floatpagepagefraction{1}
 \def\textpagefraction{.001}
-\shorttitle{MC production line simulation for human state estimation in task planning and allocation}
+\shorttitle{A TPA-Driven Simulation Pipeline for Multi-View Human State Estimation in Modular Construction}
 \shortauthors{Jintao Xue et~al.}
 
-\title [mode = title]{Modular construction production line simulation for human state estimation in task planning and allocation}                 
+\title [mode = title]{A TPA-Driven Simulation Pipeline for Multi-View Human State Estimation in Modular Construction}                 
 
 \author[1]{Jintao Xue}[]
 \author[1]{Xiao Li}[orcid=0000-0001-9702-4153]
@@ -125,7 +125,7 @@ The main contributions are summarized as follows.
 
 The remainder of this paper is organized as follows.
 Section~\ref{sec:review} reviews related work and research gaps.
-Section~\ref{sec:problem} formalizes the TPA and perception problems.
+Section~\ref{sec:problem} formalizes the TPA and  perception problems.
 Section~\ref{sec:method} presents the simulation-driven data engine and learning pipelines.
 Section~\ref{sec:exp} reports experiments, and Section~\ref{sec:conclusion} concludes.
 
@@ -152,7 +152,7 @@ Within MC production specifically, the automation mix further expands to robotic
 \subsection{Task planning and allocation}
 Task planning and allocation (TPA) is a core manufacturing decision layer that allocates operations to humans and automation assets under productivity, safety, and ergonomic constraints by determining what to execute, when to execute it, and which agent should perform each task~\cite{cheng2019task,banziger2020optimizing}.
 Existing studies fall into two broad categories:
-(i)~methods that focus on the TPA algorithm itself and treat perception as ideal or fully observable information, sometimes at relatively large problem scales~\cite{cai2023task,asadayoobi2023optimising,ye2024two,ren2023decision,yasari2025ergonomics,jia2025flexible,xue2026hierarchical}; and
+(i)~methods that focus on the TPA algorithm itself and treat perception as ideal or fully observable information, sometimes at relatively large problem scales~\cite{cai2023task,asadayoobi2023optimising,ye2024two,ren2023decision,yasari2025ergonomics,jia2025flexible,xue2026hierarchical, zhang2024ajoint, zhang2026evolutionary}; and
 (ii)~methods that incorporate perception, but only in small-scale settings, such as a single robot paired with a single machine or a narrow task type (mainly assembly)~\cite{lou2024human,wang2025transfer,merlo2023ergonomic,lee2022digital,zhao2025safety,zhang2022reinforcement}.
 Many line-level formulations in the first category consume privileged state variables, such as agent locations, task progress, and completion flags, as if they were directly observed.
 This practice is reasonable for algorithmic benchmarking, but it postpones the sensing problem that dominates real deployments.
@@ -177,7 +177,7 @@ Process-consistent labeling for MC manufacturing HRC therefore remains an open n
 \subsection{Vision-based human state estimation in industrial settings}
 \label{sec:review_vision}
 
-Vision methods for human behavior modeling in manufacturing range from pose estimation and action recognition to intent prediction~\cite{jahanmahin2022human,semeraro2023human}.
+Vision methods for human behavior modeling in manufacturing range from pose estimation and action recognition to intent prediction~\cite{Zheng_2026_CVPR, jahanmahin2022human,semeraro2023human, zheng2025human, zheng2026foundation}.
 Recent human-centric digital twin studies further recover operator status from RGB or RGB-D cameras and synchronize it into collaborative work-cell models.
 Skeleton-based pipelines support safety distancing and motion or action recognition~\cite{li2022framework,choi2022integrated,wang2021digital}, while vision-based human digital twins estimate posture, intention, ergonomic risk, and fatigue-aware operations~\cite{fan2023vision,yao2024virtual,zhang2024enabling,chand2024vision}.
 Wang et al.~\cite{wang2025design} construct a customized high-fidelity mesh human from a short RGB video and use transformers for real-time motion tracking and procedure recognition under occlusion.
