@@ -22,6 +22,9 @@
 %\documentclass[a4paper,fleqn,longmktitle]{cas-dc}
 \documentclass[a4paper,fleqn]{cas-sc}
 
+% Allow continuous Type1 scaling (STIX/.fd discrete sizes → ≤0.5pt substitution warning)
+\usepackage{anyfontsize}
+
 %\usepackage[authoryear,longnamesfirst]{natbib}
 %\usepackage[authoryear]{natbib}
 \usepackage[numbers]{natbib}
@@ -66,33 +69,33 @@
 \let\WriteBookmarks\relax
 \def\floatpagepagefraction{1}
 \def\textpagefraction{.001}
-\shorttitle{A TPA-Driven Simulation Pipeline for Multi-View Human State Estimation in Modular Construction}
-\shortauthors{Jintao Xue et~al.}
+\shorttitle{BNPDFormer for Factory Bottleneck Event Forecasting}
+\shortauthors{Yuxiao Tian}
 
-\title [mode = title]{A TPA-Driven Simulation Pipeline for Multi-View Human State Estimation in Modular Construction}                 
+\title [mode = title]{BNPDFormer: Station-Level Bottleneck Event Forecasting for Heterogeneous Factory Resources}
 
-\author[1]{Jintao Xue}[]
-\author[1]{Xiao Li}[orcid=0000-0001-9702-4153]
-\cormark[1]
 \author[1]{Yuxiao Tian}[]
-\author[1]{Hao Zheng}[]
-\author[1]{Nianmin Zhang}[]
+\cormark[1]
 \affiliation[1]{organization={CI3 Lab, Department of Civil Engineering, The University of Hong Kong},
                 city={Hong Kong SAR},
                 }
 
-\cortext[cor1]{Corresponding author: CI3 Lab, Department of Civil Engineering, Faculty of Engineering, HW6-07, Haking Wong Building, The University of Hong Kong, Pokfulam, Hong Kong, China.}
+\cortext[cor1]{Corresponding author: CI3 Lab, Department of Civil Engineering, Faculty of Engineering, The University of Hong Kong, Pokfulam, Hong Kong, China.}
 
 
 \begin{abstract}
-In modular construction (MC) factories under Industry~5.0, human--robot collaboration (HRC) is increasingly adopted, with task planning and allocation (TPA) serving as a core decision layer. Yet most existing studies remain limited to small-scale settings or assume fully observable human states, while datasets that reflect real manufacturing process dynamics are scarce, hindering practical deployment. To address these gaps, we develop a factory-level MC production-line simulation platform in NVIDIA Isaac Sim, built from a replica of a real water-pipe production-part factory. 
-The manufacturing workflow is encoded as a process-task graph that couples logistic and processing tasks and decomposes each task into executable subtasks with explicit partner-agent dependencies among humans, gantries, machines, and robots.
-A rule-based multi-agent TPA algorithm then performs product sequencing, process-task planning, task allocation, and cross-agent progress updates, forming a closed-loop pipeline that synchronizes process execution with multi-camera observations and automatically generates process-consistent labels. On the resulting dataset, we study two human state estimation tasks: multi-view human identity recognition and working-human subtask recognition with completion status. Experiments show that the simulation stably provides reliable supervision over long-horizon episodes, and the trained models achieve high accuracy and strong generalization in simulation. 
-These results demonstrate that our simulation environment effectively addresses the data scarcity for TPA in MC scenarios and establishes a complete pipeline for both decision-making and vision-based perception.
+Throughput bottlenecks in human--robot collaborative (HRC) factories are dynamic, multi-resource, and sparse in time.
+Operators need precision-first warnings of \emph{which} station will congest, \emph{when} congestion starts, and \emph{how long} it lasts---rather than retrospective detection alone.
+We present \textbf{BNPDFormer}, a spatiotemporal Transformer for station-level bottleneck event forecasting on heterogeneous factory graphs.
+Windowed operational features of machines, workbenches, gantries, AGVs, humans, and buffers are encoded with a PDFormer-style backbone (temporal, geographic, and delay-aware semantic attention).
+The primary heads predict, for each supervised station over a fixed short horizon, a binary will-block flag together with start minute and duration; auxiliary heads regress remaining order completion time and a coarse process-cause class.
+Labels are derived from unsupervised operational occupancy runs in an NVIDIA Isaac Sim replica of a modular-construction water-pipe line, under single-axis disturbances (machine, human, logistics, material).
+On 134 episodes, BNPDFormer attains test report precision/recall/F1 of $0.817$/$0.447$/$0.578$ with start and duration MAE of $0.20$ and $1.32$\,min.
+We compare against tabular and graph sequence baselines (XGBoost, LSTM, BTGCN, and BSTAN) under a shared protocol.
 \end{abstract}
 
 \begin{keywords}
-Modular construction \sep Human-centric Manufacturing \sep Factory Simulation \sep Task planning and allocation \sep Vision-based state estimation
+Factory bottleneck forecasting \sep Spatiotemporal Transformer \sep Human--robot collaboration \sep Modular construction \sep Digital twin simulation
 \end{keywords}
 
 \begin{NoHyper}
@@ -103,573 +106,205 @@ Modular construction \sep Human-centric Manufacturing \sep Factory Simulation \s
 \section{Introduction} \label{sec:intro}
 %% ========================================================================
 
-Modular construction (MC) is a promising off-site construction paradigm. By shifting much on-site work to production-part factories, it improves productivity and quality while shortening project schedules~\cite{gibb1999off}.
-Under Industry~5.0, MC factories increasingly adopt human--robot collaboration (HRC) following human-centric manufacturing~\cite{fu2024human}, where task planning and allocation (TPA) serves as a key decision layer~\cite{cheng2019task,banziger2020optimizing,xue2026safe}.
-While TPA algorithms have advanced, most studies still focus on small-scale settings (often a single robotic arm for assembly) and offer limited support for line-scale MC production with multiple humans, robots, and machines.
-Moreover, some studies assume fully observed human states, which simplifies algorithmic evaluation but leaves a sensing gap for real factories, where such information must be recovered from cameras or other sensors~\cite{jahanmahin2022human,semeraro2023human}.
+Modular construction (MC) shifts on-site work into production-part factories and increasingly adopts human--robot collaboration under Industry~5.0~\cite{gibb1999off,xu2021industry,fu2024human}.
+On such lines, throughput is limited by shifting bottlenecks across machines, humans, logistics assets, and materials~\cite{roser2001practical,li2009data}.
+Shop-floor decisions benefit from early, high-precision forecasts of \emph{where} a bottleneck will appear, \emph{when} it starts, and \emph{how long} it lasts.
 
-To address these gaps, we develop a realistic MC production-line simulation in NVIDIA Isaac Sim, reconstructed from a real water-pipe production-part factory (storage areas, gantry logistics, welding/cutting/grooving stations, and workbenches).
-We encode the workflow as a process-task graph of coupled logistic and processing tasks, each further decomposed into executable subtasks with partner-agent dependencies (human, gantry, machine, and robot).
-A rule-based multi-agent TPA algorithm performs product sequencing, process-task planning, human--robot allocation, and cross-agent progress updates, and drives a closed-loop data pipeline that synchronizes process execution with multi-camera observations and automatically emits process-consistent labels.
-On the generated dataset, we study two complementary perception tasks for line-level TPA:
-human identity recognition and
-human subtask recognition.
-Experiments show that the TPA algorithm can stably drive long-horizon episodes and that models trained on the synthetic labels achieve high accuracy and useful cross-setting generalization in simulation.
+Classical manufacturing research provides strong tools for bottleneck \emph{detection} from queue, process, and system states~\cite{roser2001practical,li2009data,subramaniyan2023throughput}.
+These methods are primarily retrospective or short-horizon diagnostic.
+In intelligent transportation systems, delay-aware spatiotemporal Transformers such as PDFormer forecast dense traffic states on graphs~\cite{jiang2023pdformer}, while related work studies sparse congestion events~\cite{jin2023stgnpp}.
+Factory HRC lines share graph-like propagation but differ in heterogeneous resource types, process--logistics coupling, and the need for station-level event reports rather than road-flow maps.
 
-The main contributions are summarized as follows.
+We therefore ask: can a PDFormer-style encoder be adapted to emit precision-first station bottleneck events on a factory graph?
+Our answer is \textbf{BNPDFormer} (Bottleneck Neural PDFormer), which:
 \begin{itemize}
-    \item We develop a realistic MC production-line simulation platform addressing the current lack of data tailored to MC production TPA and perception learning.
-    \item We couple rule-based TPA with the simulation platform so that process execution, multi-view imaging, and ground-truth labeling form a closed data-generation loop.
-    \item We study two key perception tasks for line-level TPA: per-view human identity and subtask recognition, and show that models trained on simulator data achieve strong performance, enabling perception-driven HRC systems.
+    \item encodes multi-resource window features on a process--logistics graph with temporal, geographic, and delay-aware semantic attention;
+    \item predicts per-station will-block, start minute, and duration over a fixed look-ahead (15\,min given 30\,min history);
+    \item jointly regresses remaining order time and a process-cause class as secondary outputs;
+    \item is trained on disturbance-controlled Isaac Sim episodes with unsupervised operational occupancy labels.
 \end{itemize}
 
 The remainder of this paper is organized as follows.
-Section~\ref{sec:review} reviews related work and research gaps.
-Section~\ref{sec:problem} formalizes the TPA and  perception problems.
-Section~\ref{sec:method} presents the simulation-driven data engine and learning pipelines.
-Section~\ref{sec:exp} reports experiments, and Section~\ref{sec:conclusion} concludes.
-
+Section~\ref{sec:review} reviews related work.
+Section~\ref{sec:problem} formalizes the forecasting task.
+Section~\ref{sec:method} presents the data engine and BNPDFormer.
+Section~\ref{sec:exp} reports experiments.
+Section~\ref{sec:conclusion} concludes.
 
 %% ========================================================================
 \section{Literature review} \label{sec:review}
 %% ========================================================================
 
-This section reviews four strands of related work that shape perception-enabled TPA for MC production lines:
-human--robot collaboration in MC factories,
-task planning and allocation,
-factory simulation and synthetic perception data,
-and vision-based human state estimation in industrial settings.
-We then summarize the remaining research gaps that motivate this study.
+\subsection{Bottleneck detection in manufacturing}
+Throughput bottlenecks are resources that limit system output.
+Detection methods are commonly grouped by queue state, process state, or system state information~\cite{subramaniyan2023throughput}.
+Roser et al.\ identify bottlenecks via uninterrupted active periods~\cite{roser2001practical}.
+Li et al.\ propose data-driven turning-point detection from blockage and starvation~\cite{li2009data}.
+These approaches underpin diagnosis and improvement, yet they do not cast the problem as supervised station-level event forecasting with matched start-time tolerances on heterogeneous HRC lines.
 
-\subsection{Human-robot collaboration in MC production}
-\label{sec:review_hrc}
-Human--robot collaboration (HRC) is a key enabler for Industry~5.0, as humans and robots complement each other: humans contribute flexibility in complex and adaptive tasks, while robots provide efficiency in repetitive, hazardous, and physically demanding operations~\cite{xu2021industry, xueproduction}.
-These systems also differ in interaction level, ranging from fully separated operation and human--robot coexistence with safety intervention, through assistive and cooperative modes with increasing workspace sharing, to simultaneous collaboration and largely autonomous execution~\cite{mukherjee2022survey,rodrigues2023multidimensional}.
-In manufacturing, HRC research is commonly organized around four themes: (i)~collaborative workstation and cell design, including safety and ergonomics~\cite{tsarouchi2017human,wang2025design}; (ii)~task planning and allocation to support smooth collaboration and improve productivity, safety, and related performance metrics~\cite{zhao2025safety,zheng2023video,xue2026safe}; (iii)~perception and human behavior modeling, including human-aware state estimation~\cite{prunet2024optimization,jahanmahin2022human,semeraro2023human}; and (iv)~human--robot interaction and control~\cite{cherubini2016collaborative,li2023proactive}.
-Within MC production specifically, the automation mix further expands to robotic arms, specialized robots, exoskeletons, and automated guided vehicles (AGVs), each supporting different logistics, processing, and assistance roles alongside human operators~\cite{fu2024human,malik2019generation,huysamen2018assessment,yang2021agv}.
+\subsection{Spatiotemporal forecasting on graphs}
+Spatiotemporal graph models and Transformers are widely used for dense traffic variables.
+PDFormer introduces dynamic spatial attention, short-/long-range masks, and delay-aware feature transformation~\cite{jiang2023pdformer}.
+Event-oriented traffic models further target sparse congestion timing~\cite{jin2023stgnpp}.
+BNPDFormer retains a PDFormer-style encoder for factory graphs, but replaces dense flow heads with station event heads (will/start/duration) suited to shop-floor warnings.
+We also compare graph sequence baselines that combine spatial operators (GCN or GAT) with temporal GRUs.
 
+\subsection{HRC factories and simulation}
+Industry~5.0 emphasizes human-centric manufacturing and HRC~\cite{xu2021industry,fu2024human,jahanmahin2022human,semeraro2023human}.
+High-fidelity simulation (NVIDIA Isaac Sim) enables controlled multi-resource logs under disturbances that are costly to induce on real lines.
+We use simulation as a labelled data engine for operational bottleneck forecasting from process and logistics states.
 
-\subsection{Task planning and allocation}
-Task planning and allocation (TPA) is a core manufacturing decision layer that allocates operations to humans and automation assets under productivity, safety, and ergonomic constraints by determining what to execute, when to execute it, and which agent should perform each task~\cite{cheng2019task,banziger2020optimizing}.
-Existing studies fall into two broad categories:
-(i)~methods that focus on the TPA algorithm itself and treat perception as ideal or fully observable information, sometimes at relatively large problem scales~\cite{cai2023task,asadayoobi2023optimising,ye2024two,ren2023decision,yasari2025ergonomics,jia2025flexible,xue2026hierarchical, zhang2024ajoint, zhang2026evolutionary}; and
-(ii)~methods that incorporate perception, but only in small-scale settings, such as a single robot paired with a single machine or a narrow task type (mainly assembly)~\cite{lou2024human,wang2025transfer,merlo2023ergonomic,lee2022digital,zhao2025safety,zhang2022reinforcement}.
-Many line-level formulations in the first category consume privileged state variables, such as agent locations, task progress, and completion flags, as if they were directly observed.
-This practice is reasonable for algorithmic benchmarking, but it postpones the sensing problem that dominates real deployments.
-Line-scale TPA research for MC production remains especially limited.
-Although single-arm collaboration is relatively easy to prototype and validate, multi-agent, multi-machine production lines are costly and disruptive to test in live factories.
-Consequently, work that jointly couples perception and TPA at line scale remains scarce, and scalable manufacturing simulation platforms are increasingly needed to develop and evaluate TPA algorithms under realistic process dynamics.
-
-\subsection{Factory simulation and synthetic perception data}
-\label{sec:review_sim}
-
-Manufacturing simulation has long been used to evaluate schedules, layouts, and human--robot task allocation offline~\cite{banziger2020optimizing,ferjani2017simulation,pascual2024development}.
-Workstation digital twins further combine physics-based rendering with ergonomics and safety analysis~\cite{wang2025design,lee2022digital}.
-Recent reviews also emphasize synthetic data for manufacturing vision, yet most pipelines target defect detection or assembly perception at single-station scale~\cite{shafiee2026synthetic}.
-Line-level simulators that couple multi-agent logistics with process-synchronized multi-camera labels remain scarce.
-
-Recent Physical AI platforms, such as NVIDIA Isaac Sim, NuRec, SAGE, and Factory assembly benchmarks, enable high-fidelity rendering and scalable GPU simulation for real-to-sim-to-train workflows~\cite{isaacsim2026,liang2018gpu,nurec2026,xia2026sage,narang2022factory}.
-SAGE, for instance, generates simulator-ready 3D scenes from a user-specified embodied task through generator--critic refinement of semantic, visual, and physical validity~\cite{xia2026sage}.
-However, these tools and public datasets still focus mainly on autonomous driving, warehousing, and manipulation.
-NuRec and SAGE provide strong visual or layout control, but they do not offer process-controllable shop-floor equipment under a line-level TPA algorithm.
-Process-consistent labeling for MC manufacturing HRC therefore remains an open need.
-
-\subsection{Vision-based human state estimation in industrial settings}
-\label{sec:review_vision}
-
-Vision methods for human behavior modeling in manufacturing range from pose estimation and action recognition to intent prediction~\cite{Zheng_2026_CVPR, jahanmahin2022human,semeraro2023human, zheng2025human, zheng2026foundation}.
-Recent human-centric digital twin studies further recover operator status from RGB or RGB-D cameras and synchronize it into collaborative work-cell models.
-Skeleton-based pipelines support safety distancing and motion or action recognition~\cite{li2022framework,choi2022integrated,wang2021digital}, while vision-based human digital twins estimate posture, intention, ergonomic risk, and fatigue-aware operations~\cite{fan2023vision,yao2024virtual,zhang2024enabling,chand2024vision}.
-Wang et al.~\cite{wang2025design} construct a customized high-fidelity mesh human from a short RGB video and use transformers for real-time motion tracking and procedure recognition under occlusion.
-These advances confirm that vision is a practical sensing channel for human-centric manufacturing.
-However, most systems remain at single work-cell or station scale and mainly estimate local motion or procedure states, rather than the line-level observability required by TPA: multi-view human identity and process-coupled subtask completion.
-
-
-\subsection{Research gaps}
-\label{sec:gaps}
-
-Drawing on the above review, three coupled gaps remain.
-First, line-scale TPA for MC production with multiple humans, robots, and machines is rarely studied together with perception.
-Second, many TPA methods assume fully observed human states (\emph{who} is present and \emph{what} subtask is ongoing), leaving a sensing gap for deployable closed-loop systems.
-Third, process-consistent multi-view training data are scarce, and existing simulators seldom couple an executable TPA algorithm with automatic camera labeling.
-This work addresses these gaps via a TPA-driven MC line simulation that serves as a data engine for multi-view human identity and subtask recognition.
-
+\subsection{Research gap}
+Three gaps motivate this work:
+(i)~manufacturing bottleneck literature is detection-heavy and rarely evaluates station event reports with precision-first matching;
+(ii)~traffic forecasters assume homogeneous nodes and calendar periodicity;
+(iii)~HRC factory datasets seldom couple process-consistent labels with controllable single-axis disturbances.
+BNPDFormer addresses these gaps with an event-centric model and a disturbance-aware simulation pipeline.
 
 %% ========================================================================
 \section{Problem Formulation}\label{sec:problem}
 %% ========================================================================
 
-\begin{figure*}[t]
-    \centering
-    \includegraphics[width=\textwidth]{figures/figure1_overview.pdf}
-    \caption{Overview of the proposed framework: real-time task planning and allocation (TPA) drives the MC line simulation, while multi-camera sensing provides automatic labels for perception training.}
-    \label{fig:overview}
-\end{figure*}
-
-As shown in Figure~\ref{fig:overview}, the proposed framework couples two parts:
-(i)~real-time task planning and allocation (TPA) that executes MC production and exposes privileged process states, and
-(ii)~perception training that recovers human identity and subtask labels from multi-view RGB.
-We formalize both parts below.
-
-\subsection{State task progress description}
-\label{sec:problem_tpa}
-
-Consider an MC production line with humans $\mathcal{H}=\{h_1,\ldots,h_{N_h}\}$, gantries $\mathcal{G}$, AGV robots $\mathcal{V}$, and processing machines $\mathcal{M}$.
-At discrete simulation time $t$, the environment state is
+\subsection{Resources, graph, and windowed observations}
+Let $\mathcal{R}=\{r_1,\ldots,r_N\}$ be heterogeneous resources (machines, workbenches, gantries, AGVs, humans, buffers).
+A process--logistics graph $G=(\mathcal{R},E)$ encodes upstream/downstream process links, buffer affinity, and logistics attachments.
+Time is discretized into windows of length $\Delta=60\,\mathrm{s}$.
+At window $t$, each resource $n$ has a feature vector $x_{t,n}\in\mathbb{R}^{F}$ aggregating queue, process, starvation/blockage, logistics delay, material shortage, and disturbance indicators, concatenated with a resource-type one-hot.
+An observation tensor over the past $T_{\mathrm{in}}$ windows is
 \begin{equation}
-s_t
-=
-\bigl(
-\mathcal{X}_t,\ 
-\pi_t,\ 
-\mathcal{W}_t
-\bigr),
+X_t = \{x_{\tau,n}\}_{\tau=t-T_{\mathrm{in}}+1}^{t},\; n=1,\ldots,N \in \mathbb{R}^{T_{\mathrm{in}}\times N\times F}.
 \end{equation}
-where $\mathcal{X}_t$ collects resource statuses (e.g., free / working),
-$\pi_t$ is the plant-level task progress, and
-$\mathcal{W}_t=\{r_p\}$ is the set of ongoing task records indexed by product instance $p$.
+We use $T_{\mathrm{in}}=30$ (30\,min history) and a fixed forecast horizon $H=15$ windows (15\,min).
+Humans and buffers provide context features; supervised forecast targets are stations in $\{\mathrm{machine}, \mathrm{workbench}, \mathrm{gantry}, \mathrm{AGV}\}$.
 
-\paragraph{Task progress.}
-Given a product order $O$ (units per product type), the progress record stores remaining not-started demand, currently producing instances, finished instances, and a Boolean production-done flag.
-Formally,
+\subsection{Station-level bottleneck events}
+For each supervised station $n$ and time $t$, the primary targets over the next $H$ minutes are
 \begin{equation}
-\pi_t
-=
-\bigl(
-O,\ 
-N^{\mathrm{ns}}_t,\ 
-P^{\mathrm{prod}}_t,\ 
-P^{\mathrm{fin}}_t,\ 
-\mathrm{done}^{\mathrm{prod}}_t
-\bigr),
+(w_{t,n},\, s_{t,n},\, d_{t,n}),
 \end{equation}
-where $N^{\mathrm{ns}}_t$ is the residual not-started count, $P^{\mathrm{prod}}_t$ the set of parallel producing products (bounded by a capacity limit), and $P^{\mathrm{fin}}_t$ the finished set.
-Production is successful when $|P^{\mathrm{fin}}_t|\ge O$ for every ordered product type, i.e., $\mathrm{done}^{\mathrm{prod}}_t=1$.
+where $w_{t,n}\in\{0,1\}$ indicates whether a bottleneck run occurs in the horizon,
+$s_{t,n}\ge 0$ is the start offset in minutes (forced to $0$ if congestion is already ongoing),
+and $d_{t,n}>0$ is the duration in minutes (remaining duration if ongoing).
+A prediction is counted as a correct \emph{report} only if the station identity matches and $|\hat{s}-s|\le 3$\,min.
+Secondary targets include remaining order completion time $\ell_t$ (minutes) and a process-cause class $c_{t,n}$ among six operational reasons (material shortage, transport delay, queue buildup, blocked downstream, starved upstream, high utilization).
 
-\paragraph{Subtask gallery.}
-Given a process task gallery $\mathcal{T}$ of admissible logistic and processing tasks (including a null action $\texttt{none}$), each process task $\tau\in\mathcal{T}\setminus\{\texttt{none}\}$ is further decomposed by a subtask gallery into a synchronized table of length $N_\tau$:
-\begin{equation}
-\mathrm{Sub}(\tau)
-=
-\bigl\{
-\sigma_{\tau,i,c}
-\bigr\}_{i=0}^{N_\tau-1},
-\quad
-c\in\{\mathrm{human},\mathrm{gantry},\mathrm{machine},\mathrm{robot}\},
-\end{equation}
-where column $c$ stores the role-specific micro-operation at row $i$ (travel, control gantry, process, wait, etc.).
-An ongoing task record $r_p$ instantiates $\mathrm{Sub}(\tau_p)$ and maintains
-\begin{equation}
-\bigl(
-i_p,\ 
-\sigma^{\mathrm{ong}}_{p},\ 
-f_{p}
-\bigr),
-\end{equation}
-with row index $i_p$, ongoing subtask vector $\sigma^{\mathrm{ong}}_{p}$ (one entry per active column), and column-wise finished flags $f_p\in\{0,1\}^{C_p}$.
-Coupling rules mark a human-column entry finished only when partner columns (gantry/machine/robot) reach the co-scheduled states.
-
-\paragraph{Objectives of the TPA loop.}
-The primary operational objective is to execute the order $O$ without deadlock under the task-dependency and capacity constraints encoded in $s_t$, i.e., to reach $\mathrm{done}^{\mathrm{prod}}=1$.
-A coupled data-collection objective is to keep the line continuously occupied so that synchronized multi-view observations can be logged.
-Let $\mathcal{C}=\{c_1,\ldots,c_{N_c}\}$ be the fixed camera set.
-At logging times $\mathcal{L}\subseteq\{0,1,\ldots,T\}$, the simulator writes
-\begin{equation}
-\mathcal{D}_t
-=
-\bigl(
-\{I_{c,t}\}_{c\in\mathcal{C}},\,
-\ell_t
-\bigr),
-\quad
-t\in\mathcal{L},
-\end{equation}
-where $I_{c,t}$ is the RGB frame of camera $c$, and $\ell_t$ is a textual (JSON) record containing environment progress, allocated process tasks, human-column subtasks, done flags, and identity footprints.
-Thus TPA simultaneously guarantees production continuity and supplies the image--text pairs required by perception training.
-
-\subsection{Perception training}
-\label{sec:problem_perception}
-
-The same camera set $\mathcal{C}$ observes the line at every step.
-From the TPA records, each working human $h\in\mathcal{H}$ exposes a process task $y^{\mathrm{task}}_h$, a human-column subtask $y^{\mathrm{sub}}_h\in\mathcal{S}$, and a binary done flag $y^{\mathrm{done}}_h\in\{0,1\}$, where $\mathcal{S}$ is the finite human subtask vocabulary induced by the subtask gallery.
-We study two complementary estimation problems that recover the human-centric observability required by closed-loop TPA.
-
-\paragraph{Task A: Human identity recognition.}
-For each camera $c$ that participates in identity labeling, predict a multi-hot vector $z_{c,t}\in\{0,1\}^{N_h}$ whose $i$-th entry indicates whether human $h_i$ is visible in $I_{c,t}$.
-Ground truth is obtained by testing each human's floor-plane position against a manually calibrated ground footprint polygon of camera $c$.
-
-\paragraph{Task B: Human subtask recognition.}
-For each working human $h$ at time $t$ (i.e., not free), estimate
-\begin{equation}
-\hat{y}^{\mathrm{sub}}_{h,t},\quad
-\hat{y}^{\mathrm{done}}_{h,t}
-=
-f\!\left(
-\{I_{c,t}\}_{c\in\mathcal{C}},\,
-y^{\mathrm{task}}_{h,t}
-\right),
-\end{equation}
-where $f$ is a multi-view network that fuses camera features with an embedding of the allocated process task.
-The learning objective combines multi-class cross-entropy on $\mathcal{S}$ with binary cross-entropy on the done flag.
-
-Together, Tasks~A and~B provide the missing perception interface between visual sensing and TPA: \emph{who} is in each view, and \emph{what} each working human is currently doing (and whether that subtask is complete).
-
+\subsection{Learning objective}
+Given encoder states $z=\mathrm{Enc}(X_t,G)$, BNPDFormer minimizes a weighted sum of event will/start/duration losses, light occupancy-grid auxiliaries for alignment, remaining-time regression, process-cause classification, and a small contrastive term on grouped embeddings.
+Model selection uses validation report F1 with a precision gate (preferring high precision over aggressive recall).
 
 %% ========================================================================
 \section{Research method} \label{sec:method}
 %% ========================================================================
 
-As shown in Figure~\ref{fig:overview}, we develop a TPA-driven MC line simulation that serves as a data engine for multi-view human identity and subtask recognition.
-\subsection{TPA-driven MC line simulation}
-\label{sec:method_sim}
+\subsection{Simulation data engine}
+We reconstruct a water-pipe production-part line in NVIDIA Isaac Sim (storage, gantry/AGV logistics, cutting/grooving/welding/painting, workbenches).
+A rule-based controller executes process and logistic tasks.
+Each training episode orders $10$ pipes with WIP cap $5$; a no-disturbance reference makespan is about $133$\,min.
+Raw logs record resource transitions, job traces, buffers, transport tasks, inventory, and disturbance injections.
 
-We reproduce a real MC production-part factory in a realistic simulator built on NVIDIA Isaac Sim.
-The scene includes storage areas, gantries, robots, processing machines (e.g., welding, cutting, and grooving stations), workbenches, and multiple human workers.
-Manufacturing products such as water-pipe assemblies progress through a process task gallery; each process task decomposes into coupled subtasks across human, gantry, machine, and robot columns.
+\paragraph{Controlled disturbances.}
+Formal training uses intensity $I=1.0$ and \emph{one} primary dimension per run: machine, human, logistics, or material (plus scarce no-disturbance controls).
+Configuration changes (e.g., fewer workers or AGVs, closed stations) combine with episodic shocks (faults, leave events, freezes, temporary kit shortages).
+Mixed dimensions are reserved for out-of-distribution evaluation and are not merged into training.
 
-\paragraph{Task gallery and dependency graph.}
-A process task gallery $\mathcal{T}=\{\tau_0,\ldots,\tau_{|\mathcal{T}|-1}\}$ enumerates admissible plant tasks, including a null action $\tau_0=\texttt{none}$, logistic tasks (material transfer), and processing tasks (machine operations).
-For a product type $q$, the gallery induces a directed task dependency graph
-\begin{equation}
-G_q=(\mathcal{T}_q,E_q),
-\end{equation}
-where nodes $\mathcal{T}_q\subseteq\mathcal{T}$ are the ordered logistic/processing steps of $q$, and edges in $E_q$ are successor pointers of the form
-\begin{equation}
-\tau
-\xrightarrow{\mathrm{next\_processing}}
-\tau',\qquad
-\tau
-\xrightarrow{\mathrm{next\_logistic}}
-\tau''.
-\end{equation}
-Together with a per-product finished-task pointer, $G_q$ uniquely determines the next allowable task for each unfinished instance.
-This graph is exactly the ``task dependency graph'' block in Figure~\ref{fig:overview}.
+\paragraph{Window aggregation and labelling.}
+Heterogeneous raw states are normalized and aggregated into per-resource window statistics.
+Bottleneck events are unsupervised operational occupancy runs of at least eight consecutive hot minutes on supervised stations (AGV hotness follows freeze/inbound-wait criteria rather than ordinary travel delay).
+Exported tensors exclude supervision-only scores from inputs to avoid label leakage.
+Episodes are split at the episode level (no adjacent-window leakage across train/val/test).
 
-\paragraph{Hierarchical TPA decisions.}
-At each step, a rule-based multi-agent TPA algorithm maps $(s_t,M_t)$ to a hierarchical action
+\subsection{Graph construction}
+Edges connect process neighbours, buffers to affiliated stations, logistics assets to served machines, and weak same-type links.
+Adjacency yields geographic attention masks and Laplacian positional encodings.
+Semantic neighbourhoods use behavioural correlation; short delay motifs support delay-aware geographic attention (DFT-style patterns).
+
+\subsection{BNPDFormer architecture}
 \begin{equation}
-a_t
-=
-\bigl(a^A_t,a^B_t,a^C_t,a^D_t\bigr),
+\begin{aligned}
+h &= \mathrm{Embed}(X_t)+\mathrm{PE}_{\mathrm{time}}+\mathrm{LapPE}(G),\\
+z &= \mathrm{STEncoder}^{(L)}(h;\, G_{\mathrm{geo}}, G_{\mathrm{sem}}, \mathrm{DFT}),\\
+&\quad (\hat{w},\hat{s},\hat{d}) = \mathrm{EventHead}(z),\\
+&\quad \hat{\ell} = \mathrm{RemainHead}(z),\quad \hat{c}=\mathrm{CauseHead}(z).
+\end{aligned}
 \end{equation}
-where $M_t$ denotes feasibility masks derived from $s_t$ (resource availability and next-allowable tasks on $G_q$).
-Concretely:
+Calendar day/week embeddings from traffic PDFormer are removed.
+
+\paragraph{Shared encoder.}
+Grouped token embeddings with type one-hots feed stacked spatiotemporal blocks: temporal self-attention per node, geographic attention over process--logistics neighbours with delay patterns, and semantic attention over behaviourally similar nodes.
+
+\paragraph{Event heads.}
+For each supervised station, a will-block classifier and start/duration regressors cover the $H=15$ horizon.
+Ongoing congestion forces start targets to zero and trains duration as remaining length.
+Occupancy grids remain as light auxiliaries only; they are not the checkpoint metric.
+
+\paragraph{Auxiliary heads.}
+Remaining order time is a scalar regression.
+Process causes use six operational classes derived from window evidence (not the disturbance injection name).
+
+\subsection{Baselines}
+Under the same windows, split, labels, and report metrics, we compare:
 \begin{itemize}
-\item $a^A_t$: product-type sequencing for the next batch to start;
-\item $a^B_t$: product-instance selection among producing slots or a new start;
-\item $a^C_t$: process-task planning, choosing $\tau\in\mathcal{T}$ on the selected instance;
-\item $a^D_t$: human/robot allocation, binding free agents in $\mathcal{H}$ and $\mathcal{V}$ to the planned task.
+    \item \textbf{XGBoost}: flattened history features with multi-head tabular predictors;
+    \item \textbf{LSTM}: non-graph sequence model with shared event heads;
+    \item \textbf{BTGCN}: two-layer GCN spatial mixing followed by a GRU temporal encoder and event heads (GCN+GRU);
+    \item \textbf{BSTAN}: multi-head GAT spatial mixing followed by a GRU and event heads (GAT+GRU).
 \end{itemize}
-The TPA algorithm follows a simple greedy policy over feasible options:
-for each decision head, it restricts candidates to the support of the corresponding mask in $M_t$ and selects the first admissible index (one-hot keep-first-one).
-This baseline does not optimize long-horizon makespan; it only keeps the line progressing under hard feasibility constraints.
-If $a^C_t\neq\texttt{none}$ and $a^D_t$ specifies a free human, the TPA algorithm creates (or updates) a task record $r$, binds workstation/gantry resources, loads $\mathrm{Sub}(\tau)$, and writes $r$ into $\mathcal{W}_{t+1}$.
-
-\paragraph{Subtask advancement.}
-For each product instance $p$ with active task record $r_p$, resource executors update the column-wise finished vector $f_p\in\{0,1\}^{C_p}$ independently, where $C_p$ is the number of active agent columns in $r_p$.
-Here, $(f_p)_c$ is the finished flag of column $c$ (e.g., human, gantry, machine, robot), $i_p$ is the current row index in the subtask table, $N_{\tau_p}$ is the total number of rows for task $\tau_p$, and $\sigma^{\mathrm{ong}}_{p}$ denotes the current row subtask tuple.
-When all active columns finish the current row,
-\begin{equation}
-\bigwedge_{c} (f_p)_c = 1
-\quad\Rightarrow\quad
-\begin{cases}
-\text{close } r_p, & i_p=N_{\tau_p}-1,\\
-i_p\leftarrow i_p+1,\ \text{reload }\sigma^{\mathrm{ong}}_{p},\ \text{reset }f_p, & \text{otherwise.}
-\end{cases}
-\end{equation}
-Closing $r_p$ updates the product finished-task pointer on the dependency graph $G_q=(\mathcal{T}_q,E_q)$ and releases occupied resources.
-The closed-loop dynamics are therefore
-\begin{equation}
-s_{t+1}
-=
-\mathcal{F}\!\left(s_t,a_t\right).
-\end{equation}
-Because the same TPA algorithm drives both logistics and machine operations, visual observations remain synchronized with process dynamics by construction.
-
-\subsection{Multi-camera sensing and automatic labeling}
-\label{sec:method_cam}
-
-Fixed cameras are mounted at highrise overviews, the storage area, and key machine stations.
-Each camera is configured with extrinsic pose $(\mathrm{eye},\mathrm{lookat})$ and RGB intrinsics.
-For identity labeling, station-level cameras further define a manual ground footprint polygon $\mathrm{footprint}_c\subset\mathbb{R}^2$ on the factory floor.
-At each logged step, human floor positions are tested by point-in-polygon queries; humans whose $(x,y)$ lie inside $\mathrm{footprint}_c$ form the multi-label ground truth for camera $c$.
-Highrise overview cameras may capture RGB for context while being excluded from identity labeling when footprints are not calibrated.
-
-Subtask ground truth is read directly from the TPA progress manager:
-for each non-free human, the ongoing human-column subtask name and finished flag are serialized together with the allocated process task identifier.
-Synchronized RGB frames from all cameras are saved alongside a compact environment record, yielding one JSONL sample per simulation step.
-Figure~\ref{fig:env_cameras} visualizes the global factory layout, representative camera views, and process-task/subtask examples used by the labeling pipeline.
-
-\begin{figure}[!t]
-    \centering
-    \includegraphics[width=\textwidth]{figures/fig_env_cameras.pdf}
-    \caption{Factory-level environment and sensing context. (a) Global factory overview. (b) Representative multi-camera views from storage and key stations. (c) Process-task chain with exemplar subtask rows for logistic and processing execution.}
-    \label{fig:env_cameras}
-\end{figure}
-
-\subsection{Perception learning pipelines}
-\label{sec:method_learn}
-
-\paragraph{Data engine workflow.}
-Collection runs with the rule-based TPA algorithm under headless multi-camera rendering.
-Each episode writes a directory of per-step camera images and a \texttt{meta.jsonl} file aligned with a unified sample template that jointly stores Task~A and Task~B fields.
-Episodes are split into train/validation/test partitions at the episode level to avoid temporal leakage.
-
-\paragraph{Model for Task~A.}
-We train a single-view ResNet-18 encoder with a linear multi-label head over the human identity vocabulary.
-The loss is binary cross-entropy with logits.
-At evaluation, predictions are thresholded at $0.5$, and we report element-wise accuracy overall as well as conditioned on empty versus occupied frames.
-
-\paragraph{Model for Task~B.}
-A shared ResNet-18 backbone encodes every camera image; per-camera features are projected and concatenated with a learned embedding of the process task id.
-Two heads predict the subtask class and the done probability.
-The training loss is
-\begin{equation}
-\mathcal{L}
-=
-\mathrm{CE}\!\left(\hat{y}^{\mathrm{sub}}, y^{\mathrm{sub}}\right)
-+
-\mathrm{BCE}\!\left(\hat{y}^{\mathrm{done}}, y^{\mathrm{done}}\right).
-\end{equation}
-
 
 %% ========================================================================
 \section{Experiments} \label{sec:exp}
 %% ========================================================================
 
-As shown in Figure~\ref{fig:env_cameras}, we organize experiments along the data-engine pipeline:
-(i)~verify that rule-based TPA can drive the MC line across workforce/order scales;
-(ii)~show perception learning from training to testing via learning curves on the source setting;
-(iii)~report in-distribution Task~A/B accuracy with fine-grained Task~B diagnostics, then ablate the process-task embedding;
-(iv)~test whether the same checkpoint transfers to other \((N_h,O)\) settings.
+\subsection{Setup}
+We train and evaluate on Isaac Sim episodes with $60\,\mathrm{s}$ windows, history $30$, horizon $15$, and intensity-$1.0$ single-axis disturbances.
+The usable pool contains $134$ episodes (split $92/17/25$ for train/val/test), with $N=38$ graph nodes and $F=27$ input features.
+Checkpointing maximizes validation report F1 subject to a precision preference (thresholding around $0.65$ on will-block).
+Primary metrics are report precision/recall/F1 (station match and start error $\le 3$\,min), plus start/duration MAE, who-only F1, remaining-time MAE, and ongoing vs.\ upcoming recall.
 
-\subsection{Setup and metrics}
-\label{sec:exp_setup}
+\subsection{Main results}
+Table~\ref{tab:main} summarizes test performance.
+BNPDFormer reaches report precision $0.817$, recall $0.447$, and F1 $0.578$, with start MAE $0.20$\,min and duration MAE $1.32$\,min.
+Remaining-order MAE is $6.27$\,min.
+Who-only F1 is $0.581$, nearly matching report F1, indicating that most who-correct predictions also satisfy the start tolerance.
+Ongoing events are recovered more readily than upcoming ones (report recall $0.579$ vs.\ $0.320$), which remains the main failure mode.
 
-\paragraph{Simulation grid.}
-We evaluate the rule-based TPA algorithm and the perception models under a discrete configuration grid
-\begin{equation}
-N_h\in\{1,2,3,4,5\},\qquad O\in\{1,2,3,4,5\},
-\end{equation}
-where $N_h$ is the number of human workers and $O$ is the product order size (units of \texttt{ProductWaterPipe}).
-Unless otherwise stated, each \((N_h,O)\) cell runs multiple independent episodes with the same greedy keep-first-one policy under feasibility masks.
+Baseline formal scores under the shared protocol are being finalized; architectures and training recipes are aligned with BNPDFormer (same data pack, split, and report metric).
+Placeholder dashes in Table~\ref{tab:main} will be replaced upon completion of the baseline campaign.
 
-\paragraph{Perception data splits.}
-Perception models are trained on a \emph{fixed} source setting \((N_h^{\mathrm{tr}},O^{\mathrm{tr}})=(5,5)\).
-From this setting we collect six manufacturing episodes totaling $20{,}260$ synchronized multi-view steps, split $4$/$1$/$1$ at the episode level for train/validation/in-distribution test.
-Each step stores RGB from ten cameras (two highrise overviews plus eight station/storage views) with automatic labels.
-For cross-setting generalization, we additionally collect held-out episodes on every grid cell \((N_h,O)\) and evaluate the same checkpoint without fine-tuning.
-Human identity uses a five-person vocabulary; station cameras with calibrated footprints participate in Task~A.
-Human subtask recognition uses the nine-class vocabulary
-\{\texttt{go\_to\_material},
-\texttt{material\_on\_gantry},
-\texttt{control\_gantry},
-\texttt{material\_on\_robot},
-\texttt{go\_to\_goal\_area},
-\texttt{material\_on\_goal\_area},
-\texttt{go\_to\_processing\_machine},
-\texttt{control\_machine},
-\texttt{wait}\},
-plus a binary done target.
-Models are optimized with AdamW for $20$ epochs (learning rate $1\times10^{-4}$, weight decay $1\times10^{-5}$, image size $224$).
-
-\paragraph{TPA metrics.}
-For each successful episode that reaches \(\mathrm{done}^{\mathrm{prod}}=1\), we report:
-\begin{itemize}
-\item \textbf{Makespan}: simulation steps from episode start to production completion (steps-to-finish).
-\item \textbf{Idle rate}: fraction of agent-time spent in the free state, separately for humans and machines,
-\begin{equation}
-\mathrm{Idle}_{h}
-=
-\frac{1}{N_h\,T}
-\sum_{h\in\mathcal{H}}\sum_{t=1}^{T}
-\mathbb{I}\!\left[\mathrm{state}_{h,t}=\texttt{free}\right],
-\quad
-\mathrm{Idle}_{m}
-=
-\frac{1}{|\mathcal{M}|\,T}
-\sum_{m\in\mathcal{M}}\sum_{t=1}^{T}
-\mathbb{I}\!\left[\mathrm{state}_{m,t}=\texttt{free}\right],
-\end{equation}
-where $T$ is the makespan of that episode.
-\end{itemize}
-Failed or timed-out episodes are marked unsuccessful and excluded from makespan/idle averages (we report success count alongside the means).
-
-\paragraph{Perception metrics.}
-For Task~A (identity), we report element-wise multi-label accuracy overall, and conditioned on occupied versus empty frames.
-For Task~B (subtask), we report:
-(i)~overall 9-way subtask-class accuracy;
-(ii)~per-class accuracy and a confusion matrix over \(\mathcal{S}\);
-(iii)~done-flag accuracy overall, and done accuracy conditioned on the ground-truth subtask class.
-Cross-setting tables use the same metrics on each \((N_h,O)\) test cell.
-
-\subsection{TPA scalability}
-\label{sec:exp_tpa}
-
-We first ask whether the greedy TPA algorithm can complete orders across the grid and how resource load changes with \(N_h\) and \(O\).
-Table~\ref{tab:tpa_scale} summarizes mean makespan and human/machine idle rates over successful episodes.
-Makespan grows roughly monotonically with order size \(O\).
-Adding humans reduces makespan mainly for large orders (e.g., \(O=5\): $6764\rightarrow3376$ steps from \(N_h=1\) to \(N_h=5\)), while human idle rises because the greedy allocator under-utilizes extra workers.
-Machine idle remains high overall and decreases only moderately as \(N_h\) increases, reflecting upstream logistics bottlenecks.
-These runs also produce the synchronized image--text logs used in the perception studies below.
-
-\begin{table*}[pos=t]
-\caption{TPA scalability under rule-based greedy control. Makespan is mean steps-to-finish on successful episodes; idle rates are free-state fractions over \([1,T]\). Succ.\ is the number of successful episodes aggregated over $O\in\{1..5\}$.}
-\label{tab:tpa_scale}
-\centering
-\scriptsize
-\begin{tabular}{@{}lcccccccccc@{}}
+\begin{table}[width=\linewidth,pos=t]
+\caption{Test metrics on the $134$-episode usable pack (primary: report P/R/F1). Baseline scores pending formal runs.}
+\label{tab:main}
+\begin{tabular*}{\tblwidth}{@{}lccccccc@{}}
 \toprule
-& \multicolumn{2}{c}{$O=1$} & \multicolumn{2}{c}{$O=3$} & \multicolumn{2}{c}{$O=5$} & \multicolumn{4}{c}{Mean over $O\in\{1..5\}$} \\
-\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}\cmidrule(lr){8-11}
-$N_h$ & Make. & Idle$_h$/Idle$_m$ & Make. & Idle$_h$/Idle$_m$ & Make. & Idle$_h$/Idle$_m$ & Make. & Idle$_h$ & Idle$_m$ & Succ. \\
+Model & Report P & Report R & Report F1 & Start MAE & Dur.\ MAE & Remain MAE & Who F1 \\
 \midrule
-1 & 1393 & 0.006/0.746 & 4104 & 0.005/0.747 & 6764 & 0.005/0.747 & 4089 & 0.005 & 0.747 & 225 \\
-2 & 1692 & 0.134/0.653 & 3194 & 0.075/0.642 & 4560 & 0.163/0.664 & 2988 & 0.110 & 0.649 & 20 \\
-3 & 1897 & 0.220/0.584 & 2416 & 0.188/0.575 & 3883 & 0.288/0.618 & 2770 & 0.223 & 0.590 & 20 \\
-4 & 2076 & 0.305/0.539 & 2634 & 0.275/0.527 & 3745 & 0.396/0.587 & 2761 & 0.309 & 0.544 & 20 \\
-5 & 2079 & 0.427/0.531 & 2696 & 0.390/0.516 & 3376 & 0.460/0.558 & 2716 & 0.414 & 0.529 & 25 \\
+XGBoost & -- & -- & -- & -- & -- & -- & -- \\
+LSTM & -- & -- & -- & -- & -- & -- & -- \\
+BTGCN (GCN+GRU) & -- & -- & -- & -- & -- & -- & -- \\
+BSTAN (GAT+GRU) & -- & -- & -- & -- & -- & -- & -- \\
+\textbf{BNPDFormer} & \textbf{0.817} & \textbf{0.447} & \textbf{0.578} & \textbf{0.20} & \textbf{1.32} & \textbf{6.27} & \textbf{0.581} \\
 \bottomrule
-\end{tabular}
-\end{table*}
-
-\subsection{From training to testing: learning curves}
-\label{sec:exp_curve}
-
-We then turn to perception on the source setting \((N_h,O)=(5,5)\).
-As the first perception result, Figure~\ref{fig:learning_curve} traces the path from training to testing:
-we train Task~A and Task~B with \(25\%\), \(50\%\), \(75\%\), and \(100\%\) of the source-setting training episodes and plot in-distribution test accuracy against data volume.
-Task~A stays near saturation even at $25\%$ data ($99.87\%$), indicating that footprint-consistent identity labels are sample-efficient.
-Task~B improves steadily with more data (subtask accuracy $75.71\%\rightarrow88.71\%$), while done accuracy peaks around mid-scale fractions and remains above $80\%$.
-The full-data checkpoints are used for all subsequent perception tables and figures.
-
-\begin{figure}[pos=t]
-\centering
-\includegraphics[width=0.5\linewidth]{figures/fig_learning_curve.pdf}
-\caption{Learning curves on the source setting: Task~A element-wise accuracy and Task~B subtask/done accuracy versus fraction of training data, evaluated on the in-distribution test split.}
-\label{fig:learning_curve}
-\end{figure}
-
-\subsection{In-distribution perception}
-\label{sec:exp_perc_id}
-
-Table~\ref{tab:results_id} reports the final in-distribution metrics of the full-data checkpoints.
-Task~A is nearly saturated under footprint-consistent labeling ($99.84\%$ element-wise accuracy).
-Task~B is harder because subtasks encode process semantics and multi-agent coupling; the model still reaches $89.97\%$ subtask accuracy and $83.99\%$ done accuracy.
-Figure~\ref{fig:cm_subtask} breaks Task~B into a 9-way confusion matrix and done-flag accuracy conditioned on the ground-truth subtask.
-Errors concentrate on short material-transfer subtasks (\texttt{material\_on\_gantry}, \texttt{material\_on\_goal\_area}) and on done prediction for partner-coupled controls (\texttt{control\_gantry}, \texttt{control\_machine}).
-
-\begin{table}[pos=t]
-\caption{In-distribution perception performance on the source setting \((N_h,O)=(5,5)\).}
-\label{tab:results_id}
-\centering
-\begin{tabular}{@{}llc@{}}
-\toprule
-Task & Metric & Value \\
-\midrule
-A: Identity & Element-wise acc. & $99.84\%$ \\
-A: Identity & Occupied-frame elem. acc. & $99.67\%$ \\
-A: Identity & Empty-frame elem. acc. & $99.99\%$ \\
-B: Subtask & Subtask-class acc. (9-way) & $89.97\%$ \\
-B: Subtask & Done-flag acc. & $83.99\%$ \\
-\bottomrule
-\end{tabular}
+\end{tabular*}
 \end{table}
-
-\begin{figure*}[pos=t]
-\centering
-\includegraphics[width=\textwidth]{figures/fig_subtask_cm.pdf}
-\caption{Task~B diagnostics on the in-distribution test split: confusion matrix over the nine human subtasks (left), and done-flag accuracy stratified by ground-truth subtask (right).}
-\label{fig:cm_subtask}
-\end{figure*}
-
-\subsection{Ablation: process-task embedding}
-\label{sec:exp_ablate}
-
-We next isolate a key design choice for Task~B.
-The full model conditions on the allocated process task via a learned embedding concatenated with multi-view visual features.
-Table~\ref{tab:ablate_taskemb} compares it with a vision-only variant that removes this embedding.
-Removing the embedding collapses subtask accuracy from $89.97\%$ to $47.30\%$ and done accuracy from $83.99\%$ to $67.44\%$, confirming that process context is essential for disambiguating visually similar subtasks.
-
-\begin{table}[pos=t]
-\caption{Ablation of process-task embedding on in-distribution Task~B (source setting).}
-\label{tab:ablate_taskemb}
-\centering
-\begin{tabular}{@{}lcc@{}}
-\toprule
-Model & Subtask acc. & Done acc. \\
-\midrule
-w/ task embedding (full) & $89.97\%$ & $83.99\%$ \\
-w/o task embedding & $47.30\%$ & $67.44\%$ \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Cross-setting perception generalization}
-\label{sec:exp_perc_ood}
-
-Finally, we keep the \((5,5)\)-trained full-data checkpoints fixed and evaluate every held-out cell \((N_h,O)\) in Table~\ref{tab:perc_ood}.
-Identity recognition remains near-perfect across the grid ($\ge99.64\%$), consistent with fixed camera footprints.
-Subtask and done accuracies are strongest near the training workforce size (\(N_h=5\)) and degrade more under smaller \(N_h\) (especially \(N_h=2\)), reflecting changes in concurrency, occlusion, and class priors.
-Overall, a single logged factory configuration already yields usable perception under moderate distribution shift, while multi-setting training would further stabilize Task~B.
-
-\begin{table*}[pos=t]
-\caption{Cross-setting perception generalization. Models are trained only on \((N_h,O)=(5,5)\) and evaluated on each test cell (Acc$_A$: identity element-wise acc.; Acc$_B$: 9-way subtask acc.; Done: done-flag acc.).}
-\label{tab:perc_ood}
-\centering
-\scriptsize
-\begin{tabular}{@{}lccccccccc@{}}
-\toprule
-& \multicolumn{3}{c}{$O=1$} & \multicolumn{3}{c}{$O=3$} & \multicolumn{3}{c}{$O=5$} \\
-\cmidrule(lr){2-4}\cmidrule(lr){5-7}\cmidrule(lr){8-10}
-$N_h$ & Acc$_A$ & Acc$_B$ & Done & Acc$_A$ & Acc$_B$ & Done & Acc$_A$ & Acc$_B$ & Done \\
-\midrule
-1 & 100.00 & 81.59 & 79.51 & 100.00 & 79.53 & 74.40 & 100.00 & 78.36 & 72.61 \\
-2 & 99.91 & 72.81 & 70.74 & 99.94 & 72.93 & 70.25 & 99.64 & 73.39 & 69.27 \\
-3 & 99.98 & 85.36 & 79.30 & 99.98 & 82.35 & 79.29 & 99.97 & 78.13 & 75.80 \\
-4 & 99.98 & 88.54 & 84.92 & 99.97 & 81.99 & 82.67 & 99.96 & 79.29 & 78.66 \\
-5 & 99.98 & 90.84 & 86.40 & 99.94 & 89.23 & 85.41 & 99.84 & 89.97 & 83.99 \\
-\bottomrule
-\end{tabular}
-\end{table*}
 
 \subsection{Discussion}
-\label{sec:exp_disc}
-
-The results follow the pipeline above.
-First, greedy TPA completes all grid cells and continuously supplies process-consistent multi-view logs; extra humans mainly help large orders but increase human idle under the keep-first-one policy (Table~\ref{tab:tpa_scale}).
-Second, learning curves show that identity is sample-efficient, while subtask recognition benefits from fuller coverage of rare transitions (Figure~\ref{fig:learning_curve}); full-data Task~A/B metrics and diagnostics are reported in Table~\ref{tab:results_id} and Figure~\ref{fig:cm_subtask}.
-Third, ablating the process-task embedding causes a large Task~B drop (Table~\ref{tab:ablate_taskemb}), isolating the value of process conditioning beyond RGB alone.
-Fourth, cross-setting evaluation (Table~\ref{tab:perc_ood}) shows near-perfect identity transfer and usable but workforce-sensitive subtask transfer.
-Future work includes stronger temporal models, multi-setting training, explicit cross-agent relational features, and sim-to-real transfer on the physical MC line.
-
+Precision-first selection yields usable station warnings with sub-minute start errors on matched events, at the cost of incomplete upcoming recall.
+Auxiliary occupancy metrics (grid hot F1 $\approx 0.61$ on test) support alignment but are not used for checkpointing.
+Process-cause accuracy is high in aggregate but class support is uneven; we therefore treat cause as a secondary analysis signal rather than a headline claim.
+Future work will complete baseline numbers, strengthen upcoming-event recall, and evaluate mixed-dimension OOD settings under the same report protocol.
 
 %% ========================================================================
 \section{Conclusion} \label{sec:conclusion}
 %% ========================================================================
 
-This paper addresses three coupled gaps in line-level TPA for MC production-part factories: limited line-scale multi-agent scenarios, scarce process-consistent training data, and the sensing gap behind the common fully observed-state assumption.
-By coupling a rule-based multi-agent TPA algorithm with a realistic MC line simulation in NVIDIA Isaac Sim, we build a closed-loop data engine that synchronizes process execution, multi-camera observations, and process-consistent labels.
-On this engine, we study two perception tasks aligned with line-level TPA requirements, human identity recognition and human subtask recognition.
-Experimental results, including TPA scalability, learning curves, in-distribution diagnostics, task-embedding ablation, and cross-setting evaluation, show that the proposed pipeline yields strong and transferable simulation performance.
-Future work will close the loop by feeding estimated identity and subtask states back into online TPA and by validating sim-to-real transfer on physical production lines.
+We formulated factory bottleneck forecasting as station-level will/start/duration prediction on a heterogeneous process--logistics graph and introduced BNPDFormer, a PDFormer-style spatiotemporal encoder with event heads for HRC production lines.
+A disturbance-aware Isaac Sim data engine supplies unsupervised operational labels.
+On 134 episodes, BNPDFormer achieves report F1 $0.578$ with high precision and tight start timing; upcoming-event recall and completed baseline comparisons remain priorities for deployment-ready warnings.
 
+%% ========================================================================
+%% Bibliography
+%% ========================================================================
 
-\section*{CRediT authorship contribution statement}
-\textbf{Jintao Xue}: Methodology, Software, Data curation, Writing – original draft. \textbf{Xiao Li}: Conceptualization, Supervision, Writing – review $\&$ editing. \textbf{Yuxiao Tian}: Software, Data curation. \textbf{Hao Zheng}: Methodology analysis, Experiment design. \textbf{Nianmin Zhang}: Methodology analysis, Experiment design.
-
-\section*{Declaration of Competing Interest} The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper. 
-
-\section*{Data availability} Data will be made available on request.
-
-\section*{Acknowledgments} 
-The work described in this paper is supported by grants from Technology Cooperation Funding Scheme (TCFS) (Ref No.GHP/321/22SZ), The University of Hong Kong (Ref No.109002002), and Innovation and Technology Fund (ITF) (Ref No. TP/041/24LP).
-
-
-%% Loading bibliography style file
 \bibliographystyle{cas-model2-names}
-
-% Loading bibliography database
 \bibliography{cas-refs}
 
 \end{document}

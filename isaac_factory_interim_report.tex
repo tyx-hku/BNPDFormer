@@ -1,0 +1,1092 @@
+%% Isaac Factory / BNPDFormer Interim Report (bilingual, paragraph-aligned)
+%% Compile with XeLaTeX (required for Chinese):
+%%   xelatex isaac_factory_interim_report.tex
+%%   xelatex isaac_factory_interim_report.tex
+
+\documentclass[12pt,a4paper,oneside,scheme=plain]{ctexrep}
+
+\usepackage{fontspec}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{setspace}
+\usepackage{geometry}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{hyperref}
+\usepackage{tocloft}
+
+\setmainfont{TeX Gyre Termes}[Ligatures=TeX]
+\setCJKmainfont{Noto Serif CJK SC}[
+  BoldFont={Noto Serif CJK SC Bold},
+]
+\setCJKsansfont{Noto Sans CJK SC}
+
+\geometry{a4paper, left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+\onehalfspacing
+\setlength{\parskip}{0.2em}
+\setlength{\parindent}{0pt}
+\emergencystretch=3em
+\sloppy
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=black,
+  urlcolor=blue,
+  pdftitle={Interim Report: BNPDFormer for Isaac Factory Bottleneck Forecasting},
+  pdfauthor={Yuxiao Tian}
+}
+
+\renewcommand{\contentsname}{Contents\quad 目录}
+\renewcommand{\bibname}{References\quad 参考文献}
+
+%% Chapter style: "Chapter N" then bilingual title
+\titleformat{\chapter}[display]
+  {\normalfont\Large\bfseries\centering}
+  {Chapter \thechapter}
+  {10pt}
+  {\Large}
+\titlespacing*{\chapter}{0pt}{-18pt}{16pt}
+
+\titleformat{\section}
+  {\normalfont\large\bfseries}
+  {\thesection}{1em}{}
+\titleformat{\subsection}
+  {\normalfont\normalsize\bfseries}
+  {\thesubsection}{1em}{}
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\itshape}
+  {\thesubsubsection}{1em}{}
+
+\renewcommand{\cftchapleader}{\cftdotfill{\cftdotsep}}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+\renewcommand{\cftsubsecleader}{\cftdotfill{\cftdotsep}}
+\renewcommand{\cftchapfont}{\normalfont}
+\renewcommand{\cftchappagefont}{\normalfont}
+\setcounter{tocdepth}{3}
+\setcounter{secnumdepth}{3}
+
+\newcommand{\figplaceholder}[1]{%
+  \fbox{\parbox[c][0.20\textheight][c]{0.92\textwidth}{\centering\color{gray}\textit{#1}}}%
+}
+
+\newcommand{\fillinline}[2]{\textit{\textcolor{gray}{[#1 / #2]}}}
+
+\newcommand{\fillin}[2]{%
+  \par\textit{\textcolor{gray}{[#1]}}\par
+  {\small\color{gray}[#2]}\par
+  \vspace{0.45em}%
+}
+
+%% English paragraph + Chinese counterpart
+\newcommand{\bip}[2]{%
+  \par #1\par
+  \nobreak\vspace{0.12em}%
+  {\small\color{black!62}#2}\par
+  \vspace{0.62em}%
+}
+
+\newcommand{\biitem}[2]{%
+  \item #1\newline{\small\color{black!62}#2}%
+}
+
+\begin{document}
+
+%======================================================================
+% Cover page
+%======================================================================
+\hypersetup{pageanchor=false}
+\begin{titlepage}
+\thispagestyle{empty}
+\centering
+\vspace*{1.2cm}
+{\Large\bfseries The University of Hong Kong\par}
+{\large 香港大学\par}
+\vspace{0.40cm}
+{\large Faculty of Engineering\par}
+{\normalsize 工程学院\par}
+\vspace{0.18cm}
+{\large Department of Civil Engineering\par}
+{\normalsize 土木工程系\par}
+\vspace{0.45cm}
+{\large Master of Science in Artificial Intelligence Programme\par}
+{\normalsize 人工智能理学硕士课程\par}
+\vspace{0.70cm}
+{\large ARIN7600 Artificial Intelligence Project 2026/9\par}
+{\normalsize ARIN7600 人工智能项目 2026/9\par}
+\vspace{0.95cm}
+{\LARGE\bfseries Interim Report\par}
+{\Large 中期报告\par}
+\vspace{1.15cm}
+{\large Topic / 题目\par}
+\vspace{0.25cm}
+{\large BNPDFormer --- Station-Level Bottleneck Event\\[0.15em]
+Forecasting in an Isaac Sim Factory\par}
+\vspace{0.25cm}
+{\normalsize BNPDFormer：Isaac Sim 工厂中的工位级瓶颈事件预测\par}
+\vspace{1.35cm}
+
+\begin{tabular}{rl}
+Student / 学生: & Yuxiao Tian \fillinline{UID}{学号} \\[0.50em]
+Primary Supervisor / 主导师: & \fillinline{Name}{姓名} \\[0.50em]
+Secondary Supervisor / 副导师: & \fillinline{Name}{姓名} \\[0.50em]
+Submission Date / 提交日期: & \today \\
+\end{tabular}
+
+\vfill
+\end{titlepage}
+\hypersetup{pageanchor=true}
+\pagenumbering{arabic}
+
+\tableofcontents
+\clearpage
+
+%======================================================================
+\chapter*{Abstract\quad 摘要}
+\addcontentsline{toc}{chapter}{Abstract / 摘要}
+\markboth{Abstract / 摘要}{Abstract / 摘要}
+
+\bip
+{Throughput bottlenecks on human--robot collaborative (HRC) factory lines are dynamic, multi-resource, and sparse in time.}
+{人机协同（HRC）工厂产线上的吞吐瓶颈具有动态性、多资源耦合，且在时间上稀疏发生。}
+
+\bip
+{Operators need precision-first warnings of \emph{which} station will congest, \emph{when} congestion starts, and \emph{how long} it lasts, rather than retrospective detection alone.}
+{现场人员需要的是精度优先的预警：\emph{哪个}工位将拥堵、拥堵\emph{何时}开始、以及将持续\emph{多久}，而不仅仅是事后检测。}
+
+\bip
+{This project builds a labelled digital-twin data engine in NVIDIA Isaac Sim (\texttt{isaac\_factory}) and a spatiotemporal forecasting model (\textbf{BNPDFormer}) that emits station-level bottleneck events on a heterogeneous factory graph.}
+{本项目在 NVIDIA Isaac Sim（\texttt{isaac\_factory}）中构建带标签的数字孪生数据引擎，并设计时空预测模型 \textbf{BNPDFormer}，在异构工厂图上输出工位级瓶颈事件。}
+
+\bip
+{We reconstruct a modular-construction water-pipe production-part line (storage, gantry/AGV logistics, cutting/grooving/welding/painting, workbenches) and collect event-driven raw logs under controlled single-axis disturbances (machine, human, logistics, material).}
+{我们复现一条模块化建筑用的水管部品产线（仓储、龙门/AGV 物流、切割/开槽/焊接/喷涂、工作台），并在受控的单轴扰动（机器、人力、物流、物料）下采集事件驱动的原始日志。}
+
+\bip
+{Offline aggregation produces windowed operational features, occupancy labels, and sparse bottleneck events.}
+{离线聚合得到分窗运营特征、占用标签以及稀疏的瓶颈事件。}
+
+\bip
+{BNPDFormer encodes these features with a PDFormer-style backbone (temporal, geographic, and delay-aware semantic attention) and predicts, over a fixed short horizon, a binary will-block flag together with start minute and duration; auxiliary heads regress remaining order completion time and a coarse process-cause class.}
+{BNPDFormer 用 PDFormer 风格骨干（时间、地理与时延感知的语义注意力）编码上述特征，在固定短时域内预测二值“是否将阻塞”标志以及开始分钟与持续时长；辅助头回归剩余订单完工时间，并给出粗粒度的过程原因类别。}
+
+\bip
+{On $134$ usable short-order episodes, BNPDFormer attains test report precision/recall/F1 of $0.817/0.447/0.578$ with start MAE $0.20$\,min, showing that precision-first station warnings are feasible; upcoming-onset recall remains the open problem.}
+{在 $134$ 个可用短单回合上，BNPDFormer 的测试报告精度/召回/F1 为 $0.817/0.447/0.578$，开始 MAE 为 $0.20$ 分钟，表明精度优先的工位预警可行；即将发生起始的召回仍是开放问题。}
+
+\bip
+{Overall, the current progress of this project has established (i)~a reproducible Isaac Sim collection--aggregation pipeline and (ii)~a BNPDFormer prototype capable of station-level bottleneck event forecasting, laying the foundation for systematic evaluation and shop-floor-oriented deployment.}
+{总体而言，目前已完成：(i)~可复现的 Isaac Sim 采集--聚合流水线；(ii)~能够进行工位级瓶颈事件预测的 BNPDFormer 原型，为系统评估与面向车间的部署打下基础。}
+
+\clearpage
+
+%======================================================================
+\chapter[Introduction / 引言]{Introduction\\[0.3em]{\large 引言}}
+\label{ch:intro}
+
+\section[Project Background / 项目背景]{Project Background\quad{\normalfont\small（项目背景）}}
+\label{sec:background}
+
+\bip
+{Modular construction shifts on-site work into production-part factories and increasingly adopts human--robot collaboration under Industry~5.0.}
+{模块化建造把现场作业转移到部品工厂，并在工业 5.0 背景下越来越多地采用人机协同。}
+
+\bip
+{On such lines, throughput is limited by shifting bottlenecks across machines, humans, logistics assets, and materials.}
+{在这类产线上，产能受限于在机器、人员、物流资产与物料之间不断转移的瓶颈。}
+
+\bip
+{Shop-floor decisions benefit from early, high-precision forecasts of \emph{where} a bottleneck will appear, \emph{when} it starts, and \emph{how long} it lasts.}
+{车间决策需要尽早、高精度地预报瓶颈将出现在\emph{何处}、\emph{何时}开始、以及将持续\emph{多久}。}
+
+\bip
+{Classical manufacturing research provides strong tools for bottleneck \emph{detection} from queue, process, and system states.}
+{经典制造研究已从排队、过程与系统状态出发，提供了有力的瓶颈\emph{检测}工具。}
+
+\bip
+{These methods are primarily retrospective or short-horizon diagnostic.}
+{这些方法主要以事后回顾或短时域诊断为主。}
+
+\bip
+{In intelligent transportation systems, delay-aware spatiotemporal Transformers such as PDFormer forecast dense traffic states on graphs, while related work studies sparse congestion events.}
+{在智能交通系统中，PDFormer 等时延感知时空 Transformer 在图上预报稠密交通状态，相关研究则关注稀疏拥堵事件。}
+
+\bip
+{Factory HRC lines share graph-like propagation but differ in heterogeneous resource types, process--logistics coupling, and the need for station-level event reports rather than road-flow maps.}
+{工厂 HRC 产线同样具有图状传播，但资源类型异构、工艺与物流耦合，并且需要的是工位级事件报告，而非路网流量图。}
+
+\bip
+{Therefore, this project aims to develop a simulation-grounded, event-centric forecasting system: an Isaac Sim replica of a water-pipe HRC line as a labelled data engine, and BNPDFormer as a PDFormer-style encoder adapted to emit precision-first station bottleneck events.}
+{因此，本项目旨在建立一套以仿真为根基、以事件为中心的预测系统：用 Isaac Sim 复现水管 HRC 产线作为带标签数据引擎，并将 BNPDFormer 作为 PDFormer 风格编码器，输出精度优先的工位瓶颈事件。}
+
+\fillin
+{Optional: 1 paragraph on why digital twin / Isaac Sim is necessary (cost of real-line disturbances, controllability).}
+{可选：补一段说明为何必须用数字孪生 / Isaac Sim（实线扰动成本高、可控性差）。}
+
+\section[Route Map of the Project / 项目路线]{Route Map of the Project\quad{\normalfont\small（项目路线）}}
+\label{sec:roadmap}
+
+\bip
+{The project is conducted in two primary phases:}
+{项目分为两个主要阶段：}
+
+\bip
+{\textbf{Phase I --- Simulation data engine and event labels.}
+Build and stabilize the Isaac Factory environment (process topology, rule-based control, deadlock and WIP fixes), define an event-driven seven-table logging schema, inject single-axis disturbances, and derive window features, occupancy masks, and bottleneck events via offline aggregation.}
+{\textbf{第一阶段——仿真数据引擎与事件标签。}
+搭建并稳定 Isaac Factory 环境（工艺拓扑、规则控制、死锁与在制品修复），定义事件驱动的七表日志模式，注入单轴扰动，再通过离线聚合得到窗口特征、占用掩码与瓶颈事件。}
+
+\bip
+{\textbf{Phase II --- BNPDFormer forecasting and evaluation.}
+Adapt a PDFormer spatiotemporal encoder to the factory graph; attach station event heads (will-block / start / duration), remaining-order and cause auxiliaries, and optional sparse point-process (STGNPP) heads; train and evaluate under a shared protocol against tabular and graph-sequence baselines.}
+{\textbf{第二阶段——BNPDFormer 预测与评估。}
+把 PDFormer 时空编码器适配到工厂图；接上工位事件头（是否将阻塞 / 开始 / 持续）、剩余订单与原因辅助头，以及可选的稀疏点过程（STGNPP）头；在统一协议下相对表格与图序列基线进行训练与评估。}
+
+\bip
+{These phases establish a closed loop from controllable twin logs to actionable bottleneck reports.}
+{上述阶段形成从可控孪生日志到可执行瓶颈报告的闭环。}
+
+\section[Project Objective and Current Contributions / 目标与当前贡献]{Project Objective and Current Contributions\quad{\normalfont\small（目标与当前贡献）}}
+\label{sec:objective}
+
+\bip
+{The primary objective is to forecast station-level bottleneck events (identity, onset, and duration) on a heterogeneous HRC factory graph, using only operational window features collected from Isaac Sim.}
+{首要目标是：仅使用从 Isaac Sim 采集的运营窗口特征，在异构 HRC 工厂图上预报工位级瓶颈事件（身份、起始与持续）。}
+
+\bip
+{To date, significant progress has been made towards this goal.}
+{迄今已朝该目标取得实质进展。}
+
+\bip
+{We have completed Phase~I in working form and a first implementation of Phase~II:}
+{第一阶段已形成可运行形态，第二阶段已有首版实现：}
+
+\begin{itemize}[leftmargin=1.6em]
+  \biitem
+    {A process-consistent Isaac Sim water-pipe line with rule-based scheduling, short-order load (10 pipes, WIP cap 5), and four disturbance dimensions at controllable intensity.}
+    {工艺一致的 Isaac Sim 水管产线，规则调度，短单负载（10 根管、在制品上限 5），以及强度可控的四维扰动。}
+  \biitem
+    {An event-driven collector that writes seven raw tables without altering business logic, plus an offline \texttt{bn\_agg} pipeline for features and unsupervised occupancy labels.}
+    {事件驱动采集器在不改业务逻辑的前提下写出七张原始表，另有离线 \texttt{bn\_agg} 流水线生成特征与无监督占用标签。}
+  \biitem
+    {BNPDFormer (shared encoder + occupancy/event heads + remaining-time and cause auxiliaries), with inference entry points and a sidecar path for streaming aggregation.}
+    {BNPDFormer（共享编码器 + 占用/事件头 + 剩余时间与原因辅助头），具备推理入口以及边采边聚合的旁路路径。}
+\end{itemize}
+
+\vspace{0.4em}
+\fillin
+{Replace the bullets with the numbers you want to report (episodes, nodes, features, current test P/R/F1).}
+{用拟汇报的数字替换上述条目（回合数、节点数、特征维、当前测试 P/R/F1）。}
+
+\section[Outline of the Progress Report / 报告结构]{Outline of the Progress Report\quad{\normalfont\small（报告结构）}}
+\label{sec:outline}
+
+\bip
+{The progress report is structured as follows:}
+{本进展报告结构如下：}
+
+\bip
+{Chapter~\ref{ch:related} provides a review of related work, covering bottleneck identification in manufacturing, spatiotemporal forecasting on graphs, and digital-twin simulation for HRC factories.}
+{第~\ref{ch:related}~章回顾相关工作，涵盖制造瓶颈识别、图上时空预测，以及面向 HRC 工厂的数字孪生仿真。}
+
+\bip
+{Chapter~\ref{ch:method} presents the methodology, including the simulation data engine and the BNPDFormer architecture.}
+{第~\ref{ch:method}~章给出方法，包括仿真数据引擎与 BNPDFormer 结构。}
+
+\bip
+{Chapter~\ref{ch:progress} outlines the current progress and challenges.}
+{第~\ref{ch:progress}~章概述当前进展与挑战。}
+
+\bip
+{Chapter~\ref{ch:conclusion} concludes, and Chapter~\ref{ch:future} states the next-stage plan.}
+{第~\ref{ch:conclusion}~章作结，第~\ref{ch:future}~章给出下一阶段计划。}
+
+%======================================================================
+\chapter[Related Works / 相关工作]{Related Works\\[0.3em]{\large 相关工作}}
+\label{ch:related}
+
+\section[Throughput Bottleneck Identification / 吞吐瓶颈识别]{Throughput Bottleneck Identification\quad{\normalfont\small（吞吐瓶颈识别）}}
+\label{sec:rw-bn}
+
+\bip
+{Throughput bottlenecks are resources that limit system output.}
+{吞吐瓶颈是限制系统产出的资源。}
+
+\bip
+{Detection methods are commonly grouped by queue state, process state, or system state information~\cite{subramaniyan2023throughput,roser2001practical,li2009data}.}
+{检测方法通常按排队状态、过程状态或系统状态信息来分类~\cite{subramaniyan2023throughput,roser2001practical,li2009data}。}
+
+\fillin
+{2--3 paragraphs: turning-point / active-period methods; what they do well; why they are detection-heavy rather than event-forecasting with matched start-time tolerances.}
+{待写 2--3 段：拐点 / 连续活跃期方法；其优势；为何偏检测而非带起始时刻容差的事件预报。}
+
+\section[Spatiotemporal Forecasting on Graphs / 图上时空预测]{Spatiotemporal Forecasting on Graphs\quad{\normalfont\small（图上时空预测）}}
+\label{sec:rw-st}
+
+\bip
+{Spatiotemporal graph models and Transformers are widely used for dense traffic variables.}
+{时空图模型与 Transformer 被广泛用于稠密交通变量预报。}
+
+\bip
+{PDFormer introduces dynamic spatial attention, short-/long-range masks, and delay-aware feature transformation~\cite{jiang2023pdformer}.}
+{PDFormer 引入动态空间注意力、短/长程掩码以及时延感知特征变换~\cite{jiang2023pdformer}。}
+
+\bip
+{Event-oriented traffic models further target sparse congestion timing~\cite{jin2023stgnpp}.}
+{面向事件的交通模型进一步针对稀疏拥堵的发生时刻~\cite{jin2023stgnpp}。}
+
+\fillin
+{1--2 paragraphs: why factory graphs differ (heterogeneous node types, no calendar periodicity, process--logistics coupling); position BNPDFormer as encoder reuse + event heads.}
+{待写 1--2 段：工厂图为何不同（异构节点、无日历周期性、工艺--物流耦合）；将 BNPDFormer 定位为编码器复用 + 事件头。}
+
+\section[Digital Twin Simulation for HRC Factories / HRC 工厂数字孪生]{Digital Twin Simulation for HRC Factories\quad{\normalfont\small（HRC 工厂数字孪生）}}
+\label{sec:rw-sim}
+
+\bip
+{Industry~5.0 emphasizes human-centric manufacturing and HRC~\cite{xu2021industry,fu2024human}.}
+{工业 5.0 强调以人为本的制造与人机协同~\cite{xu2021industry,fu2024human}。}
+
+\bip
+{High-fidelity simulation (NVIDIA Isaac Sim) enables controlled multi-resource logs under disturbances that are costly to induce on real lines.}
+{高保真仿真（NVIDIA Isaac Sim）可在实线难以承受的扰动条件下，得到受控的多资源日志。}
+
+\fillin
+{1--2 paragraphs: digital twins for manufacturing; gap = few public HRC datasets that couple process-consistent labels with single-axis disturbances.}
+{待写 1--2 段：制造数字孪生；缺口是公开 HRC 数据很少同时具备工艺一致标签与单轴扰动。}
+
+\paragraph{Research gap.\quad 研究缺口。}
+\bip
+{Three gaps motivate this work:
+(i)~manufacturing bottleneck literature is detection-heavy and rarely evaluates station event reports with precision-first matching;
+(ii)~traffic forecasters assume homogeneous nodes and calendar periodicity;
+(iii)~HRC factory datasets seldom couple process-consistent labels with controllable single-axis disturbances.}
+{本工作由三处缺口驱动：
+(i)~制造瓶颈文献偏重检测，很少用精度优先匹配来评估工位事件报告；
+(ii)~交通预报器默认同质节点与日历周期性；
+(iii)~HRC 工厂数据很少把工艺一致标签与可控单轴扰动结合在一起。}
+
+%======================================================================
+\chapter[Methodology / 方法]{Methodology\\[0.3em]{\large 方法}}
+\label{ch:method}
+
+\bip
+{The project aims to forecast station-level bottleneck events from an Isaac Sim HRC factory twin.}
+{本项目旨在从 Isaac Sim 的 HRC 工厂孪生中预报工位级瓶颈事件。}
+
+\bip
+{The overall pipeline is shown in Figure~\ref{fig:pipeline}.}
+{总体流水线见图~\ref{fig:pipeline}。}
+
+\bip
+{The methodology consists of a simulation data engine (Section~\ref{sec:data-engine}) and the BNPDFormer model (Section~\ref{sec:model}).}
+{方法包括仿真数据引擎（第~\ref{sec:data-engine}~节）与 BNPDFormer 模型（第~\ref{sec:model}~节）。}
+
+\begin{figure}[ht]
+\centering
+\figplaceholder{Figure placeholder / 图位: Isaac Sim $\rightarrow$ 7 raw tables $\rightarrow$ bn\_agg windows/labels $\rightarrow$ factory graph $\rightarrow$ BNPDFormer heads}
+\caption{Pipeline of simulation logging, feature aggregation, graph construction, and BNPDFormer forecasting.\\
+{\small 仿真日志、特征聚合、图构建与 BNPDFormer 预测流水线。}}
+\label{fig:pipeline}
+\end{figure}
+
+\section[Simulation Data Engine / 仿真数据引擎]{Simulation Data Engine\quad{\normalfont\small（仿真数据引擎）}}
+\label{sec:data-engine}
+
+\bip
+{This section presents an end-to-end methodology for turning Isaac Sim rollouts into supervised tensors for bottleneck event forecasting.}
+{本节给出端到端方法：把 Isaac Sim 回合转化为用于瓶颈事件预测的有监督张量。}
+
+\bip
+{The pipeline integrates a process-faithful factory environment, event-driven raw logging, controlled disturbances, offline window aggregation, and an optional streaming sidecar for online inference.}
+{流水线整合工艺忠实的工厂环境、事件驱动原始日志、受控扰动、离线窗口聚合，以及可选的在线推理旁路。}
+
+\subsection[Overview / 总览]{Overview\quad{\normalfont\small（总览）}}
+\label{sec:overview}
+
+\bip
+{Given one simulation episode, the pipeline executes as follows:}
+{对单个仿真回合，流水线按如下步骤执行：}
+
+\begin{enumerate}[leftmargin=1.6em]
+  \biitem
+    {Environment rollout: rule-based control of process and logistic tasks on the water-pipe line.}
+    {环境滚动：在水管产线上对工艺与物流任务做规则控制。}
+  \biitem
+    {Event-driven raw logging of seven tables (config, disturbances, resources, jobs, buffers, transport, inventory).}
+    {事件驱动写出七张原始表（配置、扰动、资源、工单、缓存、搬运、库存）。}
+  \biitem
+    {Optional single-axis disturbance injection (machine / human / logistics / material).}
+    {可选的单轴扰动注入（机器 / 人力 / 物流 / 物料）。}
+  \biitem
+    {Offline aggregation into per-resource time windows, occupancy masks, bottleneck events, and job KPIs.}
+    {离线聚合为按资源的时间窗、占用掩码、瓶颈事件与工单 KPI。}
+  \biitem
+    {Export to graph tensors and BNPDFormer training / inference.}
+    {导出为图张量，供 BNPDFormer 训练 / 推理。}
+\end{enumerate}
+
+\subsection[Isaac Sim Factory Environment / Isaac Sim 工厂环境]{Isaac Sim Factory Environment\quad{\normalfont\small（Isaac Sim 工厂环境）}}
+\label{sec:env}
+
+\bip
+{We reconstruct a water-pipe production-part line in NVIDIA Isaac Sim: storage, gantry/AGV logistics, cutting/grooving/welding/painting, and workbenches.}
+{我们在 NVIDIA Isaac Sim 中复现水管部品产线：仓储、龙门/AGV 物流、切割/开槽/焊接/喷涂，以及工作台。}
+
+\bip
+{A rule-based controller executes process and logistic tasks.}
+{规则控制器执行工艺与物流任务。}
+
+\bip
+{Each training episode orders 10 pipes with WIP cap 5.}
+{每个训练回合下单 10 根管，在制品上限为 5。}
+
+
+\bip
+{The simulated line follows a process--logistics topology in which raw pipes are released from storage, transported by gantry/AGV assets, processed at cutting, grooving, welding, and painting stations, and then transferred to downstream workbenches or the next machine according to process precedence.}
+{仿真产线遵循“工艺--物流”拓扑：原始管件从仓储释放，经龙门/AGV 运输，在切割、开槽、焊接、喷涂等工位加工，再依据工艺先后关系流向下游工作台或下一台设备。}
+
+\bip
+{The environment maintains multiple resource types, including machines, workbenches, transport assets, gantries, human operators, buffers, and material inventories. These heterogeneous resources are unified in a common state dictionary so that scheduling, logging, and later graph construction operate on the same identifiers and state transitions.}
+{环境同时维护多类资源，包括机台、工作台、运输设备、龙门、人工操作员、缓存区以及物料库存。这些异构资源被统一纳入同一状态字典，使调度、采集与后续图构建可基于一致的资源标识和状态迁移进行。}
+
+\bip
+{Time advancement is split into logic time and physics time. The logic layer updates task allocation, product progress, and resource states once per decision step, while the physics layer executes motions and interactions inside Isaac Sim. This separation keeps the production semantics explicit and also allows the collector to record process-faithful events at stable logical timestamps.}
+{时间推进被拆分为逻辑时间与物理时间。逻辑层在每个决策步更新任务分配、产品进度与资源状态，物理层则在 Isaac Sim 中执行运动与交互。这样的分离既保持了生产语义的清晰性，也使采集器能够在稳定的逻辑时间戳上记录工艺一致的事件。}
+
+\bip
+{To stabilize long rollouts, the environment applies basic production safeguards. A work-in-process cap prevents uncontrolled queue growth, admission control limits how many products can be active simultaneously, and deadlock-related checks are used to avoid circular waiting among machines, logistics assets, and human resources. Together, these safeguards improve data quality and ensure that bottleneck events arise from controlled operational pressure rather than simulator breakdown.}
+{为稳定长时滚动，环境加入了基本的生产防护机制。在制品上限用于防止队列无控制膨胀，准入控制限制同时处于产线中的产品数量，针对机器、物流资源与人工资源之间的循环等待还设置了死锁相关检查。这样既提高了数据质量，也确保瓶颈事件主要源于受控的运行压力，而不是仿真器失稳。}
+
+\subsection[Event-Driven Bottleneck Data Collection / 事件驱动数据采集]{Event-Driven Bottleneck Data Collection\quad{\normalfont\small（事件驱动数据采集）}}
+\label{sec:collect}
+
+\bip
+{A read-only collector attached at the end of the environment step writes seven raw tables without modifying the task manager, agents, or physics.}
+{只读采集器挂在环境步进末尾，写出七张原始表，不修改任务管理器、智能体或物理。}
+
+\bip
+{Time is recorded as logical step and logic seconds; resource IDs are stable within a run.}
+{时间记录为逻辑步与逻辑秒；资源 ID 在同一次运行内保持稳定。}
+
+\bip
+{Table~\ref{tab:raw} summarizes the schema.}
+{表~\ref{tab:raw} 概括该模式。}
+
+\begin{table}[ht]
+\centering
+\caption{Core raw log tables written by the Isaac Sim collector.\\
+{\small 仿真采集器写出的核心原始日志表。}}
+\label{tab:raw}
+\begin{tabular}{p{0.42\textwidth}p{0.48\textwidth}}
+\toprule
+Table / 表 & Role / 作用 \\
+\midrule
+\texttt{episode\_config.csv} &
+Run / episode metadata, disturbance dim \& intensity\newline
+{\small 运行与回合元数据、扰动维度与强度} \\
+\texttt{disturbance\_log.csv} &
+Injected shocks (L0/L1/L2) as environment context\newline
+{\small 注入冲击（L0/L1/L2）作为环境上下文} \\
+\texttt{resource\_event\_log.jsonl} &
+Resource state transitions\newline
+{\small 资源状态迁移} \\
+\texttt{job\_trace.csv} &
+Job / subtask boundaries\newline
+{\small 工单 / 子任务边界} \\
+\texttt{buffer\_event\_log.csv} &
+Buffer occupancy events\newline
+{\small 缓存占用事件} \\
+\texttt{route\_transport\_task.csv} &
+Gantry / AGV transport tasks\newline
+{\small 龙门 / AGV 搬运任务} \\
+\texttt{material\_inventory\_log.csv} &
+Kit / inventory snapshots\newline
+{\small 配套件 / 库存快照} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\bip
+{We deliberately adopt event-driven logging rather than periodic full-state dumps. Periodic dumps are simple but produce redundant snapshots, blur state transitions, and create unnecessary I/O overhead for long episodes. In contrast, the collector writes a new record only when a resource state, job stage, buffer occupancy, transport task, or inventory status changes. This design preserves exact boundaries of operational events, keeps the logs compact, and is better aligned with later window aggregation. The collector is versioned in the output metadata so that downstream aggregation can remain reproducible even if the schema evolves. Raw logs are organized hierarchically as \texttt{output/bottleneck\_dataset/<run\_id>/episode\_XX/env\_YY/}, while derived window tables and labels are stored under the corresponding \texttt{derived/} directory.}
+{我们有意采用事件驱动采集，而不是周期性的全状态转储。周期转储虽然实现简单，但会产生大量冗余快照、模糊状态边界，并在长回合下带来不必要的 I/O 开销。相较之下，采集器只在资源状态、工单阶段、缓存占用、运输任务或库存状态发生变化时写出新记录。该设计既能保留运行事件的精确边界，又能控制日志体量，并与后续窗口聚合更加匹配。采集器版本会写入输出元数据，便于在模式演进时维持下游聚合的可复现性。原始日志按 \texttt{output/bottleneck\_dataset/<run\_id>/episode\_XX/env\_YY/} 的层级组织，而派生的窗口表和标签则保存在对应的 \texttt{derived/} 目录下。}
+
+\subsection[Disturbance Dimensions and Injection Protocol / 扰动维度与注入协议]{Disturbance Dimensions and Injection Protocol\quad{\normalfont\small（扰动维度与注入协议）}}
+\label{sec:disturb}
+
+\bip
+{Formal training uses intensity $I=1.0$ and \emph{one} primary dimension per run: machine, human, logistics, or material (plus scarce no-disturbance controls).}
+{正式训练使用强度 $I=1.0$，且每次运行只开\emph{一}个主维度：机器、人力、物流或物料（另有少量无扰动对照）。}
+
+\bip
+{Configuration changes (fewer workers/AGVs, closed stations) combine with episodic shocks (faults, leave events, freezes, temporary kit shortages).}
+{配置变化（减少工人/AGV、关闭工位）与回合内冲击（故障、离岗、冻结、临时缺套件）叠加。}
+
+\bip
+{Disturbances are \emph{environment context}, not bottleneck labels: L2 intervals enter features as \texttt{disturbance\_active\_s} but are not treated as occupancy events.}
+{扰动是\emph{环境上下文}而非瓶颈标签：L2 区间作为 \texttt{disturbance\_active\_s} 进入特征，但不当作占用事件。}
+
+
+\bip
+{Disturbance intensity is defined as a ladder that controls how strongly the factory deviates from its nominal operating condition. In the current training setup, $I=1.0$ is the standard level and is used to generate the main in-distribution dataset. At this level, each run activates exactly one primary disturbance dimension. For machine disturbances, the simulator applies moderate workstation unavailability, processing slowdowns, or short fault intervals; for human disturbances, it reduces effective labour capacity through fewer available workers or slower manual execution; for logistics disturbances, it lowers transport capacity by reducing AGV availability, slowing gantry/AGV service, or inserting temporary freezes; for material disturbances, it injects bounded supply delays or temporary kit shortages.}
+{扰动强度被定义为控制工厂偏离标称运行状态程度的阶梯量。当前训练设置中，$I=1.0$ 为标准强度，用于生成主要的分布内数据集。在该强度下，每次运行只激活一个主扰动维度。对机器扰动，仿真器施加中等程度的工位不可用、加工减速或短时故障；对人力扰动，则通过减少可用工人数或降低人工执行速度来削弱有效劳动力；对物流扰动，则通过减少 AGV 可用数量、降低龙门/AGV 服务速度或插入临时冻结来降低运输能力；对物料扰动，则注入有限幅度的来料延迟或临时缺套件。}
+
+\bip
+{Higher intensity levels such as $I=2.0$ or $I=3.0$ are reserved for stress testing and ablation analysis, where the same disturbance dimension is amplified to create more severe bottleneck propagation. In addition, mixed-dimension disturbances are not used in the main training set; instead, they are reserved for out-of-distribution evaluation to examine whether the model trained on clean single-axis supervision can generalize to more realistic compound disruption scenarios.}
+{更高的强度等级（如 $I=2.0$ 或 $I=3.0$）主要用于压力测试与消融分析，此时在同一扰动维度上进一步放大影响，以形成更强的瓶颈传播。除此之外，多维混合扰动不进入主训练集，而是保留给分布外评估，用于检验模型在单轴监督下训练后，能否泛化到更贴近真实生产的复合扰动场景。}
+
+\subsection[Offline Feature Aggregation and Labeling / 离线特征聚合与打标]{Offline Feature Aggregation and Labeling\quad{\normalfont\small（离线特征聚合与打标）}}
+\label{sec:agg}
+
+\bip
+{Heterogeneous raw states are aggregated into per-resource windows of $\Delta=60\,\mathrm{s}$.}
+{异构原始状态按资源聚合为 $\Delta=60\,\mathrm{s}$ 的时间窗。}
+
+\bip
+{Unsupervised operational occupancy (turning-point, queue buildup, material starvation, inbound delay, upstream blockage, score threshold) yields dense occupancy grids and sparse \texttt{bottleneck\_event} runs.}
+{无监督运营占用（拐点、排队堆积、缺料饥饿、到货延误、上游堵塞、分数阈值）得到稠密占用网格与稀疏的 \texttt{bottleneck\_event} 片段。}
+
+\bip
+{Job KPIs supply remaining-order length.}
+{工单 KPI 提供剩余订单长度。}
+
+\bip
+{Supervision-only scores are excluded from input features to avoid label leakage.}
+{仅用于监督的分数不进入输入特征，以避免标签泄漏。}
+
+
+\bip
+{The aggregation window is fixed to $\Delta=60\,\mathrm{s}$. For each prediction point, the model consumes a history of $T_{\mathrm{in}}=30$ windows, corresponding to the previous 30 minutes of system evolution, and predicts events over a short horizon of $H=15$ minutes. This design matches the intended use case of shop-floor warning, where operators require a moderate look-back for context and a short but actionable look-ahead for intervention.}
+{聚合窗口固定为 $\Delta=60\,\mathrm{s}$。在每个预测时刻，模型读取长度为 $T_{\mathrm{in}}=30$ 的历史窗口，也就是过去 30 分钟的系统演化，并在未来 $H=15$ 分钟时域上输出事件预测。这样的设计契合车间预警场景：既需要足够的历史上下文，又需要一个较短但具有操作性的前瞻时域。}
+
+\bip
+{A window on a station node is marked hot when process-consistent indicators jointly suggest operational congestion, such as queue build-up, prolonged waiting, repeated downstream blockage, upstream starvation propagation, inbound logistics delay, or a bottleneck score exceeding a preset threshold. Consecutive hot windows are then merged into occupancy runs and further compressed into sparse bottleneck events with station identity, start time, and duration. To prevent leakage across sequences, training, validation, and test data are split at the episode level rather than by randomly shuffling windows, so that all windows from the same rollout remain in the same partition.}
+{当某个工位节点同时表现出与运行拥堵一致的信号时，该窗口会被标记为 hot，例如队列堆积、等待时间过长、重复的下游阻塞、上游饥饿传播、来料物流延迟，或瓶颈分数超过预设阈值。连续的 hot 窗口随后会被合并为占用区间，并进一步压缩成带有工位身份、开始时间和持续时长的稀疏瓶颈事件。为避免序列间信息泄漏，训练、验证和测试划分按 episode 进行，而不是随机打乱单个窗口，从而保证同一次滚动产生的所有窗口只属于同一数据划分。}
+
+\subsection[Streaming Aggregation and Online Inference / 流式聚合与在线推理]{Streaming Aggregation and Online Inference\quad{\normalfont\small（流式聚合与在线推理）}}
+\label{sec:online}
+
+\bip
+{Isaac Sim writes only raw tables.}
+{Isaac Sim 只写原始表。}
+
+\bip
+{A CPU sidecar can close finished 60\,s windows into \texttt{derived/} while collection continues; a trained checkpoint then emits station occupancy / events.}
+{CPU 旁路可在采集继续时把已关闭的 60 秒窗写入 \texttt{derived/}；训练好的检查点再输出工位占用 / 事件。}
+
+\bip
+{Training still requires a full-episode aggregation (future labels such as will-block need a look-ahead).}
+{训练仍需整回合聚合（如“是否将阻塞”等未来标签需要前瞻）。}
+
+
+\bip
+{For online use, the aggregation sidecar distinguishes between open and closed windows. Only closed windows, whose full 60-second contents have already been observed, are eligible to enter the derived tables and the inference buffer. A follow-mode flag allows the sidecar to keep tracking the newest raw records while a closed-window flag determines when a window can be finalized and pushed to the predictor. This mechanism avoids partial-window inconsistency and keeps online features aligned with the offline training definition.}
+{在在线使用场景下，聚合旁路区分“打开窗口”和“闭合窗口”。只有已经完整观察到其 60 秒内容的闭合窗口，才会被写入派生表并进入推理缓冲区。follow 模式标志用于持续跟踪最新的原始记录，而 closed-window 标志用于判定某个窗口何时可以最终定稿并送入预测器。该机制避免了部分窗口带来的特征不一致，并使在线特征与离线训练时的定义保持一致。}
+
+\bip
+{The runtime device split follows the simulation workload: Isaac Sim and rendering remain on the GPU, while log monitoring, window closure, and feature aggregation are executed by a CPU sidecar. At inference time the model is causal in the sense that it uses only completed historical windows, current environment context, and previously observed disturbances; it does not access future occupancy labels, future event boundaries, or any post-hoc information that is available only after the episode ends.}
+{运行时的设备分工遵循仿真负载特点：Isaac Sim 与渲染继续运行在 GPU 上，而日志监听、窗口闭合和特征聚合由 CPU 旁路完成。在推理时，模型是因果的：它只使用已经完成的历史窗口、当前环境上下文以及已发生的扰动信息；不会访问未来的占用标签、未来事件边界，或任何只有在回合结束后才能得到的事后信息。}
+
+\section[BNPDFormer Architecture / BNPDFormer 结构]{BNPDFormer Architecture\quad{\normalfont\small（BNPDFormer 结构）}}
+\label{sec:model}
+
+\bip
+{To forecast station-level bottleneck events, we define a factory graph schema, a PDFormer-style spatiotemporal encoder, and dual prediction paths (dense occupancy / event reports, plus sparse timing).}
+{为预报工位级瓶颈事件，我们定义工厂图模式、PDFormer 风格时空编码器，以及双预测路径（稠密占用 / 事件报告，外加稀疏时刻）。}
+
+\bip
+{This section outlines the problem formulation, the encoder, and the heads.}
+{本节概述问题形式化、编码器与各个输出头。}
+
+\subsection[Problem Formulation and Schema / 问题形式化与模式]{Problem Formulation and Schema\quad{\normalfont\small（问题形式化与模式）}}
+\label{sec:schema}
+
+\bip
+{Let $\mathcal{R}=\{r_1,\ldots,r_N\}$ be heterogeneous resources.}
+{设 $\mathcal{R}=\{r_1,\ldots,r_N\}$ 为异构资源集合。}
+
+\bip
+{A process--logistics graph $G=(\mathcal{R},E)$ encodes upstream/downstream process links, buffer affinity, and logistics attachments.}
+{工艺--物流图 $G=(\mathcal{R},E)$ 编码上下游工艺连接、缓存归属以及物流挂接。}
+
+\bip
+{At window $t$, each resource $n$ has a feature vector $x_{t,n}\in\mathbb{R}^{F}$.}
+{在窗口 $t$，每个资源 $n$ 有特征向量 $x_{t,n}\in\mathbb{R}^{F}$。}
+
+\bip
+{History $X_t\in\mathbb{R}^{T_{\mathrm{in}}\times N\times F}$ is encoded; supervised stations predict
+\[
+(w_{t,n},\, s_{t,n},\, d_{t,n})
+\]
+over the next $H$ minutes (will-block, start offset, duration).}
+{对历史 $X_t\in\mathbb{R}^{T_{\mathrm{in}}\times N\times F}$ 编码；受监督工位在未来 $H$ 分钟内预测
+\[
+(w_{t,n},\, s_{t,n},\, d_{t,n})
+\]
+（是否将阻塞、开始偏移、持续时长）。}
+
+\bip
+{A prediction counts as a correct \emph{report} only if the station matches and $|\hat{s}-s|\le 3$\,min.}
+{仅当工位匹配且 $|\hat{s}-s|\le 3$ 分钟时，该预测才计为一次正确的\emph{报告}。}
+
+\bip
+{Table~\ref{tab:heads} lists output heads.}
+{表~\ref{tab:heads} 列出各输出头。}
+
+\begin{table}[ht]
+\centering
+\caption{BNPDFormer output heads and their roles.\\
+{\small BNPDFormer 输出头及其作用。}}
+\label{tab:heads}
+\begin{tabular}{p{0.30\textwidth}p{0.28\textwidth}p{0.32\textwidth}}
+\toprule
+Head / 头 & Form / 形式 & Role / 作用 \\
+\midrule
+Will-block / start / duration\newline
+{\small 是否阻塞 / 开始 / 持续} &
+per station, horizon $H$\newline
+{\small 每工位、时域 $H$} &
+Primary event report (A.1)\newline
+{\small 主事件报告（A.1）} \\
+Occupancy grid\newline
+{\small 占用网格} &
+$(H\times N)$ score / 0--1\newline
+{\small $(H\times N)$ 分数 / 0--1} &
+Alignment auxiliary\newline
+{\small 对齐辅助} \\
+Remaining order time\newline
+{\small 剩余订单时间} &
+scalar windows\newline
+{\small 标量窗口} &
+Order-level context\newline
+{\small 订单级上下文} \\
+Cause class\newline
+{\small 原因类别} &
+multi-class\newline
+{\small 多分类} &
+Process reason (A.3)\newline
+{\small 过程原因（A.3）} \\
+STGNPP $\tau$, $d$\newline
+{\small STGNPP 等待与持续} &
+sparse next-event\newline
+{\small 稀疏下一事件} &
+Optional timing path\newline
+{\small 可选时刻路径} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\bip
+{Supervision is applied primarily to station-like production nodes, i.e., machines and workbenches whose future bottleneck events are operationally meaningful to report. Human, transport, gantry, buffer, and inventory-related nodes are retained in the graph as context-only nodes: they are not asked to emit bottleneck reports directly, but they provide explanatory signals about resource competition, upstream starvation, downstream blockage, and logistics delay. This supervised-versus-context separation aligns the learning target with actual decision needs while preserving the causal structure of the production system.}
+{监督主要施加在具有工位语义的生产节点上，也就是那些未来瓶颈事件本身就具有报告意义的机台与工作台节点。人工、运输设备、龙门、缓存区以及库存相关节点则作为仅上下文节点保留在图中：它们不直接输出瓶颈报告，但会提供关于资源竞争、上游饥饿、下游阻塞与物流延迟的解释性信号。这样的“监督节点 / 上下文节点”划分既贴合实际决策需求，也保留了生产系统的因果结构。}
+
+\bip
+{The graph contains typed edges that reflect how congestion propagates through the factory. These include process-precedence edges between upstream and downstream stations, attachment edges between stations and their associated buffers, transport-service edges that connect stations to AGVs or gantries, and service-affinity edges that connect manual workstations to human resources. During message passing, these typed neighbourhoods can be represented either explicitly or through corresponding geographic masks so that the encoder attends to process-relevant neighbours rather than to all nodes uniformly.}
+{图中包含多种类型的边，用于刻画拥堵在工厂中的传播路径。这些边包括连接上下游工位的工艺先后边、连接工位与其关联缓存区的挂接边、连接工位与 AGV/龙门的运输服务边，以及连接人工工位与人力资源的服务关联边。在消息传递过程中，这些类型化邻域可以显式表示，也可以通过相应的地理掩码实现，使编码器优先关注工艺相关邻居，而不是对所有节点一视同仁地平均建模。}
+
+\subsection[Spatiotemporal Encoder / 时空编码器]{Spatiotemporal Encoder\quad{\normalfont\small（时空编码器）}}
+\label{sec:encoder}
+
+\bip
+{Grouped token embeddings with type one-hots feed stacked spatiotemporal blocks: temporal self-attention per node, geographic attention over process--logistics neighbours with delay patterns, and semantic attention over behaviourally similar nodes.}
+{带类型独热的分组 token 嵌入进入堆叠时空块：每个节点的时间自注意力、带时延模式的工艺--物流邻域地理注意力，以及对行为相似节点的语义注意力。}
+
+\bip
+{Calendar day/week embeddings from traffic PDFormer are removed.}
+{交通 PDFormer 中的日历日/周嵌入被去掉。}
+
+\bip
+{Laplacian positional encodings are derived from the factory adjacency.}
+{拉普拉斯位置编码由工厂邻接得到。}
+
+
+\bip
+{The encoder stacks multiple spatiotemporal blocks, each operating on a shared hidden representation. In the current prototype, the exact number of layers and hidden width are treated as tunable implementation hyperparameters and are selected on the validation set, while the architectural principle remains fixed: temporal attention models each node's history, geographic attention is constrained by the factory adjacency or typed neighbourhood masks, and semantic attention links behaviourally similar nodes even if they are not physically adjacent. This decomposition lets the model capture both direct process interactions and non-local pattern similarity.}
+{编码器由多个时空块堆叠而成，每个时空块都在共享隐表示上工作。在当前原型中，具体层数和隐层宽度被视为可调的实现超参数，并在验证集上选择；而架构原则保持不变：时间注意力建模每个节点的历史演化，地理注意力由工厂邻接或类型化邻域掩码约束，语义注意力则连接那些虽然不物理相邻、但行为模式相似的节点。这样的分解使模型既能捕捉直接工艺交互，也能学习非局部模式相似性。}
+
+\bip
+{Geo and semantic attention are implemented with different masks. The geographic mask preserves only process--logistics neighbours, whereas the semantic mask is built from feature similarity or delay-pattern similarity over recent windows. If delay motifs are incorporated, they are used to express recurring lag structures such as ``upstream blockage now, downstream starvation several windows later'', which are common in manufacturing propagation chains. These delay-aware patterns complement the static graph structure and improve the encoder's sensitivity to temporally shifted causal effects.}
+{地理注意力与语义注意力使用不同的掩码实现。地理掩码只保留工艺--物流邻居，而语义掩码则依据近期窗口上的特征相似性或时延模式相似性构建。如果引入时延模体，其作用是表达“当前上游阻塞、若干窗口后下游饥饿”这类反复出现的滞后结构，这正是制造系统传播链中的常见现象。这样的时延感知模式为静态图结构提供补充，增强了编码器对时移因果效应的敏感性。}
+
+\subsection[Dual-Path Prediction Heads / 双路径预测头]{Dual-Path Prediction Heads\quad{\normalfont\small（双路径预测头）}}
+\label{sec:heads}
+
+\bip
+{Path~I (dense) predicts occupancy over a fixed $H=15$\,min horizon and converts connected hot segments into (start, duration, station) reports.}
+{路径 I（稠密）在固定 $H=15$ 分钟时域上预测占用，并把连通热段收成（开始、持续、工位）报告。}
+
+\bip
+{Path~II (sparse, STGNPP-style) models the next process hotspot's waiting time and duration, censored at remaining order completion.}
+{路径 II（稀疏，STGNPP 风格）建模下一次过程热点的等待时间与持续，并在剩余订单完工处删失。}
+
+\bip
+{Auxiliary heads regress remaining order time and classify a coarse process cause (not the injected L2 type name).}
+{辅助头回归剩余订单时间，并分类粗粒度过程原因（不是注入的 L2 类型名）。}
+
+\bip
+{Model selection uses validation report F1 with a precision preference.}
+{模型选择使用验证集报告 F1，并偏好更高精度。}
+
+
+\bip
+{Training uses a multi-task objective. Binary cross-entropy is used for will-block or occupancy classification, masked regression losses are used for start offset, duration, and remaining-order time, and cross-entropy is used for the coarse cause class. When the sparse timing path is enabled, its waiting-time and duration terms are added as an auxiliary event loss. The relative loss weights are tuned to keep the primary station-event task dominant while allowing the auxiliaries to regularize the shared encoder rather than overwhelm it. Model selection is based on validation report F1 with a precision preference; when two checkpoints achieve similar F1, the one with higher report precision is preferred because false alarms are particularly costly in shop-floor warning.}
+{训练采用多任务目标。对于是否将阻塞或占用分类使用二元交叉熵损失；对于开始偏移、持续时间与剩余订单时间使用带掩码的回归损失；对于粗粒度原因类别使用交叉熵损失。当启用稀疏时刻路径时，其等待时间和持续时间项会作为辅助事件损失加入总目标。各项损失的相对权重通过调节，使主工位事件任务保持主导地位，同时让辅助任务起到正则化共享编码器的作用，而不会喧宾夺主。模型选择以验证集报告 F1 为主，并偏好更高精度；当两个检查点 F1 相近时，优先保留报告精度更高的模型，因为在车间预警中误报成本尤其高。}
+
+\bip
+{The dense occupancy path and the sparse point-process path are intentionally not collapsed into a single head because they solve related but different problems. The occupancy path provides a window-wise description of how congestion evolves across the horizon and is useful for spatial alignment and calibration. The sparse path, in contrast, focuses on the next event's onset and duration, which is a low-frequency and heavily censored prediction problem. Keeping them separate makes the supervision cleaner, preserves interpretability, and allows the dense path to support event extraction while the sparse path specializes in timing accuracy.}
+{之所以不把稠密占用路径与稀疏点过程路径合并为同一个头，是因为二者虽然相关，但解决的是不同层次的问题。占用路径给出时域内逐窗口的拥堵演化描述，更适合做空间对齐与校准；稀疏路径则专注于下一次事件的发生时刻与持续时间，这属于低频且存在删失的预测问题。将二者分开能够使监督更干净、解释性更强，并让稠密路径承担事件提取支持，而稀疏路径专门优化时刻预测精度。}
+
+%======================================================================
+\chapter[Current Progress / 当前进展]{Current Progress\\[0.3em]{\large 当前进展}}
+\label{ch:progress}
+
+\bip
+{In this chapter, the project progress, up to the submission of this report, is discussed.}
+{本章讨论截至本报告提交时的项目进展。}
+
+\bip
+{Phase~I (the Isaac Sim data engine) is operational: collector \texttt{v0.3} writes seven raw tables; \texttt{bn\_agg} derives windows, occupancy, events, and job KPIs; export skips deadlock and incomplete episodes.}
+{第一阶段（Isaac Sim 数据引擎）已可运行：采集器 \texttt{v0.3} 写出七张原始表；\texttt{bn\_agg} 派生窗口、占用、事件与工单 KPI；导出时丢弃死锁与未完工回合。}
+
+\bip
+{Phase~II has a working BNPDFormer implementation under \texttt{PDFormer/factory\_bn/} and a frozen evaluation on the $134$-episode usable pack \texttt{n10\_i1\_all\_usable}.}
+{第二阶段在 \texttt{PDFormer/factory\_bn/} 中已有可工作的 BNPDFormer 实现，并在 $134$ 回合可用包 \texttt{n10\_i1\_all\_usable} 上冻结了一套评估。}
+
+\section[Dataset Construction and Schema Instantiation / 数据集构建与模式落地]{Dataset Construction and Schema Instantiation\quad{\normalfont\small（数据集构建与模式落地）}}
+\label{sec:prog-data}
+
+\bip
+{The logging schema is instantiated in \texttt{isaac\_factory} at \texttt{src/bottleneck\_data.py} (\texttt{collector\_version=v0.3}).}
+{日志模式落地于 \texttt{isaac\_factory} 的 \texttt{src/bottleneck\_data.py}（\texttt{collector\_version=v0.3}）。}
+
+\bip
+{Each short-order episode places $10$ water pipes with a WIP cap of $5$, under \texttt{rule\_based} control, at disturbance intensity $I=1.0$ and a single primary dimension per run.}
+{每个短单回合下单 $10$ 根水管、在制品上限为 $5$，由 \texttt{rule\_based} 控制，扰动强度 $I=1.0$，且每次运行只开一个主维度。}
+
+\bip
+{Watchdog false-kills (stall fingerprint ignoring in-transit motion) and WIP-slot bugs that truncated earlier $18$-pipe runs have been patched in \texttt{hc\_single\_env\_base.py}, \texttt{task\_progress\_manager.py}, and gantry parking logic.}
+{此前截断 $18$ 根管旧回合的看门狗误杀（进度指纹忽略在途运动）与在制品槽位缺陷，已在 \texttt{hc\_single\_env\_base.py}、\texttt{task\_progress\_manager.py} 以及龙门停靠逻辑中修复。}
+
+\bip
+{Export still excludes any episode with \texttt{deadlock\_reset} or fewer than $10/10$ completions. On the current top-level short-order inventory this drops $8$ deadlock episodes (mainly material and logistics).}
+{导出仍排除带 \texttt{deadlock\_reset} 或完工不足 $10/10$ 的回合。在当前顶层短单库存中，这丢掉 $8$ 个死锁回合（主要来自物料与物流维）。}
+
+\bip
+{The canonical training export \texttt{n10\_i1\_all\_usable} contains $134$ complete $I=1.0$ episodes, split at the episode level ($92/17/25$ train/val/test; seed $42$), stratified by run so adjacent windows never leak across partitions.}
+{正式训练导出包 \texttt{n10\_i1\_all\_usable} 含 $134$ 个完整 $I=1.0$ 回合，按回合划分（训练/验证/测试 $92/17/25$，种子 $42$），并按 run 分层，避免相邻窗口跨划分泄漏。}
+
+\begin{table}[ht]
+\centering
+\caption{Usable $I=1.0$ episodes in \texttt{n10\_i1\_all\_usable} (after deadlock / completeness filters).\\
+{\small \texttt{n10\_i1\_all\_usable} 中 $I=1.0$ 可用回合（已过滤死锁与未完工）。}}
+\label{tab:dataset}
+\begin{tabular}{lcc}
+\toprule
+Dimension / 维度 & Runs / 运行包 & Usable episodes / 可用回合 \\
+\midrule
+machine / 机器 & \texttt{n10\_machine1.0} + \texttt{extra\_machine} & $20+10=30$ \\
+human / 人力 & \texttt{n10\_human1.0} + \texttt{extra\_human} & $20+10=30$ \\
+logistics / 物流 & \texttt{n10\_logistics1.0} + \texttt{extra\_logistics} & $20+10=30$ \\
+material / 物料 & \texttt{n10\_material1.0} + extra + 重采 & $17+9+18=44$ \\
+\midrule
+Total / 合计 & nine run tags & $134$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\bip
+{Fifty-five mixed-dimension episodes (\texttt{n10\_mix\_ood}) are held out for out-of-distribution evaluation and are not merged into training.}
+{$55$ 个混合维度回合（\texttt{n10\_mix\_ood}）留给分布外评估，不并入训练集。}
+
+\bip
+{The factory graph has $N=38$ nodes: $7$ machines/workbenches, $4$ gantries, $5$ humans, $4$ AGVs (\texttt{transport\_robot}), and $18$ buffers/storage cells (Figure~\ref{fig:layout}).}
+{工厂图有 $N=38$ 个节点：$7$ 台机台/工作台、$4$ 座龙门、$5$ 名工人、$4$ 台 AGV（\texttt{transport\_robot}），以及 $18$ 个缓存/仓储单元（图~\ref{fig:layout}）。}
+
+\bip
+{Each node has $F=27$ input features: $21$ operational columns from \texttt{FEATURE\_COLS} (queue, wait, occupancy, blockage/starvation, logistics delay, material shortage, disturbance-active context, turning-point flags), $5$ resource-type one-hots, and a machine-only \texttt{labor\_saturated} bit.}
+{每个节点有 $F=27$ 维输入：$21$ 列来自 \texttt{FEATURE\_COLS} 的运营特征（排队、等待、占用、堵塞/饥饿、物流延迟、缺料、扰动激活上下文、拐点标志）、$5$ 维资源类型独热，以及仅广播到机台的 \texttt{labor\_saturated} 位。}
+
+\bip
+{\texttt{bottleneck\_score\_s} is never concatenated into $X$, to avoid label leakage.}
+{\texttt{bottleneck\_score\_s} 不拼进 $X$，以避免标签泄漏。}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.92\textwidth]{_isaac_factory/map_data/occupancy_map4robot.png}
+\caption{Top-down occupancy map of the Isaac factory line used for navigation and resource placement (robot layer).\\
+{\small Isaac 工厂产线俯视占用图，用于导航与资源布置（机器人层）。}}
+\label{fig:layout}
+\end{figure}
+
+\section[Model Implementation and Preliminary Experiments / 模型实现与初步实验]{Model Implementation and Preliminary Experiments\quad{\normalfont\small（模型实现与初步实验）}}
+\label{sec:prog-model}
+
+\bip
+{BNPDFormer lives in \texttt{PDFormer/factory\_bn/}. Training is \texttt{python -m factory\_bn.train}; inference is \texttt{python -m factory\_bn.infer} (or \texttt{BNPredictor.predict\_x}).}
+{BNPDFormer 位于 \texttt{PDFormer/factory\_bn/}。训练入口为 \texttt{python -m factory\_bn.train}；推理入口为 \texttt{python -m factory\_bn.infer}（或 \texttt{BNPredictor.predict\_x}）。}
+
+\bip
+{The frozen protocol in \texttt{FactoryBN.json} uses $60\,\mathrm{s}$ windows, history $T_{\mathrm{in}}=30$ ($30$\,min), occupancy horizon $H=15$ ($15$\,min), encoder depth $4$ and embedding width $64$, and \texttt{use\_stgnpp=false}.}
+{\texttt{FactoryBN.json} 中的冻结协议为：$60$ 秒窗、历史 $T_{\mathrm{in}}=30$（$30$ 分钟）、占用时域 $H=15$（$15$ 分钟）、编码器深度 $4$、嵌入宽度 $64$，且 \texttt{use\_stgnpp=false}。}
+
+\bip
+{Connected occupancy cells with $\mathrm{hot\_prob}\ge 0.5$ are decoded by \texttt{occupancy\_to\_events} into (start, duration, station) reports; remaining-order length is a separate head.}
+{连通占用格在 $\mathrm{hot\_prob}\ge 0.5$ 时由 \texttt{occupancy\_to\_events} 解码为（开始、持续、工位）报告；剩余订单长度是独立的头。}
+
+\bip
+{An older checkpoint \texttt{evt/BNPDFormer\_best.pt} (WandB \texttt{lchf07o9}, test hot F1 $\approx 0.165$, precision $\approx 0.10$) used a different occupancy definition and $N=34$ nodes; its numbers are not comparable to the short-order $H=15$ protocol and must not be mixed into Table~\ref{tab:results}.}
+{旧检查点 \texttt{evt/BNPDFormer\_best.pt}（WandB \texttt{lchf07o9}，测试 hot F1 约 $0.165$、精度约 $0.10$）使用不同占用定义且 $N=34$，与短单 $H=15$ 协议不可比，不得混入表~\ref{tab:results}。}
+
+\bip
+{On the $134$-episode pack, checkpointing maximises validation report F1 with a precision floor. Test metrics of \texttt{n10\_i1\_all\_usable\_unsup\_best} are given in Table~\ref{tab:results}.}
+{在 $134$ 回合包上，检查点以验证集报告 F1 为主并设精度下限。\texttt{n10\_i1\_all\_usable\_unsup\_best} 的测试指标见表~\ref{tab:results}。}
+
+\begin{table}[ht]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\caption{Test metrics on the $134$-episode usable pack. Primary metric: report P/R/F1 (station match and $|\hat{s}-s|\le 3$\,min).\\
+{\small $134$ 回合可用包上的测试指标。主指标：报告精度/召回/F1（工位匹配且 $|\hat{s}-s|\le 3$ 分钟）。}}
+\label{tab:results}
+\begin{tabular}{lccccccc}
+\toprule
+Model & Rep.\ P & Rep.\ R & Rep.\ F1 & Start MAE & Dur.\ MAE & Remain MAE & Who F1 \\
+\midrule
+XGBoost & -- & -- & -- & -- & -- & -- & -- \\
+LSTM & -- & -- & -- & -- & -- & -- & -- \\
+BTGCN & -- & -- & -- & -- & -- & -- & -- \\
+BSTAN & -- & -- & -- & -- & -- & -- & -- \\
+\textbf{BNPDFormer} & \textbf{0.817} & \textbf{0.447} & \textbf{0.578} & \textbf{0.20} & \textbf{1.32} & \textbf{6.27} & \textbf{0.581} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\bip
+{A correct \emph{report} requires both the station identity and a start error of at most $3$\,min. Who-only F1 ($0.581$) nearly matches report F1 ($0.578$), so most who-correct predictions also satisfy the start tolerance; start MAE on matched events is $0.20$\,min and duration MAE is $1.32$\,min.}
+{一次正确\emph{报告}要求工位身份匹配且开始误差不超过 $3$ 分钟。仅工位 F1（$0.581$）与报告 F1（$0.578$）几乎相同，说明多数工位正确的预测也满足起始容差；匹配事件上开始 MAE 为 $0.20$ 分钟，持续 MAE 为 $1.32$ 分钟。}
+
+\bip
+{Grid occupancy hot F1 is $0.613$ (precision $0.779$, recall $0.506$) and is used for alignment, not for checkpointing. Remaining-order MAE is $6.27$ windows ($\approx 6.3$\,min).}
+{网格占用 hot F1 为 $0.613$（精度 $0.779$，召回 $0.506$），用于对齐而非选检查点。剩余订单 MAE 为 $6.27$ 个窗（约 $6.3$ 分钟）。}
+
+\bip
+{Per-type occupancy F1 is uneven: workbench $0.712$, AGV $0.729$, machine $0.676$, gantry only $0.352$. Gantry occupancy remains the weakest spatial class.}
+{分类型占用 F1 不均衡：工作台 $0.712$、AGV $0.729$、机台 $0.676$，龙门仅 $0.352$。龙门占用仍是最弱的空间类别。}
+
+\bip
+{Ongoing events are recovered more readily than upcoming onsets (report recall $0.579$ vs.\ $0.320$ on $195$ vs.\ $203$ true events). This is the main failure mode for shop-floor warning.}
+{正在发生的事件比即将到来的起始更容易找回（报告召回 $0.579$ 对 $0.320$，真值分别为 $195$ 与 $203$ 次）。这是车间预警的主要失败模式。}
+
+\bip
+{Cause-head accuracy is $0.935$ against a majority-class baseline of $0.415$ (macro recall $0.943$ on transport delay, material shortage, starved upstream, and queue buildup). We still treat A.3 as a secondary analysis signal until a full confusion matrix is reported.}
+{原因头准确率为 $0.935$，高于多数类基线 $0.415$（运输延误、缺料、上游饥饿与排队堆积的宏召回 $0.943$）。在给出完整混淆矩阵之前，A.3 仍只作为辅助分析信号。}
+
+\bip
+{Tabular and graph-sequence baselines (XGBoost, LSTM, BTGCN/GCN+GRU, BSTAN/GAT+GRU) are specified under the same pack, split, and report metric, but their training modules are not yet in \texttt{factory\_bn/}; Table~\ref{tab:results} therefore leaves those rows blank.}
+{表格与图序列基线（XGBoost、LSTM、BTGCN/GCN+GRU、BSTAN/GAT+GRU）已规定使用同一数据包、划分与报告指标，但其训练模块尚未进入 \texttt{factory\_bn/}，故表~\ref{tab:results} 相应行留空。}
+
+\bip
+{Implementation patterns used throughout:}
+{贯穿始终的实现原则：}
+
+\begin{itemize}[leftmargin=1.6em]
+  \biitem
+    {\textbf{Process labels, not injection names.} Occupancy and events come from operational heat (turning point, queue, material starvation, inbound delay, upstream blockage, score $\ge 0.55$), not from copying L2 type strings. L2 enters $X$ only as \texttt{disturbance\_active\_s}.}
+    {\textbf{过程标签，而非注入名称。}占用与事件来自运营热度（拐点、排队、缺料饥饿、到货延误、上游堵塞、分数 $\ge 0.55$），而不是抄写 L2 类型字符串。L2 只作为 \texttt{disturbance\_active\_s} 进入 $X$。}
+  \biitem
+    {\textbf{Episode-level splits.} \texttt{dataset.py} splits by episode, stratified by run; no window shuffling across train/val/test.}
+    {\textbf{按回合划分。}\texttt{dataset.py} 按回合、再按 run 分层；训练/验证/测试之间不打乱窗口。}
+  \biitem
+    {\textbf{Precision-first reports.} A who-correct prediction still fails the primary metric if start error exceeds $3$\,min.}
+    {\textbf{精度优先的报告。}即便工位预测正确，若开始误差超过 $3$ 分钟，主指标仍计失败。}
+  \biitem
+    {\textbf{Streaming sidecar is for inference only.} \texttt{bn\_agg --follow --closed-windows} can fill \texttt{derived/} while Isaac runs on GPU, but training always uses a full-episode aggregation without closed-window truncation.}
+    {\textbf{流式旁路只用于推理。}\texttt{bn\_agg --follow --closed-windows} 可在 Isaac 占用 GPU 时写入 \texttt{derived/}，但训练始终使用不截断闭窗的整回合聚合。}
+\end{itemize}
+
+\section[Challenges / 挑战]{Challenges\quad{\normalfont\small（挑战）}}
+\label{sec:challenges}
+
+\bip
+{Despite the progress, several challenges remain in code and in the frozen numbers.}
+{尽管已有进展，代码与冻结数字中仍有若干挑战。}
+
+\begin{itemize}[leftmargin=1.6em]
+  \biitem
+    {\textbf{Label granularity.} Too fine a hot-mask explodes positive windows; too coarse merges distinct process phenomena. Aligning occupancy grids with sparse events (and not treating L2 shocks as events) required several revisions of \texttt{bn\_agg}. Current test hot positive rate is only $0.89\%$, so the task stays severely imbalanced.}
+    {\textbf{标签粒度。}热掩码过细会使正例窗口爆炸；过粗又会把不同过程现象并在一起。把占用网格与稀疏事件对齐（且不把 L2 冲击当事件）需要对 \texttt{bn\_agg} 多次修订。当前测试 hot 正例率仅 $0.89\%$，任务仍严重不平衡。}
+  \biitem
+    {\textbf{Upcoming-event recall.} Ongoing congestion recall is $0.579$; upcoming onset recall is $0.320$. Raising future-start recall without collapsing the $0.817$ report precision is the open modelling problem.}
+    {\textbf{即将发生事件的召回。}进行中拥堵召回为 $0.579$，即将到来起始召回仅 $0.320$。在不牺牲 $0.817$ 报告精度的前提下提升未来起始召回，是尚未解决的建模问题。}
+  \biitem
+    {\textbf{Gantry occupancy.} Gantry hot F1 ($0.352$) lags machines and workbenches. Dual-gantry interlocks and slow realistic motion make occupancy on transport assets harder to label and to predict.}
+    {\textbf{龙门占用。}龙门 hot F1（$0.352$）落后于机台与工作台。双龙门互锁与真实慢速运动使运输资产上的占用更难打标、也更难预测。}
+  \biitem
+    {\textbf{Simulation completeness.} Even after watchdog and WIP-slot fixes, material and logistics runs still emit occasional \texttt{deadlock\_reset} rows. Complete $10/10$ episodes under disturbance remain expensive to collect.}
+    {\textbf{仿真完整性。}即使修复看门狗与在制品槽位后，物料与物流运行仍会偶尔写出 \texttt{deadlock\_reset}。扰动下采齐 $10/10$ 完工回合仍然昂贵。}
+  \biitem
+    {\textbf{Cause-head interpretation.} New-pack cause accuracy ($0.935$) beats the majority baseline ($0.415$), unlike the obsolete \texttt{evt} run whose \texttt{cause\_acc=1.0} was spurious. A.3 is still not a headline claim until class-wise confusion is published.}
+    {\textbf{原因头解释。}新包原因准确率（$0.935$）高于多数类基线（$0.415$），不同于旧 \texttt{evt} 中虚高的 \texttt{cause\_acc=1.0}。在公布分各类混淆之前，A.3 仍不能作为头条结论。}
+  \biitem
+    {\textbf{Checkpoint drift.} Mixing \texttt{evt} ($N=34$, paint-until-jobs-done) with \texttt{n10\_i1\_*} ($N=38$, $H=15$) invalidates every metric. History-$12$ checkpoints are likewise incompatible with \texttt{input\_window=30}.}
+    {\textbf{检查点漂移。}把 \texttt{evt}（$N=34$，画到收工）与 \texttt{n10\_i1\_*}（$N=38$，$H=15$）混用会使所有指标失效。历史长度为 $12$ 的检查点同样与 \texttt{input\_window=30} 不兼容。}
+  \biitem
+    {\textbf{Missing baselines and product heads.} B2--B5 models are design-only in this tree. Product-side outputs B.1--B.3 are not wired; \texttt{job\_kpi} currently only supplies remaining-job counts for the occupancy condition.}
+    {\textbf{缺失基线与产品头。}B2--B5 模型在本仓库中仍停留在设计文档。产品侧输出 B.1--B.3 尚未接线；\texttt{job\_kpi} 目前只为占用条件提供剩余工单数。}
+\end{itemize}
+
+%======================================================================
+\chapter[Conclusion / 结论]{Conclusion\\[0.3em]{\large 结论}}
+\label{ch:conclusion}
+
+\bip
+{This work presented a unified, verifiable pipeline for station-level bottleneck event forecasting from an Isaac Sim HRC factory twin.}
+{本工作给出一套统一、可核验的流水线，用于从 Isaac Sim HRC 工厂孪生中预报工位级瓶颈事件。}
+
+\bip
+{The end-to-end system integrates (i)~a process-faithful water-pipe environment with rule-based control (order $10$, WIP $5$), (ii)~event-driven seven-table logging (\texttt{collector\_version=v0.3}), (iii)~single-axis $I=1.0$ disturbance injection as environment context, (iv)~offline window aggregation and unsupervised occupancy / event labels, (v)~a $38$-node process--logistics graph with $F=27$ features, (vi)~a PDFormer-style spatiotemporal encoder (depth $4$, width $64$), and (vii)~precision-first event heads with remaining-time and cause auxiliaries.}
+{端到端系统整合了：(i)~带规则控制的工艺忠实水管环境（订单 $10$、在制品 $5$）；(ii)~事件驱动七表日志（\texttt{collector\_version=v0.3}）；(iii)~作为环境上下文的单轴 $I=1.0$ 扰动注入；(iv)~离线窗口聚合与无监督占用 / 事件标签；(v)~$38$ 节点工艺--物流图、$F=27$ 维特征；(vi)~PDFormer 风格时空编码器（深度 $4$、宽度 $64$）；(vii)~精度优先的事件头以及剩余时间与原因辅助头。}
+
+\bip
+{On $134$ usable episodes (split $92/17/25$), BNPDFormer attains report precision/recall/F1 of $0.817/0.447/0.578$, with start MAE $0.20$\,min and duration MAE $1.32$\,min. Remaining-order MAE is $6.27$\,min. These numbers show that precision-first station warnings with sub-minute start error on matched events are feasible in the twin; the open problem is upcoming-onset recall ($0.320$ vs.\ $0.579$ for events already underway).}
+{在 $134$ 个可用回合（划分 $92/17/25$）上，BNPDFormer 的报告精度/召回/F1 为 $0.817/0.447/0.578$，开始 MAE $0.20$ 分钟、持续 MAE $1.32$ 分钟，剩余订单 MAE $6.27$ 分钟。这些数字表明：在孪生中，对匹配事件做到亚分钟起始误差的精度优先工位预警是可行的；尚未解决的问题是即将发生起始的召回（$0.320$，相对已在进行中的 $0.579$）。}
+
+\bip
+{An obsolete \texttt{evt} checkpoint (hot F1 $\approx 0.165$) must not be compared with this protocol. Gantry occupancy, mixed-dimension OOD, and fair baselines remain unfinished.}
+{作废的 \texttt{evt} 检查点（hot F1 约 $0.165$）不得与本协议比较。龙门占用、混合维度分布外评估，以及公平基线仍未完成。}
+
+\bip
+{Challenges---label granularity, imbalance, simulation completeness, cause-head interpretation, and checkpoint drift---were mitigated through occupancy--event alignment, episode filtering, precision-gated selection, and a frozen $H=15$ evaluation protocol.}
+{标签粒度、不平衡、仿真完整性、原因头解释与检查点漂移等挑战，通过占用--事件对齐、回合过滤、精度门控选择以及冻结的 $H=15$ 评估协议加以缓解。}
+
+\bip
+{The resulting stack balances twin controllability with event-centric supervision and is ready for the next phase: shared-split baselines, stronger upcoming-event recall, product-side heads, and live sidecar inference.}
+{由此得到的技术栈在孪生可控性与事件中心监督之间取得平衡，可以进入下一阶段：共享划分下的基线、更强的即将发生事件召回、产品侧输出头，以及实时旁路推理。}
+
+%======================================================================
+\chapter[Future Plans / 未来计划]{Future Plans\\[0.3em]{\large 未来计划}}
+\label{ch:future}
+
+\bip
+{Future work follows two tracks grounded in the current codebase: (i)~research-grade evaluation and model refinement for station-level reports; (ii)~product-side forecasts and a deployable online toolkit.}
+{后续工作依据当前代码分成两条轨道：(i)~面向工位级报告的研究级评估与模型改进；(ii)~产品侧预报与可部署的在线工具包。}
+
+\section[Track I: Systematic Evaluation and Model Refinement / 轨道一：系统评估与模型改进]{Track I: Systematic Evaluation and Model Refinement\quad{\normalfont\small（轨道一：系统评估与模型改进）}}
+\label{sec:track1}
+
+\bip
+{This track freezes the comparable protocol already used for Table~\ref{tab:results} and raises upcoming-event quality.}
+{本轨道冻结表~\ref{tab:results} 已用的可比较协议，并提升即将发生事件的质量。}
+
+\bip
+{Priorities, in the order already used internally for collection and training scripts:}
+{优先级（与仓库内采集/训练脚本的既定顺序一致）：}
+
+\begin{itemize}[leftmargin=1.6em]
+  \biitem
+    {Keep the short-order $I=1.0$ four-dimension packs; do not mix $I=2.0$ or $18$-pipe \texttt{norm20} into the $H=15$ numbers. Re-aggregate after any \texttt{bn\_agg} rule change, then retrain with \texttt{ckpt\_metric=report\_f1} and a precision floor.}
+    {继续使用短单 $I=1.0$ 四维包；不要把 $I=2.0$ 或 $18$ 根管的 \texttt{norm20} 混进 $H=15$ 数字。一旦 \texttt{bn\_agg} 规则变更就重聚再训，检查点仍看 \texttt{report\_f1} 并设精度下限。}
+  \biitem
+    {Implement B2--B5 in \texttt{factory\_bn} (XGBoost on flattened windows, LSTM, GCN+GRU as BTGCN, GAT+GRU as BSTAN) on the same \texttt{n10\_i1\_all\_usable} split manifest, and fill the blank rows of Table~\ref{tab:results}.}
+    {在 \texttt{factory\_bn} 中实现 B2--B5（展平窗口上的 XGBoost、LSTM、GCN+GRU 作 BTGCN、GAT+GRU 作 BSTAN），使用同一份 \texttt{n10\_i1\_all\_usable} 划分清单，并填满表~\ref{tab:results} 的空行。}
+  \biitem
+    {Evaluate \texttt{n10\_mix\_ood} ($55$ mixed-dimension episodes) under the same report metric as a true OOD test, without retraining on mixed labels.}
+    {在相同报告指标下评估 \texttt{n10\_mix\_ood}（$55$ 个混合维度回合）作为真正的分布外测试，不在混合标签上重训。}
+  \biitem
+    {A.2 setting$\times$station heatmaps by aggregating A.1 occupancy / events over machine, human, logistics, and material runs---no new network head.}
+    {A.2：按机器、人力、物流、物料运行聚合 A.1 占用/事件，画 setting$\times$工位热力图——无需新网络头。}
+  \biitem
+    {Publish the A.3 confusion matrix against \texttt{cause\_majority\_acc}; confirm that \texttt{material\_shortage}, \texttt{transport\_delay}, and \texttt{queue\_buildup} remain separable. Improve gantry occupancy (type-balanced loss already exists in \texttt{FactoryBN.json}) before claiming transport-asset warnings.}
+    {公布相对 \texttt{cause\_majority\_acc} 的 A.3 混淆矩阵；确认 \texttt{material\_shortage}、\texttt{transport\_delay} 与 \texttt{queue\_buildup} 仍可分维。在宣称运输资产预警之前，先提升龙门占用（\texttt{FactoryBN.json} 中已有分类型损失权重）。}
+  \biitem
+    {Turn on \texttt{use\_stgnpp} only after occupancy precision is stable, so the sparse $\tau$/$d$ path is not clamped to trivial NLL.}
+    {仅在占用精度稳定后再打开 \texttt{use\_stgnpp}，避免稀疏 $\tau$/$d$ 路径的负对数似然被夹到平凡值。}
+\end{itemize}
+
+\section[Track II: Product-Side Forecasting and Shop-Floor Deployment / 轨道二：产品侧预测与车间部署]{Track II: Product-Side Forecasting and Shop-Floor Deployment\quad{\normalfont\small（轨道二：产品侧预测与车间部署）}}
+\label{sec:track2}
+
+\bip
+{The second track extends beyond station reports toward production use, using tables that already exist but are not yet supervision targets.}
+{第二条轨道从工位报告延伸到生产可用，利用已经落盘、但尚未作为监督目标的表。}
+
+\begin{itemize}[leftmargin=1.6em]
+  \biitem
+    {Product-side heads B.1--B.3 from \texttt{job\_kpi} / \texttt{job\_trace}: on-time order flag, piece completion time, and subtask completion distributions. Today \texttt{job\_kpi} only feeds remaining-job counts into the occupancy condition.}
+    {产品侧头 B.1--B.3 来自 \texttt{job\_kpi} / \texttt{job\_trace}：订单按时标志、单件完工时间、子任务完工分布。目前 \texttt{job\_kpi} 只把剩余工单数送进占用条件。}
+  \biitem
+    {Harden the streaming sidecar already documented in the follow-mode path: Isaac on GPU writes raw tables; CPU \texttt{bn\_agg --follow} closes $60\,\mathrm{s}$ windows; \texttt{factory\_bn.infer --device cpu} emits live reports without reading future labels. Do not train on follow-mode \texttt{derived/}.}
+    {夯实 follow 路径中已有的流式旁路：GPU 上的 Isaac 写原始表；CPU 上 \texttt{bn\_agg --follow} 关闭 $60$ 秒窗；\texttt{factory\_bn.infer --device cpu} 输出实时报告且不读未来标签。不要用 follow 模式的 \texttt{derived/} 做训练。}
+  \biitem
+    {Package \texttt{batch\_bn\_collect.sh}, \texttt{python -m bn\_agg}, \texttt{python -m factory\_bn.export\_dataset}, \texttt{python -m factory\_bn.train}, and \texttt{python -m factory\_bn.infer} as a reproducible toolkit with a data card (collector version, $N$, $F$, split seed, occupancy rule).}
+    {把 \texttt{batch\_bn\_collect.sh}、\texttt{python -m bn\_agg}、\texttt{python -m factory\_bn.export\_dataset}、\texttt{python -m factory\_bn.train} 与 \texttt{python -m factory\_bn.infer} 打包为可复现工具包，并附数据卡片（采集器版本、$N$、$F$、划分种子、占用规则）。}
+\end{itemize}
+
+\begin{table}[ht]
+\centering
+\caption{Near-term plan aligned with the current repository.\\
+{\small 与当前仓库对齐的近期计划。}}
+\label{tab:plan}
+\begin{tabular}{clp{0.62\textwidth}}
+\toprule
+Week / 周 & Track / 轨道 & Objective / 目标 \\
+\midrule
+1--2 & I & Shared split manifest; implement XGBoost / LSTM / BTGCN / BSTAN under the report metric. \\
+ &  & {\small 共享划分清单；在报告指标下实现 XGBoost / LSTM / BTGCN / BSTAN。} \\
+3--4 & I & Mix-dimension OOD; A.2 heatmaps; A.3 confusion matrix; gantry occupancy ablation. \\
+ &  & {\small 混合维度 OOD；A.2 热力图；A.3 混淆矩阵；龙门占用消融。} \\
+5--6 & I+II & Upcoming-recall experiments; optional STGNPP; B.1 from \texttt{job\_kpi}; sidecar live demo. \\
+ &  & {\small 即将发生召回实验；可选 STGNPP；从 \texttt{job\_kpi} 做 B.1；旁路实时演示。} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%======================================================================
+\begin{thebibliography}{99}
+
+\bibitem{roser2001practical}
+C.~Roser, M.~Nakano, and M.~Tanaka.
+\newblock A practical bottleneck detection method.
+\newblock In \emph{Proceeding of the 2001 Winter Simulation Conference}, vol.~2, pp.~949--953, 2001.
+
+\bibitem{li2009data}
+L.~Li, Q.~Chang, and J.~Ni.
+\newblock Data driven bottleneck detection of manufacturing systems.
+\newblock \emph{International Journal of Production Research}, 47(18):5019--5036, 2009.
+
+\bibitem{subramaniyan2023throughput}
+A.~Skoogh, M.~Th{\"u}rer, M.~Subramaniyan, A.~Matta, and C.~Roser.
+\newblock Throughput bottleneck detection in manufacturing: a systematic review of the literature on methods and operationalization modes.
+\newblock \emph{Production \& Manufacturing Research}, 11(1):2283031, 2023.
+
+\bibitem{jiang2023pdformer}
+J.~Jiang, C.~Han, W.~X. Zhao, and J.~Wang.
+\newblock {PDFormer}: Propagation delay-aware dynamic long-range transformer for traffic flow prediction.
+\newblock In \emph{Proceedings of the AAAI Conference on Artificial Intelligence}, vol.~37, no.~4, pp.~4365--4373, 2023.
+
+\bibitem{jin2023stgnpp}
+G.~Jin, L.~Liu, F.~Li, and J.~Huang.
+\newblock Spatio-temporal graph neural point process for traffic congestion event prediction.
+\newblock In \emph{Proceedings of the AAAI Conference on Artificial Intelligence}, vol.~37, no.~12, pp.~14268--14276, 2023.
+
+\bibitem{xu2021industry}
+X.~Xu, Y.~Lu, B.~Vogel-Heuser, and L.~Wang.
+\newblock Industry 4.0 and Industry 5.0---inception, conception and perception.
+\newblock \emph{Journal of Manufacturing Systems}, 61:530--535, 2021.
+
+\bibitem{fu2024human}
+Y.~Fu, J.~Chen, and W.~Lu.
+\newblock Human-robot collaboration for modular construction manufacturing: Review of academic research.
+\newblock \emph{Automation in Construction}, 158:105196, 2024.
+
+\end{thebibliography}
+\addcontentsline{toc}{chapter}{References / 参考文献}
+
+\end{document}

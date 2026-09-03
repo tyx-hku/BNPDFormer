@@ -1,17 +1,25 @@
 {
-  "spellright.language": ["en_US"],
-  "spellright.documentTypes": ["latex"],
+  "spellright.language": [
+    "en_US"
+  ],
+  "spellright.documentTypes": [
+    "latex"
+  ],
   "spellright.notificationClass": "hint",
+
+  "[latex]": {
+    "editor.wordWrap": "on",
+    "editor.wrappingIndent": "same"
+  },
 
   "latex-workshop.latex.autoBuild.run": "onSave",
   "latex-workshop.latex.recipe.default": "latexmk",
   "latex-workshop.latex.outDir": "%DIR%/build",
 
-  "latex-workshop.latex.path": "C:\\Users\\Administrator\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64",
   "latex-workshop.latex.tools": [
     {
       "name": "latexmk",
-      "command": "C:\\Users\\Administrator\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64\\latexmk.exe",
+      "command": "latexmk",
       "args": [
         "-pdf",
         "-interaction=nonstopmode",
@@ -19,10 +27,7 @@
         "-f",
         "-outdir=%OUTDIR%",
         "%DOC%"
-      ],
-      "env": {
-        "PATH": "C:\\Users\\Administrator\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64;C:\\Strawberry\\perl\\bin;%PATH%"
-      }
+      ]
     }
   ],
   "latex-workshop.latex.recipes": [
@@ -33,15 +38,13 @@
   ],
 
   "latex-workshop.view.pdf.viewer": "tab",
+  "latex-workshop.view.pdf.tab.editorGroup": "right",
+  "latex-workshop.view.pdf.zoom": "page-width",
   "latex-workshop.synctex.afterBuild.enabled": true,
   "latex-workshop.view.pdf.internal.synctex.keybinding": "ctrl-click",
+  "latex-workshop.latex.autoClean.run": "never",
 
   "files.associate": {
     "*.tex": "latex"
-  },
-
-  "[latex]": {
-    "editor.wordWrap": "on",
-    "editor.wrappingIndent": "same"
   }
 }
