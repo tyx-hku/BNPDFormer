@@ -100,9 +100,9 @@
 
 
 \begin{abstract}
-Dynamic bottleneck prediction is important to digital manufacturing because timely knowledge of a changing throughput constraint enables production intervention before its effects spread across the line. The task is to determine which resource will constrain throughput and to characterize when the event begins, how long it persists, and what observable production condition explains it. Existing studies are limited by the scarcity of bottleneck events in physical factories and by data that predominantly describe machines while underrepresenting workers, buffers, materials, and logistics. Consequently, conventional time-series models and local graph predictors may not fully capture heterogeneous cross-resource interaction or the delayed propagation of a disturbance into a remote station-level constraint. This paper proposes \textbf{BNPDFormer}, a delay-aware spatiotemporal Transformer for fine-grained dynamic bottleneck prediction. A disturbance-controlled digital production line generates traceable human-, material-, machine-, and logistics-related trajectories without disrupting physical production. Process-informed labelling and clustering distinguish sustained bottleneck regimes from normal production patterns, improving data separability and providing operational evidence for cause prediction. A heterogeneous factory graph preserves typed process and logistics relations, while recurrent short-term patterns condition spatiotemporal interaction so that lagged precursors can contribute to prediction. BNPDFormer jointly reports the bottleneck station, onset, duration, process cause, and remaining order time at minute resolution. Experiments show that clustering improves event and cause prediction, graph modelling strengthens relational learning and interpretability, and the integrated BNPDFormer outperforms the compared baselines across station identification, early warning, timing, and diagnosis. These results support a more accurate, fine-grained, and interpretable approach to dynamic bottleneck prediction in complex digital production systems.
+Dynamic bottleneck prediction is important to digital manufacturing because timely knowledge of a changing throughput constraint enables production intervention before its effects spread across the line. The task is to determine which resource will constrain throughput and to characterize when the event begins, how long it persists, and what observable production condition explains it. Existing studies are limited by the scarcity of bottleneck events in physical factories and by data that predominantly describe machines while underrepresenting workers, buffers, materials, and logistics. Consequently, conventional time-series models and local graph predictors may not fully capture heterogeneous cross-resource interaction or the delayed propagation of a disturbance into a remote station-level constraint. This paper proposes \textbf{BNPDFormer}, a delay-aware spatiotemporal Transformer for fine-grained dynamic bottleneck prediction. A disturbance-controlled digital production line generates traceable human-, material-, machine-, and logistics-related trajectories without disrupting physical production. Process-informed labelling and clustering distinguish sustained bottleneck regimes from normal production patterns, improving data separability and providing operational evidence for cause prediction. A heterogeneous factory graph preserves typed process and logistics relations, while recurrent short-term patterns condition spatiotemporal interaction so that lagged precursors can contribute to prediction. BNPDFormer jointly reports the bottleneck station, onset, duration, process cause, and remaining order time at minute resolution. On the held-out simulation set, report F1 is $0.804/0.778/0.768$ for 5/10/15-min onset caps, with upcoming-event recall near $0.53$. Removing clustering from the data pipeline lowers report F1 to $0.735/0.646/0.637$ and upcoming recall to $0.299/0.324/0.320$, supporting improved operational separability and prediction accuracy from the combined labelling--clustering strategy. Directional entity and delay-pattern ablations further associate heterogeneous observations, cross-type relations, and recurrent pattern conditioning with stronger early warning and process diagnosis. These results support a fine-grained and operationally traceable approach to dynamic bottleneck prediction.
 
-\zhpara{动态瓶颈预测对于数字制造具有重要意义，因为及时获知不断变化的吞吐约束，能够使生产干预在其影响扩散至整条产线之前实施。该任务不仅需要判断未来由哪一资源限制吞吐量，还需要说明事件何时开始、持续多久，以及何种可观测生产状态能够解释该事件。现有研究受到两方面限制：实体工厂中的瓶颈事件样本稀缺；可获取数据又主要描述机器，对人员、缓冲区、物料和物流的表征不足。因此，传统时间序列模型和局部图预测方法难以充分捕捉异构资源之间的交互，以及局部扰动经过一定时延后演变为远端工位约束的过程。为此，本文提出 \textbf{BNPDFormer}，一种面向细粒度动态瓶颈预测的延迟感知时空 Transformer。可控扰动的数字化生产线在不干扰实体生产的条件下生成可追溯的人员、物料、机器和物流轨迹。过程启发式标签与聚类相结合，用于区分持续性瓶颈工况与正常生产模式，从而提高数据可分性，并为原因预测提供运营证据。异构工厂图保留具有类型差异的工艺和物流关系，重复出现的短时模式进一步调节时空交互，使具有时滞的前驱信息能够参与预测。BNPDFormer 以分钟为分辨率，联合报告瓶颈工位、开始时间、持续时间、过程原因和订单剩余时间。实验表明，聚类提高了事件与原因预测准确率，图建模增强了关系学习能力与可解释性，而完整 BNPDFormer 在工位识别、提前预警、时间预测和原因诊断等指标上优于对照基线。上述结果为复杂数字生产系统提供了一种更准确、更细粒度且更具可解释性的动态瓶颈预测方法。}
+\zhpara{动态瓶颈预测对于数字制造具有重要意义，因为及时获知不断变化的吞吐约束，能够使生产干预在其影响扩散至整条产线之前实施。该任务不仅需要判断未来由哪一资源限制吞吐量，还需要说明事件何时开始、持续多久，以及何种可观测生产状态能够解释该事件。现有研究受到两方面限制：实体工厂中的瓶颈事件样本稀缺；可获取数据又主要描述机器，对人员、缓冲区、物料和物流的表征不足。因此，传统时间序列模型和局部图预测方法难以充分捕捉异构资源之间的交互，以及局部扰动经过一定时延后演变为远端工位约束的过程。为此，本文提出 \textbf{BNPDFormer}，一种面向细粒度动态瓶颈预测的延迟感知时空 Transformer。可控扰动的数字化生产线在不干扰实体生产的条件下生成可追溯的人员、物料、机器和物流轨迹。过程启发式标签与聚类相结合，用于区分持续性瓶颈工况与正常生产模式，从而提高数据可分性，并为原因预测提供运营证据。异构工厂图保留具有类型差异的工艺和物流关系，重复出现的短时模式进一步调节时空交互，使具有时滞的前驱信息能够参与预测。BNPDFormer 以分钟为分辨率，联合报告瓶颈工位、开始时间、持续时间、过程原因和订单剩余时间。在留出仿真测试集上，五/十/十五分钟起点范围的 report F1 分别为 $0.804/0.778/0.768$，upcoming 事件召回率约为 $0.53$。从数据流程中移除聚类后，report F1 降至 $0.735/0.646/0.637$，upcoming 召回率降至 $0.299/0.324/0.320$，支持过程标签—聚类组合能够提高运营状态可分性和预测准确率。方向性多实体与延迟模式消融进一步表明，异构观测、跨类型关系和重复模式条件化与更好的提前预警及过程诊断相关。上述结果支持一种细粒度且具有运营可追溯性的动态瓶颈预测方法。}
 \end{abstract}
 
 \begin{keywords}
@@ -121,25 +121,25 @@ Digital twin simulation
 \section{Introduction} \label{sec:intro}
 %% ========================================================================
 
-Digital manufacturing integrates machines, workers, materials, buffers, and autonomous handling resources through interdependent process and information flows. This integration improves flexibility but also allows a local delay to accumulate as work-in-process, interrupt material supply, and restrict output at another station. Because retrospective detection often leaves insufficient time for material replenishment, labour reallocation, equipment maintenance, buffer adjustment, or logistics rerouting, dynamic bottleneck prediction is important for converting an emerging production constraint into an actionable warning.
+Digital manufacturing systems coordinate machines, workers, materials, buffers, and autonomous handling resources through tightly coupled process and logistics flows. This coupling improves production flexibility, but it also allows a local disturbance to accumulate as work-in-process, interrupt material supply, delay handling services, and eventually constrain throughput at another station. Retrospective bottleneck detection may therefore leave insufficient time for material replenishment, labour reallocation, equipment maintenance, buffer adjustment, or logistics rerouting. Predicting how a constraint forms and propagates across heterogeneous factory resources is essential for converting an emerging disruption into an actionable production warning.
 
-\zhpara{数字制造通过相互依赖的工艺流与信息流，将机器、人员、物料、缓冲区和自主搬运资源紧密连接。这种集成提高了生产柔性，但也会使局部延误逐步演变为在制品积压、物料供应中断，并最终在另一工位限制产出。由于事后检测往往无法为物料补充、人员调配、设备维护、缓冲区调整或物流重路由留出足够时间，因此，动态瓶颈预测对于将正在形成的生产约束转化为可执行预警具有重要意义。}
+\zhpara{数字制造系统通过紧密耦合的工艺流与物流流，协调机器、人员、物料、缓冲区和自主搬运资源。这种耦合提高了生产柔性，但也使局部扰动可能逐步造成在制品积压、物料供应中断和搬运服务延误，并最终在另一工位形成吞吐约束。因此，事后瓶颈检测往往无法为物料补充、人员调配、设备维护、缓冲区调整或物流重路由留出足够时间。预测约束如何在异构工厂资源之间形成和传播，是将正在发展的生产扰动转化为可执行预警的关键。}
 
-A production bottleneck is the resource or process that limits system throughput at a given time~\cite{roser2001practical,subramaniyan2023throughput,tang2024comprehensive}. It is not necessarily a fixed machine: its identity and location can migrate as product mix, work-in-process, resource availability, and operating conditions change~\cite{roser2002shifting,lai2021data}. We investigate this problem on a digital-twin shared production line for water-pipe manufacturing. Historical and current simulation observations are used to predict the affected station, event onset and duration, observable process cause, and remaining order time. The objective is not merely to identify a bottleneck, but to produce a fine-grained and interpretable report that can guide production intervention.
+A production bottleneck is the resource or process that limits system throughput at a given time~\cite{roser2001practical,subramaniyan2023throughput,tang2024comprehensive}. Its identity and location are not fixed: changes in resource availability, material supply, work-in-process, and operating conditions can cause the bottleneck to migrate during production~\cite{roser2002shifting,lai2021data}. We investigate station-level dynamic bottleneck prediction on a digital-twin shared production line for water-pipe manufacturing. Historical and current observations are used to predict the affected station, event onset and duration, observable process cause, and remaining order time. The objective is not only to identify a future bottleneck, but also to provide a fine-grained and interpretable report that supports timely intervention.
 
-\zhpara{生产瓶颈是指在某一时刻限制系统吞吐量的资源或过程~\cite{roser2001practical,subramaniyan2023throughput,tang2024comprehensive}。瓶颈并不必然对应某一台固定机器；随着产品组合、在制品、资源可用性和运行条件变化，其身份与位置会动态迁移~\cite{roser2002shifting,lai2021data}。本文在一条用于水管制造的数字孪生共享产线上研究这一问题，利用历史和当前仿真观测预测受影响工位、事件开始时间与持续时间、可观测过程原因以及订单剩余时间。研究目标并非仅识别瓶颈，而是生成能够指导生产干预的细粒度、可解释报告。}
+\zhpara{生产瓶颈是指在某一时刻限制系统吞吐量的资源或过程~\cite{roser2001practical,subramaniyan2023throughput,tang2024comprehensive}。其身份与位置并非固定不变；资源可用性、物料供给、在制品和运行条件的变化，都可能使瓶颈在生产过程中发生迁移~\cite{roser2002shifting,lai2021data}。本文在一条用于水管制造的数字孪生共享产线上研究工位级动态瓶颈预测，利用历史和当前观测预测受影响工位、事件开始时间与持续时间、可观测过程原因以及订单剩余时间。研究目标不仅是识别未来瓶颈，还要形成支持及时干预的细粒度、可解释报告。}
 
-Despite progress in bottleneck detection and prediction, several limitations remain. Representative bottleneck events are rare in routine production, while deliberately inducing machine failures, worker absence, material shortages, or logistics interruption in a physical factory is costly, disruptive, and potentially unsafe; increasing the volume of normal-operation data does not supply the trajectories needed to learn constraint formation, propagation, and recovery. Existing supervision also commonly relies on scalar bottleneck scores or turning-point indicators derived from utilization, blockage, and starvation~\cite{li2009data,subramaniyan2023throughput,lai2021data,su2022dynamic}. Such indicators are useful for retrospective analysis, but long-window scores can obscure migration and isolated turning points can confuse temporary fluctuation with a sustained throughput constraint. Real-time prediction is more difficult because a warning must be issued before the target station exhibits an obvious bottleneck, when precursor evidence is weak and distributed across resources. Moreover, bottlenecks both migrate and propagate with delay: the resource at which a disturbance originates can differ from the station that later becomes throughput-critical. Factory data are also heterogeneous. Machine-centred time-series and recurrent methods forecast active periods, blockage, starvation, or bottleneck scores~\cite{li2011throughput,subramaniyan2018data,lai2018twolayer,liu2023lstmdam}, but flattening observations weakens the distinction among process, labour, storage, material, and logistics relations. Graph-based predictors recover part of the production topology~\cite{lai2023bstan,yin2025btgcn,ma2023tusb,cen2025dstnn,wu2025knowledge}, yet local aggregation does not by itself determine which earlier cross-resource pattern precedes a delayed constraint. Existing outputs also frequently remain at the level of a score or bottleneck identity, leaving event timing, persistence, explanation, and production consequence insufficiently represented.
+Despite progress in bottleneck prediction, three limitations remain. First, existing studies predominantly model machine or workstation data. Time-series and recurrent methods forecast active periods, blockage, starvation, or bottleneck scores from machine-centred observations~\cite{li2011throughput,subramaniyan2018data,lai2018twolayer,liu2023lstmdam}; graph-based methods further introduce workstation, task, or material-flow relations~\cite{lai2023bstan,yin2025btgcn,ma2023tusb,cen2025dstnn,wu2025knowledge}. Nevertheless, workers, material availability, buffers, gantries, and transport robots are rarely represented together, even though their interactions can determine where and when a throughput constraint appears. Second, bottleneck supervision is difficult to construct. Positive events are scarce in normal operation, and deliberately inducing failures, worker absence, material shortages, or logistics interruption in a physical factory is costly and disruptive. Conventional scalar scores and turning-point indicators derived from utilization, blockage, or starvation~\cite{li2009data,subramaniyan2023throughput,lai2021data,su2022dynamic} can support retrospective analysis, but isolated threshold crossings may confuse transient variation with a sustained constraint and provide limited evidence about the operational cause. This weak separation between normal and bottleneck states complicates learning and reduces the interpretability of model outputs. Third, dynamic bottlenecks exhibit delayed cross-resource propagation. A disturbance may pass through transport and buffering before emerging as blockage or starvation at a downstream station, so the resource where the disturbance originates may differ from the resource that later constrains throughput. Recurrent transmission and local graph aggregation can capture temporal or neighbourhood dependence, but do not explicitly align an earlier cross-resource pattern with its delayed consequence. These limitations motivate a unified approach to heterogeneous observation, process-consistent supervision, and delay-aware prediction.
 
-\zhpara{尽管瓶颈检测与预测已取得进展，现有研究仍存在若干限制。代表性瓶颈事件在常规生产中十分稀少，而在实体工厂内主动制造设备故障、人员离岗、物料短缺或物流中断，不仅成本高、干扰生产，还可能带来安全风险；单纯增加正常运行数据，也无法提供学习约束形成、传播和恢复过程所需的轨迹。现有监督还普遍依赖由利用率、阻塞和饥饿等指标构成的标量瓶颈评分或转折点~\cite{li2009data,subramaniyan2023throughput,lai2021data,su2022dynamic}。这类指标适用于事后分析，但长窗口评分可能掩盖瓶颈迁移，孤立转折点也容易把暂时波动误判为持续性吞吐约束。实时预测更加困难，因为预警必须在目标工位呈现明显瓶颈之前发出，此时前驱证据往往较弱且分散于多个资源。瓶颈还同时具有动态迁移和延迟传播属性：扰动最初出现的资源可能不同于随后成为吞吐约束的工位。工厂数据本身也具有异构性。以机器为中心的时间序列和循环方法通常预测活跃期、阻塞、饥饿或瓶颈评分~\cite{li2011throughput,subramaniyan2018data,lai2018twolayer,liu2023lstmdam}，但展平观测会削弱工艺、人员、存储、物料与物流关系之间的区别。图预测方法能够恢复部分生产拓扑~\cite{lai2023bstan,yin2025btgcn,ma2023tusb,cen2025dstnn,wu2025knowledge}，但局部聚合本身无法确定哪些更早的跨资源模式预示后续延迟约束。现有输出也常停留在评分或瓶颈身份层面，对事件时间、持续性、解释及生产后果的表示仍不充分。}
+\zhpara{尽管瓶颈预测已取得进展，现有研究仍存在三方面不足。第一，已有研究主要建模机器或工位数据。时间序列和循环方法通常依据以机器为中心的观测预测活跃期、阻塞、饥饿或瓶颈评分~\cite{li2011throughput,subramaniyan2018data,lai2018twolayer,liu2023lstmdam}；图模型进一步引入工位、任务或物料流关系~\cite{lai2023bstan,yin2025btgcn,ma2023tusb,cen2025dstnn,wu2025knowledge}。然而，人员、物料可用性、缓冲区、龙门和运输机器人很少被纳入统一表示，尽管这些资源之间的交互会共同决定吞吐约束在何处、何时出现。第二，瓶颈监督数据难以构造。正常生产中的瓶颈正样本稀少，而在实体工厂主动制造设备故障、人员离岗、物料短缺或物流中断成本高且会干扰生产。由利用率、阻塞或饥饿构成的传统标量评分与转折点指标~\cite{li2009data,subramaniyan2023throughput,lai2021data,su2022dynamic}能够支持事后分析，但孤立阈值穿越容易混淆瞬时波动与持续性约束，并且对运营原因提供的证据有限。正常状态与瓶颈状态之间可分性不足，不仅增加模型学习难度，也削弱预测结果的可解释性。第三，动态瓶颈具有跨资源延迟传播属性。扰动可能经过运输和缓冲后，才在下游工位表现为阻塞或饥饿，因此扰动起源资源可能不同于随后限制吞吐量的资源。循环传递和局部图聚合能够刻画时间或邻域依赖，却没有显式对齐更早的跨资源模式与其延迟后果。上述不足共同要求一种能够统一处理异构观测、过程一致监督和延迟感知预测的方法。}
 
-To address these limitations, we propose \textbf{BNPDFormer}. A digital-twin production line generates traceable trajectories under controlled human, material, machine, and logistics disturbances, providing bottleneck formation and recovery data without interrupting physical production~\cite{lu2020digital,isaacsim2026,xue2026safe}. Process-informed, resource-type-specific event construction distinguishes sustained operational constraints from transient variation, and clustering organizes recurrent operating patterns to improve the separation of bottleneck and normal states and to support process-cause interpretation. A heterogeneous factory graph represents machines, workers, buffers, gantries, and transport robots together while preserving their process and logistics relations. BNPDFormer adapts delay-aware spatiotemporal attention~\cite{jiang2023pdformer} to combine local temporal evolution, cross-resource interaction, and lagged pattern evidence, and then produces a unified minute-level station-event report.
+To address these limitations, we propose \textbf{BNPDFormer}. A disturbance-controlled digital-twin production line provides traceable trajectories of machines, workers, material supply, buffers, gantries, and transport robots without interrupting physical production~\cite{lu2020digital,isaacsim2026,xue2026safe}. These observations are organized as a heterogeneous process--logistics graph: machines and handling resources are represented as interacting entities, while material shortage, buffer occupancy, labour availability, and transport delay provide resource-specific operational context. Process-informed rules then combine queue, blockage, starvation, availability, shortage, and logistics evidence with persistence requirements to construct sustained bottleneck events. Clustering complements these rules by grouping recurrent operating regimes and short-term precursor patterns, thereby increasing the separability of bottleneck and normal states and linking predictions to recognizable production evidence rather than an opaque score. Finally, a delay-pattern module is incorporated into a spatiotemporal Transformer adapted from PDFormer~\cite{jiang2023pdformer}. The module uses recurrent short-term patterns to condition cross-resource attention, enabling earlier resource states to contribute to the prediction of constraints that emerge elsewhere after a lag. The resulting model produces a minute-level report of bottleneck station, onset, duration, observable process cause, and remaining order time.
 
-\zhpara{为解决上述问题，本文提出 \textbf{BNPDFormer}。数字孪生生产线在人员、物料、机器和物流可控扰动下生成可追溯轨迹，在不干扰实体生产的条件下提供瓶颈形成与恢复数据~\cite{lu2020digital,isaacsim2026,xue2026safe}。资源类型相关的过程启发式事件构造用于区分持续性运营约束与瞬时波动，聚类则组织重复出现的运行模式，以提高瓶颈状态与正常状态的可分性，并支持过程原因解释。异构工厂图将机器、人员、缓冲区、龙门和运输机器人共同表示，并保留其工艺与物流关系。BNPDFormer 将延迟感知时空注意力~\cite{jiang2023pdformer}适配于制造场景，联合建模局部时间演化、跨资源交互和具有时滞的模式证据，最终生成统一的分钟级工位事件报告。}
+\zhpara{为解决上述问题，本文提出 \textbf{BNPDFormer}。可控扰动的数字孪生生产线在不干扰实体生产的条件下，提供机器、人员、物料供给、缓冲区、龙门和运输机器人的可追溯轨迹~\cite{lu2020digital,isaacsim2026,xue2026safe}。这些观测被组织为异构工艺—物流图：机器与搬运资源作为相互作用的实体，物料短缺、缓冲区占用、人员可用性和运输延迟则提供与资源类型相关的运营上下文。随后，过程启发式规则将队列、阻塞、饥饿、可用性、缺料和物流证据与持续性条件结合，构造持续性瓶颈事件。聚类作为规则的补充，对重复出现的运行工况和短时前驱模式进行分组，从而提高瓶颈状态与正常状态的可分性，并使预测能够对应可识别的生产证据，而不是停留在不透明的评分层面。最后，本文在由 PDFormer~\cite{jiang2023pdformer}改造的时空 Transformer 中加入延迟模式模块。该模块利用重复短时模式调节跨资源注意力，使较早资源状态能够参与预测经过一定时滞后在其他位置显现的约束。最终模型生成分钟级瓶颈报告，包括瓶颈工位、开始时间、持续时间、可观测过程原因和订单剩余时间。}
 
-The contributions of this work are summarized as follows. (1) To the best of our knowledge within the reviewed literature, this is the first study to use a delay-aware spatiotemporal Transformer as the principal encoder for manufacturing bottleneck prediction. By combining this encoder with heterogeneous process--logistics graph modelling, BNPDFormer captures cross-station propagation and complex resource interaction that flattened sequence models or purely local graph aggregators represent only partially, thereby improving the accuracy and interpretability of early warning. (2) We develop a disturbance-controlled data and supervision pipeline that combines process-informed event construction with clustering. Sustained, resource-type-specific labels make the prediction target consistent with observable shop-floor symptoms, while clustering improves the separability of bottleneck and normal states and supplies operational evidence for event and cause prediction. (3) We formulate bottleneck prediction as a minute-resolution, multi-output station-event task. Rather than returning only a coarse score or resource identity, the model jointly reports the affected station, onset, duration, observable process cause, and remaining order time. The resulting report responds more sensitively to changing production states and provides temporally precise, interpretable information for intervention.
+The contributions of this work are summarized as follows. (1) We extend dynamic bottleneck prediction from machine-centred observations to heterogeneous multi-entity factory data. Machines, workers, material-supply states, buffers, gantries, and transport robots are jointly represented with their process and logistics relations, enabling the model to capture bottlenecks arising from production, labour, material, and handling interactions rather than from machine states alone. (2) We develop a process-informed labelling and clustering strategy for bottleneck data whose positive events are scarce and weakly separable from normal fluctuations. Resource-specific rules and persistence constraints provide operationally meaningful event labels, while clustering organizes recurrent regimes and precursor patterns. Their combination improves data separability and supports interpretation through observable evidence associated with event formation and process cause. (3) We propose a delay-aware spatiotemporal Transformer for dynamic bottleneck propagation. Its delay-pattern module conditions cross-resource interaction on relevant historical patterns, allowing the model to associate an upstream precursor with a downstream constraint that appears after transport, buffering, or service delay.
 
-\zhpara{本文的主要贡献如下。（1）据本文对现有文献的检索，本文首次将延迟感知时空 Transformer 作为制造业瓶颈预测的主编码器。BNPDFormer 将该编码器与异构工艺—物流图建模结合，用于捕捉展平序列模型或纯局部图聚合难以完整表示的跨工位传播与复杂资源交互，从而提高提前预警的准确性与可解释性。（2）提出面向可控扰动数据的监督流程，将过程启发式事件构造与聚类相结合。具有持续性且与资源类型相关的标签，使预测目标更符合现场可观测生产现象；聚类提高瓶颈状态与正常状态的可分性，并为事件和原因预测提供运营证据。（3）将瓶颈预测形式化为分钟分辨率的多输出工位事件任务。模型不再只返回粗粒度评分或资源身份，而是联合报告受影响工位、开始时间、持续时间、可观测过程原因和订单剩余时间。所得报告能够更敏感地响应生产状态变化，并为干预提供时间明确且可解释的信息。}
+\zhpara{本文的主要贡献如下。（1）将动态瓶颈预测从以机器为中心的观测扩展到工厂异构多实体数据。机器、人员、物料供给状态、缓冲区、龙门和运输机器人及其工艺与物流关系被纳入联合表示，使模型能够捕捉由生产、人员、物料和搬运交互形成的瓶颈，而不再只依赖机器状态。（2）针对瓶颈正事件稀缺、且与正常生产波动可分性不足的问题，提出过程启发式标签与聚类相结合的数据构造策略。资源类型相关规则与持续性约束提供具有运营含义的事件标签，聚类则组织重复出现的运行工况和前驱模式。两者结合提高数据可分性，并通过与事件形成和过程原因相关的可观测证据支持预测解释。（3）针对动态瓶颈的延迟传播问题，提出延迟感知时空 Transformer。其延迟模式模块依据相关历史模式调节跨资源交互，使模型能够将上游前驱状态与经过运输、缓冲或服务时延后出现的下游约束联系起来。}
 
 The remainder of this paper is organized as follows. Section~\ref{sec:review} reviews bottleneck detection and prediction methods and spatiotemporal graph forecasting. Section~\ref{sec:problem} formulates the station-level dynamic bottleneck prediction problem. Section~\ref{sec:method} presents the disturbance-controlled data pipeline and BNPDFormer architecture. Section~\ref{sec:exp} reports the experimental setup and results.
 
@@ -238,13 +238,13 @@ Let the complete resource set be
 \mathcal{R}=\mathcal{R}^{m}\cup\mathcal{R}^{g}\cup
 \mathcal{R}^{a}\cup\mathcal{R}^{h}\cup\mathcal{R}^{b},
 \end{equation}
-where the superscripts denote machines and workbenches, gantries, transport robots, humans, and buffers. These entities have different operational meanings. A machine transforms a product, a gantry or transport robot moves a product between locations, a human provides labour-dependent service, and a buffer stores intermediate products. The event-supervised target set is
+where the superscripts denote machines and workbenches, gantries, transport robots, humans, and buffers. The retained graph contains 38 nodes: 7 machine/workbench nodes, 4 gantries, 4 transport robots, 5 humans, and 18 buffers. Material is not represented as a separate graph node; its state enters through shortage propagation, inbound waiting, affiliated-buffer occupancy, and other material-flow channels attached to the affected resources. These entities have different operational meanings. A machine transforms a product, a gantry or transport robot moves a product between locations, a human provides labour-dependent service, and a buffer stores intermediate products. The event-supervised target set is
 \begin{equation}
 \mathcal{S}=\mathcal{R}^{m}\cup\mathcal{R}^{g}\cup\mathcal{R}^{a}.
 \end{equation}
 Human and buffer nodes remain in the observation graph because labour availability and storage occupancy influence other resources, but the current implementation does not assign them station-event targets.
 
-\zhpara{设完整资源集合为 $\mathcal{R}$，其子集分别表示机器与工作台、龙门、运输机器人、人员和缓冲区。这些实体具有不同运营含义：机器完成产品加工，龙门或运输机器人负责位置间搬运，人员提供依赖劳动力的服务，缓冲区存放中间产品。事件监督目标集合 $\mathcal{S}$ 由机器、龙门和运输机器人组成。人员和缓冲区仍保留在观测图中，因为劳动力可用性和存储占用会影响其他资源，但当前实现不直接为这两类节点分配工位事件目标。}
+\zhpara{设完整资源集合为 $\mathcal{R}$，其子集分别表示机器与工作台、龙门、运输机器人、人员和缓冲区。最终图共包含三十八个节点，其中包括七个机器/工作台、四个龙门、四个运输机器人、五个人员和十八个缓冲区。物料并不作为独立图节点，而是通过缺料传播、入站等待、关联缓冲区占用及其他物料流通道附着于受影响资源。这些实体具有不同运营含义：机器完成产品加工，龙门或运输机器人负责位置间搬运，人员提供依赖劳动力的服务，缓冲区存放中间产品。事件监督目标集合 $\mathcal{S}$ 由机器、龙门和运输机器人组成。人员和缓冲区仍保留在观测图中，因为劳动力可用性和存储占用会影响其他资源，但当前实现不直接为这两类节点分配工位事件目标。}
 
 \subsection{Heterogeneous process--logistics graph}
 
@@ -357,6 +357,15 @@ This formulation differs from forecasting a bottleneck score. The output specifi
 
 \zhpara{完整预测问题被定义为从历史状态与工厂图到所有监督工位事件、过程原因和订单剩余时间的映射。该形式不同于瓶颈评分预测：输出在统一的决策接口中明确给出受影响资源、事件起点、持续性、过程解释和预期订单影响。第~\ref{sec:method}节使用延迟感知异构时空编码器及多任务预测头参数化该映射。}
 
+The delayed-propagation challenge is contained in this mapping rather than introduced as an additional label. For an upcoming event at target resource $j$, predictive evidence may occur at another resource $i$ and at an earlier history offset $\tau$. The model must therefore learn associations of the form
+\begin{equation}
+(x_{t-\tau,i},\,i\!\rightarrow\!j)\longmapsto y^{\mathrm{evt}}_{t,j},
+\qquad \tau>0,
+\end{equation}
+where $i\!\rightarrow\!j$ denotes a possible process or logistics route, not a proven physical causal path. This formulation motivates conditioning cross-resource interaction on recurrent historical patterns while evaluating success only through the future event report.
+
+\zhpara{延迟传播困难包含在上述映射中，而不是通过额外标签引入。对于目标资源 $j$ 的 upcoming 事件，可预测证据可能出现在另一资源 $i$ 及更早的历史偏移 $\tau$ 处。因此，模型需要学习从较早资源状态与可能的工艺或物流路径到未来目标事件的关联。这里的 $i\!\rightarrow\!j$ 表示潜在传播通道，而不是已经证明的物理因果路径。该形式化为“使用重复历史模式调节跨资源交互”提供动机，而模型成败仍只通过未来事件报告进行评价。}
+
 Two event criteria are distinguished. A station-level hit requires that the predicted resource equal the labelled resource. A stricter report-level true positive additionally requires
 \begin{equation}
 |\hat{s}_{t,n}-s_{t,n}|\leq\epsilon_s,\qquad
@@ -371,7 +380,7 @@ Occurrence precision, recall, and F1 quantify the coverage and reliability of al
 
 \subsection{Method overview}
 
-BNPDFormer is designed as a response to the four difficulties established in Section~\ref{sec:intro}. Controlled simulation addresses the scarcity of positive bottleneck trajectories; process-informed event construction addresses ambiguous supervision; the factory graph and grouped embedding preserve heterogeneous resource relations; and pattern-enhanced spatiotemporal attention addresses delayed propagation. The complete information flow is
+BNPDFormer is organized around the three contributions established in Section~\ref{sec:intro}. First, controlled simulation, a heterogeneous factory graph, and grouped embedding integrate machine, human, material-flow, buffer, gantry, and transport evidence. Second, process-informed event construction and recurrent-pattern grouping address scarce, weakly separable supervision while retaining traceability to observable production evidence. Third, pattern-enhanced spatiotemporal attention addresses delayed propagation. The complete information flow is
 \begin{equation}
 \begin{aligned}
 \text{simulation}&\rightarrow\text{window/event construction}\\
@@ -380,7 +389,7 @@ BNPDFormer is designed as a response to the four difficulties established in Sec
 \end{equation}
 The first two stages create reproducible observations and targets. The latter two parameterize the mapping $f_\theta$ defined in Section~\ref{sec:problem}.
 
-\zhpara{BNPDFormer 的设计逐项回应第~\ref{sec:intro}节提出的四类困难：可控仿真缓解瓶颈正轨迹稀缺，过程启发式事件构造缓解监督歧义，工厂图与分组嵌入保留异构资源关系，模式增强时空注意力则面向延迟传播。完整信息流为“仿真生成—窗口与事件构造—工厂图—联合预测”。前两个阶段形成可复现观测与目标，后两个阶段参数化第~\ref{sec:problem}节定义的映射 $f_\theta$。}
+\zhpara{BNPDFormer 围绕第~\ref{sec:intro}节提出的三项贡献组织。第一，可控仿真、异构工厂图和分组嵌入联合机器、人员、物料流、缓冲区、龙门和运输证据；第二，过程启发式事件构造与重复模式分组面向正样本稀缺和监督可分性不足，并保持预测对可观测生产证据的可追溯性；第三，模式增强时空注意力用于处理延迟传播。完整信息流为“仿真生成—窗口与事件构造—工厂图—联合预测”。前两个阶段形成可复现观测与目标，后两个阶段参数化第~\ref{sec:problem}节定义的映射 $f_\theta$。}
 
 Figure~\ref{fig:method-flow} organizes the method into four modules. The environment is a disturbance-controlled water-pipe line. Data processing converts its logs into minute windows, process-informed sustained labels, and clustered short-term patterns. BNPDFormer then encodes these inputs with grouped embeddings and temporal, graph, and semantic attention, using the clustered patterns to condition delayed cross-station interaction. The report states the bottleneck station, onset, duration, process cause, and remaining order time.
 
@@ -414,7 +423,7 @@ Mixed two-, three-, and four-dimension episodes are exported as a separate datas
 
 \zhpara{二维、三维和四维混合扰动 episode 被导出为独立数据集，而不直接并入最终单轴数据集，因为同时冲击会同时改变事件发生率和原因归属问题。这样的分离使主模型能够在更易追踪的扰动轨迹上训练，并将混合扰动作为后续分布扩展实验单独考察。}
 
-\subsection{Window aggregation and process-consistent supervision}
+\subsection{Multi-entity aggregation and process-consistent supervision}
 
 The second stage converts heterogeneous raw logs into a common resource--time grid. Statistics are aggregated over non-overlapping one-minute windows and aligned by resource identifier. Missing resource states are completed through the export pipeline, type one-hot variables are appended, and labour saturation is recomputed from the available human nodes. The resulting tensor contains 38 resource nodes and 27 channels in the retained dataset. Episode boundaries are preserved throughout sliding-window generation, preventing a history from combining observations from two production runs.
 
@@ -424,9 +433,9 @@ Event supervision follows the type-specific occupancy and persistence definition
 
 \zhpara{事件监督遵循第~\ref{sec:problem}节定义的资源类型占用与持续性规则。最终配置使用运营状态生成目标，而不使用导出的瓶颈评分列，因此模型不能通过复现聚合阶段的评分来完成任务。事件目标构造器扫描每个工位的未来占用，删除不合格 upcoming 热段，保留已经建立的 ongoing 事件的短剩余部分，应用配置起点上限，并选择最长合格热段，由此形成彼此对齐的发生、起点、持续时间、未来占用网格和 prefix 目标。}
 
-Three different clustering-related objects are kept conceptually separate. First, the offline aggregation tools can produce station- and window-level $K=8$ k-means descriptors for exploratory regime analysis. Second, the training dataset derives cause-aligned regime identifiers by deterministic rules and uses them in representation conditioning and contrastive regularization. Third, short temporal patches are clustered to create the pattern keys used by geographic attention. In the retained model, the offline cluster-prediction loss has weight zero; therefore neither the exploratory cluster index nor a line-level k-means label defines the bottleneck ground truth.
+Three different clustering-related objects are kept conceptually separate. First, the offline aggregation tools can produce station- and window-level $K=8$ k-means descriptors for exploratory regime analysis. Second, the training dataset derives cause-aligned regime identifiers by deterministic rules and can use them for representation conditioning and contrastive regularization. Third, short temporal patches are clustered to create the pattern keys used by geographic attention. Only the third object is an active clustering mechanism in the retained delay module. The offline cluster-prediction loss has weight zero, and no cluster index defines the bottleneck ground truth; event labels are produced only by the process rules and persistence filter above.
 
-\zhpara{本文明确区分三类与“聚类”相关的对象。第一，离线聚合工具可以产生工位级和窗口级的 $K=8$ k-means 描述，用于探索性工况分析；第二，训练数据依据确定性规则生成原因对齐工况标识，并用于表示条件化与对比正则；第三，对短时间 patch 进行聚类，以形成地理注意力使用的模式键。在最终模型中，离线簇预测损失权重为零，因此探索性簇编号或产线级 k-means 标签都不构成瓶颈真值。}
+\zhpara{本文明确区分三类与“聚类”相关的对象。第一，离线聚合工具可以产生工位级和窗口级的 $K=8$ k-means 描述，用于探索性工况分析；第二，训练数据依据确定性规则生成原因对齐工况标识，可用于表示条件化与对比正则；第三，对短时间 patch 进行聚类，以形成地理注意力使用的模式键。最终延迟模块中只有第三类属于正在使用的聚类机制。离线簇预测损失权重为零，且任何簇编号都不构成瓶颈真值；事件标签只由上述过程规则和持续性过滤得到。}
 
 \subsection{Factory graph, geographic mask, and semantic mask}
 
@@ -489,16 +498,16 @@ where temporal attention has no cross-node mask, geographic attention uses $M^G$
 
 \zhpara{编码器需要区分三类依赖：单个资源随时间的演化、沿工艺—物流图的传播，以及不一定相邻资源之间的行为相似性。因此，每个编码器模块分别为时间、地理和语义注意力分配注意力头。时间注意力不使用跨节点掩码，地理注意力使用 $M^G$，语义注意力使用 $M^S$。}
 
-Delayed propagation is introduced through data-derived short-pattern keys. From the training histories, the implementation extracts length-three patches from the configured pattern channel and applies k-means with sixteen centres. Let $P_{t,n}$ denote a query patch and $K^P$ the learned centres. Pattern attention computes
+Delayed propagation is introduced through data-derived short-pattern keys. In the retained implementation, the prototype bank is fitted by applying k-means with sixteen centres to length-three patches of the configured activity channel (\texttt{active\_pct\_s}), whereas online query patches use the first model-output channel (\texttt{queue\_length\_s}). Let $P_{t,n}$ denote a queue query patch and $K^P$ the learned activity-pattern centres. Pattern attention computes
 \begin{equation}
 C^P_{t,n}=
 \mathrm{softmax}\!\left(
 \frac{Q^P(P_{t,n})K^P(K^P)^\top}{\sqrt{d_h}}
 \right)V^P(K^P).
 \end{equation}
-The resulting pattern context is added to the geographic key before geographic attention is evaluated. Thus, spatial interaction is conditioned not only on node proximity but also on which recurrent short-term evolution resembles the current precursor. The mechanism does not use a Fourier transform.
+The resulting cross-channel pattern context is added to the geographic key before geographic attention is evaluated. Thus, spatial interaction is conditioned not only on node proximity but also on the learned association between current queue evolution and recurrent activity prototypes. The mechanism does not use a Fourier transform.
 
-\zhpara{延迟传播通过数据驱动的短模式键引入。代码从训练历史中提取长度为三的指定通道 patch，并使用十六个中心进行 k-means。模式注意力将当前查询 patch 与这些中心比较，所得模式上下文在计算地理注意力之前加入地理 key。因此，空间交互不仅取决于节点邻近性，还取决于当前前驱状态更接近哪一种重复出现的短期演化模式。该机制不使用傅里叶变换。}
+\zhpara{延迟传播通过数据驱动的短模式键引入。在最终实现中，模式原型库依据指定活动通道（\texttt{active\_pct\_s}）的长度三 patch，通过十六中心 k-means 拟合；在线查询 patch 则来自模型的第一个输出通道（\texttt{queue\_length\_s}）。模式注意力将当前队列查询与活动模式原型进行投影匹配，所得跨通道模式上下文在计算地理注意力之前加入地理 key。因此，空间交互不仅取决于节点邻近性，还取决于当前队列演化与重复活动原型之间学习到的关联。该机制不使用傅里叶变换。}
 
 For encoder block $l$, the three branches are
 \begin{equation}
@@ -587,105 +596,43 @@ The global report threshold is not tuned on the test set. Candidate thresholds a
 \section{Experiments}\label{sec:exp}
 %% ========================================================================
 
-Following the problem--mechanism--system evaluation logic of the reference experimental design, the experiments address three questions. \textbf{RQ1} asks whether BNPDFormer identifies the correct station and a sufficiently accurate onset as the early-warning range expands. \textbf{RQ2} asks whether the shared representation also explains the event through remaining-order-time and process-cause prediction. \textbf{RQ3} asks which structural assumptions contribute to performance and where the operating boundary lies. Evidence is presented in that order: protocol definition, retained-model selection, held-out task performance, structural decomposition, distribution expansion, and comparison boundaries.
+The evaluation is organized one-to-one around the three contributions rather than around training runs. \textbf{RQ1} asks whether heterogeneous entity observations and cross-type relations improve station-level prediction relative to machine-centred information. \textbf{RQ2} asks whether process-informed labels together with recurrent-pattern grouping produce a more discriminative and operationally traceable event representation. \textbf{RQ3} asks whether delay-pattern conditioning improves prediction of bottlenecks that emerge after cross-resource lag. Before these mechanism questions, the complete model is evaluated on the common station-event task; afterwards, limitations and non-comparable development baselines are stated explicitly.
 
-\zhpara{实验遵循参考论文“问题—机制—系统验证”的逻辑，围绕三个研究问题展开。\textbf{RQ1}：随着提前预警范围扩大，BNPDFormer 能否识别正确工位并给出足够准确的起点？\textbf{RQ2}：共享表示能否进一步通过订单剩余时间和过程原因预测解释事件？\textbf{RQ3}：哪些结构假设对性能产生贡献，模型的运行边界位于何处？证据按照协议定义、最终模型选择、留出任务表现、结构分解、分布扩展和比较边界的顺序呈现。}
+\zhpara{实验不再按训练批次组织，而是与三项贡献一一对应。\textbf{RQ1}：与以机器为中心的信息相比，异构实体观测和跨类型关系是否改善工位级预测？\textbf{RQ2}：过程启发式标签与重复模式分组能否形成可分性更强、且具有运营可追溯性的事件表示？\textbf{RQ3}：延迟模式条件化是否改善经过跨资源时滞后才显现的瓶颈预测？在回答上述机制问题之前，本文先在统一的工位事件任务上评价完整模型；随后明确说明有效性边界及不可直接比较的开发阶段基线。}
 
-\subsection{Experimental environment setup}
+\subsection{Common setup, protocol, and metrics}
 
-The production environment is the NVIDIA Isaac Sim water-pipe line described in Section~\ref{sec:method}. A rule-based production controller executes the order while machine, human, logistics, or material disturbances modify resource availability and service conditions. The collector does not terminate an episode when a bottleneck appears; it records the subsequent propagation and recovery until the complete order finishes. This produces trajectories that include normal operation, event formation, sustained restriction, and post-event recovery rather than isolated positive snapshots.
+The NVIDIA Isaac Sim line described in Section~\ref{sec:method} records complete trajectories from normal operation through event formation, persistence, and recovery. The retained \texttt{dense\_i1} pack contains 204 episodes over 38 resources and is split by episode into 140/28/36 training, validation, and test episodes (20,826/4,331/5,354 windows). Each sample contains a 30-min history and a 20-min future label grid at one-minute resolution. The admissible onset cap is varied over 5, 10, and 15 min, while an upcoming event must satisfy the eight-window persistence rule. Since changing the cap changes the positive set, results are not pooled across horizons.
 
-\zhpara{实验环境为第~\ref{sec:method}节介绍的 NVIDIA Isaac Sim 水管生产线。基于规则的生产控制器持续执行订单，机器、人员、物流或物料扰动则改变资源可用性和服务条件。采集器不会在瓶颈出现时终止 episode，而是持续记录其后续传播与恢复，直至完整订单完成。因此，所得轨迹同时覆盖正常运行、事件形成、持续约束和事件后恢复，而不是只包含孤立正样本。}
+\zhpara{第~\ref{sec:method}节所述 NVIDIA Isaac Sim 产线记录从正常运行到事件形成、持续和恢复的完整轨迹。最终 \texttt{dense\_i1} 数据包包含二百零四个 episode 和三十八个资源，并按 episode 划分为 140/28/36 个训练、验证和测试 episode，对应 20,826/4,331/5,354 个窗口。每个样本包含三十分钟历史和一分钟分辨率的二十分钟未来标签网格；允许的事件起点上限分别为五、十和十五分钟，upcoming 事件必须满足八窗口持续性条件。由于改变起点上限会改变正例集合，本文不合并不同预测范围的结果。}
 
-The retained data pack contains 204 complete episodes over 38 resources. Each sample uses a thirty-minute history at one-minute resolution. Event labels occupy twenty future grids, while the admissible onset cap is set to five, ten, or fifteen minutes. Upcoming events must last at least eight minutes; ongoing events may have a shorter future remainder because their sustained portion began in history. These three tasks share a label-construction pipeline but contain different positive sets, so their scores are reported separately rather than pooled.
+The retained BNPDFormer uses five encoder blocks, latent dimension 80, eight-dimensional Laplacian encoding, temporal/geographic/semantic head allocation $4/2/2$, a four-hop geographic mask, five semantic neighbours, and sixteen length-three pattern keys. AdamW uses batch size 16, learning rate $5\times10^{-5}$, weight decay $0.05$, cosine decay to $10^{-6}$, and fourfold positive-window oversampling. The retained model is warm-started and trained for at most 100 epochs; the 10- and 15-min tasks continue from the preceding horizon.
 
-\zhpara{最终数据包包含二百零四个完整 episode 和三十八个资源。每个样本使用一分钟分辨率的三十分钟历史；事件标签覆盖未来二十个网格，允许的起点上限分别设为五、十或十五分钟。upcoming 事件必须至少持续八分钟；ongoing 事件的未来剩余部分可以更短，因为其持续部分已经在历史中开始。三项任务共享标签构造流程，但对应不同正例集合，因此分别报告结果而不进行合并。}
+\zhpara{最终 BNPDFormer 使用五个编码器模块、八十维潜表示、八维拉普拉斯编码、$4/2/2$ 的时间/地理/语义注意力头、四跳地理掩码、五个语义邻居，以及十六个长度为三的模式键。AdamW 的 batch size 为 16，学习率为 $5\times10^{-5}$，权重衰减为 $0.05$，并采用余弦衰减至 $10^{-6}$ 和四倍正例窗口过采样。最终模型使用热启动且最多训练一百个 epoch；十分钟和十五分钟任务分别从前一预测范围继续训练。}
 
-\subsection{Dataset families and protocol boundaries}
+Station precision, recall, and F1 evaluate location identification. Report F1 additionally requires $|\hat{s}-s|\leq3$ min. Upcoming report recall is the primary early-warning measure, whereas ongoing station recall measures continuity monitoring. Remaining-order-time uses minute-scale MAE, and process-cause prediction uses accuracy and macro recall over the four supported classes. Checkpoints and thresholds are selected on validation only; test values are reported after freezing both. All runs use seed 42, so differences are observed effect sizes, not significance estimates.
 
-Table~\ref{tab:exp-families} summarizes the experiment families. The retained BNPDFormer and its structure analyses use \texttt{dense\_i1}. The compound experiment uses \texttt{dense\_i1\_mix}, which augments the quality-filtered single-disturbance episodes with mixed-disturbance episodes while also disabling the cluster objective. BTGCN and BSTAN use a separately prepared split whose test partition has not been evaluated. These families therefore provide different levels of evidence and are not pooled into a single ranking.
-
-\zhpara{表~\ref{tab:exp-families} 汇总了各实验系列。最终保留的 BNPDFormer 及其结构分析使用 \texttt{dense\_i1}；复合实验使用 \texttt{dense\_i1\_mix}，该数据集在经过质量筛选的单扰动 episode 基础上加入混合扰动 episode，同时关闭聚类目标；BTGCN 与 BSTAN 使用单独准备的数据划分，且其测试分区尚未评估。因此，这些实验具有不同的证据等级，不能合并为单一性能排名。}
+\zhpara{工位精确率、召回率和 F1 评价位置识别；严格 report F1 还要求 $|\hat{s}-s|\leq3$ 分钟。Upcoming report recall 是主要提前预警指标，ongoing 工位召回率用于评价持续监测。订单剩余时间采用分钟级 MAE，过程原因在四个具有样本支持的类别上报告准确率和宏平均召回率。checkpoint 与阈值只使用验证集选择，冻结后再用于测试。所有运行均使用 seed 42，因此差异表示该划分下观察到的效应量，而不是统计显著性。}
 
 \begin{table}[t]
 \centering
-\caption{Experiment families and evidence boundaries.}
-\label{tab:exp-families}
+\caption{Evidence design aligned with the three contributions.}
+\label{tab:evidence-design}
 \scriptsize
-\setlength{\tabcolsep}{3pt}
+\setlength{\tabcolsep}{2.5pt}
 \renewcommand{\arraystretch}{1.12}
-\begin{tabularx}{\columnwidth}{@{}>{\raggedright\arraybackslash}Xcc@{}}
+\begin{tabularx}{\columnwidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
 \toprule
-Family (dataset) & Split & Evidence \\
+Question & Intervention & Main evidence \\
 \midrule
-BNPDFormer (\texttt{dense\_i1}) & 140/28/36 & Test \\
-Structure analysis (\texttt{dense\_i1}) & 140/28/36 & Unequal-budget test \\
-Mixed/no-cluster (\texttt{dense\_i1\_mix}) & 166/37/45 & Compound test \\
-BTGCN/BSTAN (separate set) & 138/30/40 & Validation only \\
+RQ1 & mask non-machine dynamics; remove cross-type relations & Station/report F1, $R_{\rm up}$, cause recall, remaining-time MAE \\
+RQ2 & retain process labels but remove clustering from the data pipeline & Event separability, report F1, upcoming recall, cause accuracy \\
+RQ3 & disable short-pattern injection in geographic attention & Report F1, $R_{\rm up}$, queue-buildup recall \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-\subsection{Training protocol and evaluation metrics}
-
-The retained BNPDFormer uses five encoder blocks, latent dimension 80, eight-dimensional Laplacian encoding, and temporal/geographic/semantic head allocation $4/2/2$. The geographic mask retains paths shorter than four hops, the semantic mask retains five neighbours, and the pattern bank contains sixteen length-three keys. These settings are fixed across the three onset tasks so that changing the warning range does not change the representation capacity.
-
-\zhpara{最终 BNPDFormer 使用五个编码器模块、八十维潜表示、八维拉普拉斯编码，以及 $4/2/2$ 的时间/地理/语义头分配。地理掩码保留短于四跳的路径，语义掩码保留五个邻居，模式库包含十六个长度为三的模式键。三种起点任务固定使用这些设置，使提前范围变化不会同时改变表示容量。}
-
-Optimization uses AdamW with batch size 16, a fine-tuning learning rate of $5\times10^{-5}$, weight decay $0.05$, cosine decay to $10^{-6}$, and fourfold oversampling of event-positive windows. Training permits 100 epochs with patience 40. Start$\leq10$ is initialized from the selected Start$\leq5$ run, and Start$\leq15$ is initialized from Start$\leq10$, forming a short-to-long onset curriculum. Before this curriculum, the first task is warm-started from the prefix-aware \texttt{dense\_i1\_a1\_prefix8} checkpoint.
-
-\zhpara{优化采用 AdamW，batch size 为 16，微调学习率为 $5\times10^{-5}$，权重衰减为 $0.05$，并使用余弦衰减至 $10^{-6}$。训练最多进行一百个 epoch，早停 patience 为四十，事件正例窗口采用四倍过采样。Start$\leq10$ 从入选的 Start$\leq5$ 运行初始化，Start$\leq15$ 再从 Start$\leq10$ 初始化，形成由短至长的起点课程；在该课程之前，第一个任务从 prefix 感知的 \texttt{dense\_i1\_a1\_prefix8} checkpoint 热启动。}
-
-The fine-tuning routine first freezes the loaded network and then re-enables all five encoder blocks, skip convolutions, event heads, and occupancy decoder. The cause head and several representation/legacy heads remain frozen. Cause results must therefore be interpreted as performance of the inherited cause head under the jointly updated encoder, not as a newly initialized cause classifier trained from scratch in each onset experiment. STGNPP and the legacy score, mark, will, and time-to-start paths are disabled in the retained configuration.
-
-\zhpara{微调流程首先冻结已加载网络，再重新启用全部五个编码器模块、skip convolution、事件头和占用解码器。原因头以及若干表示头和旧版预测头保持冻结。因此，原因结果应被解释为继承原因头在联合更新编码器下的表现，而不是每个起点实验中从头训练的新原因分类器。最终配置关闭 STGNPP 以及旧版 score、mark、will 和 time-to-start 路径。}
-
-Station precision, recall, and F1 evaluate whether the correct bottleneck station is identified. The stricter report metric additionally requires $|\hat{s}-s|\leq3$ min. Ongoing station recall measures continuation recognition, whereas upcoming report recall measures actionable early warning and is not allowed to be hidden by the more frequent ongoing events. Remaining-order-time and event-duration errors use MAE; process-cause prediction uses accuracy, macro recall, and per-class recall.
-
-\zhpara{工位精确率、召回率和 F1 用于评价模型是否识别出正确的瓶颈工位；更严格的 report 指标还要求 $|\hat{s}-s|\leq3$ 分钟。进行中工位召回率衡量事件持续识别，即将发生事件的严格召回率则衡量可操作的提前预警，不能被数量更多的 ongoing 事件掩盖。订单剩余时间和事件持续时间采用 MAE；过程原因采用准确率、宏平均召回率和逐类召回率。}
-
-Checkpoint and threshold selection use validation data only. The candidate threshold set is shared by all retained runs. A candidate is preferred when validation precision is at least $0.80$ and recall at least $0.70$, after which station F1 determines the checkpoint; the documented fallback is used if the gate does not open. Test predictions use the frozen checkpoint and threshold. All reported runs use seed 42, so the tables describe observed effect sizes under this split and do not support significance or variance claims.
-
-\zhpara{checkpoint 与阈值选择只使用验证集。最终实验共享同一候选阈值集合；当候选结果满足验证精确率不低于 $0.80$ 且召回率不低于 $0.70$ 时，再依据工位 F1 选择 checkpoint；若门槛未开启，则使用预先规定的 fallback。测试预测使用冻结的 checkpoint 与阈值。所有实验仅使用 seed 42，因此表格描述的是该划分下观察到的效应大小，不支持显著性或方差声明。}
-
-\subsection{Comparison design}
-
-The comparisons are grouped by the question they answer. The earlier \texttt{12\_2} and protocol-aligned \texttt{12\_3} recipes address model selection: one complete recipe must be retained without choosing a different test winner for each onset cap. The \texttt{nograph} arm replaces the factory adjacency with an identity matrix and tests whether cross-resource structure is informative. The \texttt{nogroup} arm removes station-group/semantic-group embedding and tests whether heterogeneous grouping contributes beyond topology.
-
-\zhpara{对照实验按照其回答的问题进行分组。较早的 \texttt{12\_2} 与完成协议对齐的 \texttt{12\_3} 用于模型选择：必须保留一套完整配方，而不能针对每个起点范围从测试结果中分别挑选最优版本。\texttt{nograph} 使用单位矩阵替代工厂邻接关系，以检验跨资源结构是否提供信息；\texttt{nogroup} 移除工位组/语义组嵌入，以检验异构分组是否在拓扑之外产生贡献。}
-
-The mixed-disturbance run addresses distribution expansion. It adds 55 two-, three-, and four-dimension episodes to the quality-filtered data and creates a new 166/37/45 split. Both the retained main recipe and this run have zero offline cluster-head loss; consequently, this experiment is \emph{not} evidence for a clustering ablation. It tests the net outcome of changing the episode distribution and split under a cluster-head-disabled recipe. BTGCN and BSTAN form the final comparison group, but their separately prepared split has unevaluated test episodes; they are reported only as validation-stage graph-recurrent references.
-
-\zhpara{混合扰动实验回答分布扩展问题。它在质量筛选数据中加入五十五个二维、三维和四维扰动 episode，并形成新的 166/37/45 划分。最终主模型配方和该实验的离线簇头损失都为零，因此该实验\emph{不能}作为聚类消融证据；它只反映在关闭簇头的配方下改变 episode 分布与划分后的总体结果。BTGCN 与 BSTAN 构成最后一组对照，但它们使用单独准备的数据划分且测试 episode 尚未评估，因此仅作为验证阶段的图循环参照。}
-
 \subsection{Performance of the retained BNPDFormer}
-
-\subsubsection{Validation-based model selection}
-
-The retained model family is selected from validation behaviour and protocol consistency. As shown in Table~\ref{tab:model-selection}, \texttt{12\_3} has the higher mean validation F1 and is stronger at the medium and long onset caps. It also uses the same station-selection objective, precision/recall gate, threshold grid, far-upcoming weighting, and progress-weighted remaining-time objective across all horizons. Although \texttt{12\_2} has a stronger short-range test result, using that result to replace only the short-range model would constitute test-driven selection. We therefore retain \texttt{12\_3} as one coherent model family.
-
-\zhpara{最终模型系列依据验证集表现和协议一致性进行选择。如表~\ref{tab:model-selection} 所示，\texttt{12\_3} 具有更高的平均验证 F1，并在中程和长程起点范围表现更好；同时，它在各预测范围内统一采用工位选模目标、精确率/召回率门槛、阈值集合、远距离 upcoming 加权以及按进度加权的剩余时间目标。尽管 \texttt{12\_2} 的短程测试结果更高，但根据该测试结果只替换短程模型会造成测试集驱动的选择。因此，本文将 \texttt{12\_3} 作为统一的最终模型系列。}
-
-\begin{table}[t]
-\centering
-\caption{Validation-based selection of the retained model family.}
-\label{tab:model-selection}
-\scriptsize
-\setlength{\tabcolsep}{3pt}
-\renewcommand{\arraystretch}{1.12}
-\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}lcccc@{}}
-\toprule
-Start cap & Family & Val.\ P & Val.\ R & Val.\ F1 \\
-\midrule
-$\leq5$  & 12\_2 & .865 & .872 & .869 \\
-          & 12\_3 & .837 & .891 & .863 \\
-$\leq10$ & 12\_2 & .805 & .836 & .820 \\
-          & 12\_3 & .831 & .840 & .835 \\
-$\leq15$ & 12\_2 & .814 & .803 & .808 \\
-          & 12\_3 & .841 & .835 & .838 \\
-\bottomrule
-\end{tabular*}
-\end{table}
 
 \subsubsection{Held-out station identification}
 
@@ -762,149 +709,154 @@ Cause accuracy should likewise be interpreted within its support boundary. The r
 
 \zhpara{原因准确率也必须在其样本支持边界内解释。该结果验证的是四种已有样本的过程现象之间的区分能力，而不是恢复所有已配置启发式类别，也不是识别外部注入扰动。这个区别对于可解释性十分关键：模型输出解释生产数据中可观测的运营状态，而不是泄露只有仿真器才知道的干预标签。}
 
-\subsection{Mechanism analyses}
+\subsection{RQ1: contribution of heterogeneous multi-entity information}
 
-\subsubsection{Graph and grouped-representation analysis}
+The entity study separates three ways of reducing the heterogeneous input. \emph{No entity information} masks the dynamics of humans, gantries, transport robots, and buffers and also masks machine-side channels derived from these entities. \emph{No cross-type relations} retains all observations but removes cross-type graph edges and attention. \emph{Machine-only} combines both interventions and is the closest available approximation to conventional machine-centred logging. Node count and prediction targets are retained, so the model cannot improve by predicting fewer resource classes.
 
-Table~\ref{tab:structure-ablation} examines the three completed structure arms. Replacing the factory graph with an identity graph causes the largest and most consistent degradation in upcoming recall and remaining-time estimation. Removing grouped resource embeddings also reduces event F1 at every onset cap. The newly completed \texttt{nopattern} arm disables short-pattern injection into the geographic attention keys and tests whether graph proximity alone is sufficient to represent delayed propagation.
+\zhpara{多实体实验以三种方式削弱异构输入。“无实体信息”屏蔽人员、龙门、运输机器人和缓冲区动态，同时屏蔽机器端由这些实体派生的通道；“无跨类型关系”保留全部观测，但移除跨类型图边和注意力；“仅机器”同时采用上述两项干预，是现有实验中最接近传统机器中心日志的设置。各组保持节点数和预测目标不变，因此模型不能通过减少预测资源类别获得优势。}
 
-\zhpara{表~\ref{tab:structure-ablation} 分析了三个已完成的结构消融。以单位矩阵图替代工厂图，会对 upcoming 召回率和订单剩余时间估计造成最大且最一致的下降；移除分组资源嵌入同样会降低所有起点范围的事件 F1。新完成的 \texttt{nopattern} 实验关闭地理注意力 key 中的短模式注入，用于检验仅依赖图邻近关系是否足以表示延迟传播。}
+\begin{table*}[t]
+\centering
+\caption{Multi-entity ablation on the held-out test set. F1 is station-level event F1; $R_{\rm up}$ is strict upcoming report recall.}
+\label{tab:entity-ablation}
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}llrrrrr@{}}
+\toprule
+Arm & Start & F1 & $R_{\rm up}$ & $R_{\rm on}$ & Remain MAE & Cause macro R \\
+\midrule
+Full & $\leq5$ & .805 & .539 & .937 & 10.9 & .967 \\
+No entity information & $\leq5$ & .644 & .049 & .899 & 19.4 & .888 \\
+No cross-type relations & $\leq5$ & .723 & .199 & .907 & 17.8 & .864 \\
+Machine-only & $\leq5$ & .650 & .033 & .903 & 23.3 & .676 \\
+\midrule
+Full & $\leq10$ & .783 & .528 & .936 & 11.2 & .965 \\
+No entity information & $\leq10$ & .545 & .020 & .896 & 24.7 & .707 \\
+No cross-type relations & $\leq10$ & .595 & .157 & .893 & 13.9 & .851 \\
+Machine-only & $\leq10$ & .559 & .014 & .901 & 26.8 & .730 \\
+\midrule
+Full & $\leq15$ & .772 & .534 & .925 & 9.7 & .978 \\
+No entity information & $\leq15$ & .490 & .127 & .922 & 14.0 & .929 \\
+No cross-type relations & $\leq15$ & .563 & .205 & .892 & 15.3 & .811 \\
+Machine-only & $\leq15$ & .534 & .021 & .912 & 21.2 & .735 \\
+\bottomrule
+\end{tabular*}
+\end{table*}
+
+The clearest change occurs in early warning. Under machine-only input, upcoming recall is $0.033/0.014/0.021$, compared with approximately $0.53$ for the retained model, while ongoing recall remains above $0.90$. Removing cross-type relations but retaining entity observations preserves more upcoming information ($0.199/0.157/0.205$) than masking entity dynamics. The result is consistent with two complementary roles: non-machine observations expose an event before it becomes visible at the target station, and cross-type relations organize how that evidence reaches the target representation. At Start$\leq15$, machine-only remaining-time MAE is $21.2$ min and cause macro recall is $0.735$, compared with $9.7$ min and $0.978$ for the retained model. Queue-buildup recall is particularly sensitive to cross-type relations, falling to $0.460$ in the no-cross arm.
+
+\zhpara{最明显的变化出现在提前预警。仅使用机器输入时，upcoming 召回率为 $0.033/0.014/0.021$，而最终模型约为 $0.53$；与此同时，ongoing 召回率仍高于 $0.90$。保留实体观测但移除跨类型关系时，upcoming 信息保留得更多（$0.199/0.157/0.205$），优于直接屏蔽实体动态。该结果与两项互补作用一致：非机器观测使事件能够在目标工位自身显现之前被观察到，跨类型关系则组织这些证据如何进入目标表示。在 Start$\leq15$ 下，仅机器模型的订单剩余时间 MAE 为 $21.2$ 分钟、原因宏平均召回率为 $0.735$，而最终模型分别为 $9.7$ 分钟和 $0.978$。队列积压对跨类型关系尤其敏感，在无跨类型关系组中召回率降至 $0.460$。}
+
+This evidence is directional rather than a strict single-factor causal estimate. The retained model is warm-started and trained for up to 100 epochs, whereas the entity arms are independently cold-started for 50 epochs; the available artifact does not contain the planned Full-Scratch-50 control. Moreover, masking entity-derived channels changes the constructed positive pool (955/1,225/1,331 events for the three machine-only tasks versus 1,102/1,372/1,478 for the retained and no-cross tasks). Comparisons involving no-entity-information or machine-only therefore combine information removal with a target-pool change. The no-cross arm shares the target pool with the full model, but still differs in training budget.
+
+\zhpara{上述证据应被解释为方向性结果，而不是严格的单因素因果估计。最终模型采用热启动并最多训练一百个 epoch，多实体消融则分别冷启动训练五十个 epoch；现有结果中没有计划的 Full-Scratch-50 直接对照。此外，屏蔽实体派生通道会改变构造出的正例池：三个仅机器任务分别包含 955/1,225/1,331 个事件，而最终模型和无跨类型关系组分别包含 1,102/1,372/1,478 个事件。因此，涉及无实体信息或仅机器的比较同时包含信息移除和目标池变化；无跨类型关系组虽与最终模型共享目标池，但训练预算仍不一致。}
+
+\subsection{RQ2: process-informed labels, clustering, and traceability}
+
+The second contribution has two layers. Process rules and the eight-window persistence filter define which observations constitute an operational bottleneck event; clustering then organizes recurrent regimes and short precursor patches without treating cluster IDs as ground truth. This separation makes the output traceable: a reported event can be linked to resource-specific queue, stall, shortage, labour, buffer, or transport evidence, while the four-class cause head summarizes the dominant observable process symptom.
+
+\zhpara{第二项贡献包含两个层次。过程规则与八窗口持续性过滤首先定义哪些观测构成具有运营意义的瓶颈事件，聚类随后组织重复出现的工况和短时前驱 patch，但不把簇编号作为瓶颈真值。这样的分离使输出具有可追溯性：报告事件可以对应资源类型相关的队列、停滞、缺料、人员、缓冲区或运输证据，四类原因头则概括主要的可观测过程现象。}
+
+\subsubsection{No-clustering ablation}
+
+The \emph{no-clustering} arm is the \texttt{dense\_i1\_mix} pipeline. It retains the process-informed event and cause definitions but does not apply the clustering stage used to organize bottleneck regimes and recurrent precursors. The complete labelling--clustering pipeline uses the retained \texttt{dense\_i1} data. Table~\ref{tab:cluster-ablation} compares their held-out results at the same three onset caps.
+
+\zhpara{“无聚类”实验使用 \texttt{dense\_i1\_mix} 数据流程。该组保留过程启发式事件与原因定义，但不执行用于组织瓶颈工况和重复前驱模式的聚类阶段；完整的标签—聚类流程则使用最终 \texttt{dense\_i1} 数据。表~\ref{tab:cluster-ablation} 在相同三个起点范围比较两者的留出结果。}
 
 \begin{table}[t]
 \centering
-\caption{Structure analysis on the held-out test set.}
-\label{tab:structure-ablation}
+\caption{Ablation of clustering from the process-informed data pipeline.}
+\label{tab:cluster-ablation}
 \scriptsize
-\setlength{\tabcolsep}{2.5pt}
+\setlength{\tabcolsep}{2.8pt}
 \renewcommand{\arraystretch}{1.12}
-\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}llrrrrr@{}}
+\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}llrrrr@{}}
 \toprule
-Arm & Start & F1$_w$ & F1$_r$ & $R_{\rm up}$ & MAE & $R_c$ \\
+Pipeline & Start & F1$_{\rm rep}$ & $R_{\rm up}$ & Cause acc. & Remain MAE \\
 \midrule
-Full     & $\leq5$  & .805 & .804 & .539 & 10.9 & .967 \\
-No graph & $\leq5$  & .747 & .746 & .101 & 17.0 & .889 \\
-No group & $\leq5$  & .761 & .753 & .307 & 12.7 & .955 \\
-No pattern & $\leq5$ & .748 & .745 & .158 & 18.6 & .734 \\
-\midrule
-Full     & $\leq10$ & .783 & .778 & .528 & 11.2 & .965 \\
-No graph & $\leq10$ & .651 & .649 & .065 & 23.3 & .746 \\
-No group & $\leq10$ & .668 & .651 & .445 & 11.6 & .953 \\
-No pattern & $\leq10$ & .607 & .588 & .235 & 13.4 & .805 \\
-\midrule
-Full     & $\leq15$ & .772 & .768 & .534 &  9.7 & .978 \\
-No graph & $\leq15$ & .616 & .612 & .037 & 20.8 & .787 \\
-No group & $\leq15$ & .623 & .604 & .395 & 10.6 & .949 \\
-No pattern & $\leq15$ & .616 & .601 & .397 & 11.1 & .850 \\
+Labels + clustering & $\leq5$ & .804 & .539 & .965 & 10.90 \\
+No clustering & $\leq5$ & .735 & .299 & .944 & 11.85 \\
+Labels + clustering & $\leq10$ & .778 & .528 & .962 & 11.20 \\
+No clustering & $\leq10$ & .646 & .324 & .924 & 10.95 \\
+Labels + clustering & $\leq15$ & .768 & .534 & .974 & 9.70 \\
+No clustering & $\leq15$ & .637 & .320 & .940 & 10.92 \\
 \bottomrule
 \end{tabular*}
 \end{table}
 
-The graph effect is concentrated in the genuinely predictive part of the task. At Start$\leq15$, removing graph edges lowers station F1 from $0.772$ to $0.616$, but the corresponding upcoming recall falls from $0.534$ to $0.037$. Remaining-time MAE increases from $9.7$ to $20.8$ min, and queue-buildup recall falls to $0.290$. These changes are consistent with the role assigned to the graph: it carries precursor information from process, buffer, and handling neighbours before the target station itself becomes hot.
+Removing clustering lowers report F1 by $0.069$, $0.132$, and $0.131$ for Start$\leq5/10/15$, respectively. The reduction is larger for the genuinely predictive component: upcoming recall falls by $0.240$, $0.204$, and $0.214$. Cause accuracy also decreases at every cap, from $0.965/0.962/0.974$ to $0.944/0.924/0.940$. These consistent changes support the proposed role of clustering: process rules first define production-relevant events, and clustering then organizes recurrent regimes so that bottleneck and normal trajectories become more separable for downstream event and cause prediction. Remaining-time MAE improves in two of the three clustered settings but not at Start$\leq10$, indicating that clustering primarily benefits event discrimination rather than uniformly improving every auxiliary regression target.
 
-\zhpara{图结构的影响主要集中在真正具有预测性的任务部分。在 Start$\leq15$ 下，移除图边使工位 F1 从 $0.772$ 降至 $0.616$，但对应 upcoming 召回率从 $0.534$ 大幅降至 $0.037$；订单剩余时间 MAE 从 $9.7$ 增至 $20.8$ 分钟，队列积压原因召回率降至 $0.290$。这些变化与图结构的设计作用一致：在目标工位自身变热之前，图能够从工艺、缓冲区和搬运邻居传递前驱信息。}
+\zhpara{移除聚类后，Start$\leq5/10/15$ 的 report F1 分别下降 $0.069$、$0.132$ 和 $0.131$。在真正体现预测能力的 upcoming 部分，召回率分别下降 $0.240$、$0.204$ 和 $0.214$。原因准确率也在所有范围内由 $0.965/0.962/0.974$ 降至 $0.944/0.924/0.940$。这些一致变化支持聚类的设计作用：过程规则首先定义具有生产含义的事件，聚类再组织重复运行工况，使瓶颈轨迹与正常轨迹在后续事件和原因预测中具有更强可分性。聚类流程在三个设置中的两个改善订单剩余时间 MAE，但在 Start$\leq10$ 下没有改善，说明其主要收益来自事件区分，而不是对所有辅助回归目标的统一提升。}
 
-Removing grouped representation produces a different pattern. Remaining-time and cause degradation is smaller than under graph removal, but event F1 declines at every onset cap and the longest-range upcoming recall falls to $0.395$. This suggests that grouped feature semantics assist event discrimination, whereas explicit graph structure is more strongly associated with cross-station early warning. The experiment does not establish that either mechanism is individually sufficient.
+This is a pipeline-level ablation rather than a single configuration switch. The no-clustering pipeline contains 248 episodes with a 166/37/45 split, whereas the clustered pipeline contains 204 episodes with a 140/28/36 split; event prevalence therefore also differs. The comparison evaluates the intended end-to-end effect of introducing clustering into the process-informed data construction, but the numerical deltas should not be interpreted as the isolated effect of one loss coefficient. A future equal-split comparison can further separate cluster quality from episode composition.
 
-\zhpara{移除分组表示呈现出不同模式。其订单剩余时间和原因任务下降小于去图实验，但所有起点范围的事件 F1 均下降，最长范围 upcoming 召回率降至 $0.395$。这表明分组特征语义有助于事件区分，而显式图结构与跨工位提前预警的关系更强。该实验并不能证明任一机制单独使用就足够。}
+\zhpara{该实验属于数据流程级消融，而不是单一配置开关。无聚类流程包含二百四十八个 episode，划分为 166/37/45；聚类流程包含二百零四个 episode，划分为 140/28/36，因此事件比例也有所不同。该比较评价的是在过程启发式数据构造中引入聚类的端到端作用，但数值差异不能被解释为某一个损失权重的独立效果。后续可通过相同数据划分进一步分离聚类质量与 episode 组成的影响。}
 
-Removing delayed pattern injection lowers report F1 by $0.059$, $0.190$, and $0.167$ at Start$\leq5/10/15$, respectively. Its upcoming recall is also lower than the full model at every cap. The effect is especially visible in process diagnosis: queue-buildup recall falls from $0.984$ for the full model to $0.145$, $0.476$, and $0.573$. Thus, geographic edges alone retain part of the structural signal, but the clustered short-pattern context is associated with better delayed-event recognition and with distinguishing propagated queue accumulation.
+\subsubsection{Interpretability through process evidence}
 
-\zhpara{移除延迟模式注入后，Start$\leq5/10/15$ 三档 report F1 分别下降 $0.059$、$0.190$ 和 $0.167$，upcoming 召回率在所有档位也均低于完整模型。该影响在过程诊断中尤其明显：完整模型的 queue-buildup 召回率为 $0.984$，去模式后分别降至 $0.145$、$0.476$ 和 $0.573$。这说明地理边本身仍保留部分结构信号，但短模式聚类上下文与更好的延迟事件识别及传播性队列积压区分相关。}
+On the retained test set, cause macro recall reaches $0.967/0.965/0.978$. At Start$\leq15$, recalls for transport delay, material shortage, upstream starvation, and queue buildup are $0.978$, $0.988$, $0.962$, and $0.984$. This supports operational traceability over the four represented conditions: the model report can be connected to shortage, transport, starvation, or queue evidence used by the process labels. It does not turn the heuristic cause into a physical root-cause label or an injected-disturbance identifier.
 
-These differences are not strict equal-budget causal estimates. The full model is warm-started and trained for up to 100 epochs, whereas all three ablations are trained from scratch for at most 50 epochs. The no-group validation precision does not pass the full-model gate, its longest-range checkpoint occurs at the final epoch, and the precision gate does not open for any no-pattern task; the no-pattern rows therefore use the ungated validation best. The planned no-semantic-attention arm failed before the first epoch because of a zero-sized convolution weight and has no valid metrics.
+\zhpara{在最终测试集上，原因宏平均召回率达到 $0.967/0.965/0.978$。在 Start$\leq15$ 下，运输延迟、物料短缺、上游饥饿和队列积压的召回率分别为 $0.978$、$0.988$、$0.962$ 和 $0.984$。这支持四种已有样本过程条件上的运营可追溯性：模型报告能够对应过程标签所使用的缺料、运输、饥饿或队列证据。但启发式原因并不因此成为物理根因标签或注入扰动标识。}
 
-\zhpara{上述差异不能被解释为严格等预算的因果效应。完整模型采用热启动并最多训练一百个 epoch，而三个消融模型均从头训练且最多为五十个 epoch。无分组模型的验证精确率未通过完整模型门槛，其最长程 checkpoint 位于最后一个 epoch；无模式实验的三档精确率门槛也均未开启，因此表中 no-pattern 结果使用无门槛验证集最优值。计划中的无语义注意力实验因卷积权重维度为零而在首个 epoch 前失败，没有有效指标。}
+\subsection{RQ3: contribution of delay-pattern conditioning}
 
-\subsubsection{Mixed-disturbance distribution expansion}
+The \emph{no-pattern} arm keeps the factory graph and attention branches but disables injection of clustered length-three patterns into geographic keys. It therefore asks whether static process--logistics proximity is sufficient, or whether recurrent temporal context contributes additional information about delayed propagation.
 
-The distribution-expansion experiment adds mixed-disturbance episodes while retaining a zero-weight offline cluster head. Table~\ref{tab:mixed-results} shows lower event performance than the retained single-axis model at every onset cap, with the largest loss occurring for upcoming events. The result does not show that mixed disturbances are intrinsically harmful; the expanded data changes episode composition, class prevalence, and the train/validation/test split simultaneously. It shows that direct pooling under the current curriculum and threshold policy does not improve the official event task.
-
-\zhpara{分布扩展实验加入混合扰动 episode，同时保持离线簇头权重为零。表~\ref{tab:mixed-results} 显示，其在所有起点范围内的事件性能均低于最终单轴模型，其中 upcoming 事件下降最明显。该结果并不说明混合扰动天然有害，因为扩展数据同时改变 episode 组成、类别比例以及训练/验证/测试划分；它只表明在当前课程与阈值策略下直接合并数据不能改善正式事件任务。}
+\zhpara{“无模式”实验保留工厂图和各注意力分支，但关闭长度为三的聚类模式向地理注意力 key 的注入。因此，该实验检验静态工艺—物流邻近是否已经足够，还是重复时间上下文能够为延迟传播提供额外信息。}
 
 \begin{table}[t]
 \centering
-\caption{Mixed-disturbance distribution-expansion experiment.}
-\label{tab:mixed-results}
-\scriptsize
-\setlength{\tabcolsep}{3pt}
-\renewcommand{\arraystretch}{1.12}
-\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}lrrrrr@{}}
-\toprule
-Start & F1$_r$ & F1$_w$ & $R_{\rm up}$ & $R_{\rm on}$ & MAE \\
-\midrule
-$\leq5$  & .735 & .737 & .299 & .888 & 11.85 \\
-$\leq10$ & .646 & .659 & .324 & .855 & 10.95 \\
-$\leq15$ & .637 & .643 & .320 & .847 & 10.92 \\
-\bottomrule
-\end{tabular*}
-\end{table}
-
-For the medium and long onset caps, the validation precision/recall gate is not reached and the ungated validation-best checkpoint is used. Cause macro recall remains between $0.940$ and $0.964$, but this does not offset the loss in event prediction. Progress-weighted remaining-time measures are retained as training diagnostics and are not substituted for the unweighted MAE shown in the table.
-
-\zhpara{在中程和长程起点范围内，验证精确率/召回率门槛未被满足，因此采用无门槛的验证集最优 checkpoint。原因宏平均召回率仍位于 $0.940$ 至 $0.964$ 之间，但这并不能抵消事件预测能力的下降。按生产进度加权的剩余时间指标仅作为训练诊断保留，不能替代表中报告的未加权 MAE。}
-
-Because both the retained model and the expanded-data run disable the offline cluster-prediction loss, their difference cannot establish whether clustering improves bottleneck separability. A valid clustering study would require matched data, initialization, budget, and threshold policy with only the clustering objective changed. No such matched pair is available in the current experiment set, and no clustering-effect claim is made.
-
-\zhpara{由于最终模型与扩展数据实验都关闭离线簇预测损失，两者差异不能说明聚类是否提高瓶颈可分性。有效的聚类实验需要固定数据、初始化、训练预算和阈值策略，只改变聚类目标。当前实验集中不存在这样的匹配对照，因此本文不对聚类效果作独立结论。}
-
-\subsection{Validation-only comparison with graph-recurrent baselines}
-
-Table~\ref{tab:baseline-val} reports BTGCN and BSTAN validation performance. BSTAN has higher validation F1 and lower remaining-time error than BTGCN at each onset cap, but neither baseline provides reliable upcoming prediction. BSTAN also does not dominate every metric; at the medium onset cap, its strict upcoming recall is slightly lower. The severe training--validation gap of BTGCN at the longest cap indicates poor generalization rather than merely inaccurate onset regression.
-
-\zhpara{表~\ref{tab:baseline-val} 报告了 BTGCN 和 BSTAN 的验证集表现。BSTAN 在各起点范围内均取得更高的验证 F1 和更低的剩余时间误差，但两个基线都无法提供可靠的 upcoming 预测。BSTAN 也并非在所有指标上占优；在中程起点范围内，其严格 upcoming 召回率略低。BTGCN 在最长范围内出现严重的训练—验证差距，说明问题主要来自泛化不足，而不只是开始时间回归不准确。}
-
-BTGCN uses a GCN spatial mixer followed by a GRU with hidden dimension 128, while BSTAN uses scalar graph attention followed by a GRU of the same hidden size. Each baseline keeps its own near-history input and parent checkpoint and does not receive BNPDFormer-specific event-prefix, delay-pattern, or grouped-embedding branches. All six runs follow the same Start$\leq5\rightarrow10\rightarrow15$ curriculum, start tolerance, future-grid definition, and validation threshold candidates. None opens the joint validation precision/recall gate, so selection falls back to validation F1.
-
-\zhpara{BTGCN 使用 GCN 空间混合器和隐藏维度为 128 的 GRU，BSTAN 使用标量图注意力和相同隐藏维度的 GRU。每个基线保留自身的近历史输入与父 checkpoint，不接收 BNPDFormer 专有的事件 prefix、延迟模式或分组嵌入分支。六组运行采用相同的 Start$\leq5\rightarrow10\rightarrow15$ 课程、起点容差、未来网格定义和验证阈值候选。由于没有一组同时通过验证精确率与召回率门槛，最终均依据验证 F1 fallback 进行选择。}
-
-\begin{table}[t]
-\centering
-\caption{Validation-only comparison of graph-recurrent baselines.}
-\label{tab:baseline-val}
+\caption{Delay-pattern ablation on the held-out test set.}
+\label{tab:delay-ablation}
 \scriptsize
 \setlength{\tabcolsep}{3pt}
 \renewcommand{\arraystretch}{1.12}
 \begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}llrrrr@{}}
 \toprule
-Model & Start & Val.\ F1 & $R_{\rm up}$ & $R_{\rm on}$ & Remain$^\ast$ \\
+Arm & Start & F1$_{\rm rep}$ & $R_{\rm up}$ & Remain MAE & Queue R \\
 \midrule
-BTGCN & $\leq5$  & .6643 & .0742 & .8078 & 13.34 \\
-BSTAN & $\leq5$  & .6709 & .0812 & .8124 & 11.29 \\
-BTGCN & $\leq10$ & .5211 & .0353 & .6833 & 16.24 \\
-BSTAN & $\leq10$ & .5503 & .0314 & .7466 & 10.66 \\
-BTGCN & $\leq15$ & .4778 & .0280 & .7133 & 11.78 \\
-BSTAN & $\leq15$ & .4918 & .0291 & .6772 &  9.61 \\
+Full & $\leq5$ & .804 & .539 & 10.9 & .984 \\
+No pattern & $\leq5$ & .745 & .158 & 18.6 & .145 \\
+Full & $\leq10$ & .778 & .528 & 11.2 & .984 \\
+No pattern & $\leq10$ & .588 & .235 & 13.4 & .476 \\
+Full & $\leq15$ & .768 & .534 & 9.7 & .984 \\
+No pattern & $\leq15$ & .601 & .397 & 11.1 & .573 \\
 \bottomrule
 \end{tabular*}
-\vspace{1pt}
-\parbox{\columnwidth}{\scriptsize $^\ast$Middle-progress-weighted error in window units; not directly comparable with BNPDFormer MAE.}
 \end{table}
 
-This comparison is evidence about baseline development behaviour, not a final test ranking. The baseline split differs from the BNPDFormer split, its test subset has not been evaluated, and its remaining-time metric is a middle-progress-weighted value in window units rather than the unweighted minute-scale MAE used by BNPDFormer. Accordingly, the results cannot support a test-set superiority or state-of-the-art claim.
+Removing pattern conditioning lowers report F1 by $0.059$, $0.190$, and $0.167$ and lowers upcoming recall at every onset cap. Queue-buildup recall falls from $0.984$ to $0.145/0.476/0.573$. The long-range full model also shows a forecast-distance boundary: upcoming recall is $0.574$ for starts within five minutes, $0.522$ for six to ten minutes, and $0.433$ beyond ten minutes. Together, these observations are consistent with the delay module using recurrent precursor context beyond static adjacency, while also showing that distant events remain difficult.
 
-\zhpara{该对比反映的是基线模型在开发阶段的表现，而不是最终测试排名。基线数据划分不同于 BNPDFormer，其测试子集尚未评估，剩余时间指标又是以窗口为单位的中段进度加权值，而不是 BNPDFormer 使用的分钟级未加权 MAE。因此，这些结果不能支持测试集优越性或最先进性能声明。}
+\zhpara{移除模式条件化后，三个起点范围的 report F1 分别下降 $0.059$、$0.190$ 和 $0.167$，upcoming 召回率也在所有范围内下降；队列积压召回率从 $0.984$ 降至 $0.145/0.476/0.573$。完整模型在长程任务上同样显示预测距离边界：五分钟内、六至十分钟及十分钟以后的 upcoming 召回率分别为 $0.574$、$0.522$ 和 $0.433$。这些观察与“延迟模块在静态邻接之外利用重复前驱上下文”的设计一致，同时也说明远距离事件仍然困难。}
 
-The baseline results nevertheless reveal a recurring difficulty. At the longest onset cap, BTGCN reaches training F1/upcoming recall of $0.8816/0.7332$ but validation values of $0.4778/0.0280$. BSTAN reduces the aggregate gap but still has very low upcoming recall. Recurrent graph encoding can fit the event distribution, yet the current runs do not generalize weak long-range precursors. This observation motivates delay-aware modelling, but because the splits and evidence levels differ, it is a motivation rather than a formal superiority result.
+As in RQ1, this is not an equal-budget causal estimate: the retained model is warm-started for up to 100 epochs, while no-pattern is cold-started for 50 epochs, and the validation precision gate does not open for the no-pattern tasks. The result supports an association between pattern conditioning and performance under the recorded protocol, but attention associations should not be interpreted as measured physical propagation delays.
 
-\zhpara{基线结果仍揭示出一个重复出现的困难。在最长起点范围内，BTGCN 的训练 F1/upcoming 召回率达到 $0.8816/0.7332$，验证结果却降至 $0.4778/0.0280$；BSTAN 缩小了聚合指标差距，但 upcoming 召回率仍然很低。图循环编码能够拟合事件分布，却未能在当前运行中泛化较弱的长距离前驱信号。这一观察为延迟感知建模提供动机，但由于数据划分和证据等级不同，它不能被当作正式优越性结论。}
+\zhpara{与 RQ1 相同，该结果不是等预算因果估计：最终模型采用热启动并最多训练一百个 epoch，而无模式实验冷启动训练五十个 epoch，且三个无模式任务的验证精确率门槛均未开启。因此，结果支持在当前协议下模式条件化与性能之间的关联，但注意力关联不能被解释为实际测得的物理传播时延。}
+
+\subsection{Context experiments and comparison boundary}
+
+BTGCN and BSTAN were evaluated on a separate 138/30/40 split and have validation results only. Their longest-range validation F1 values are $0.4778$ and $0.4918$, with upcoming recall $0.0280$ and $0.0291$, but their test subset is unevaluated and their remaining-time metric uses a different weighting and unit. These runs motivate the early-warning problem but cannot establish BNPDFormer test superiority or a state-of-the-art ranking.
+
+\zhpara{BTGCN 和 BSTAN 使用另一份 138/30/40 划分且只有验证结果；其最长范围验证 F1 分别为 $0.4778$ 和 $0.4918$，upcoming 召回率为 $0.0280$ 和 $0.0291$，但测试子集尚未评估，订单剩余时间指标的权重和单位也不同。这些运行可以说明提前预警的困难，但不能证明 BNPDFormer 在测试集上优于基线或达到最先进水平。}
 
 \subsection{Discussion and validity boundaries}
 
-For RQ1, BNPDFormer maintains similar station and report F1 values, showing that onset tolerance rarely invalidates an otherwise correct station prediction. The main separation is between ongoing and upcoming events. Ongoing recall remains high because the history already contains direct occupancy evidence; upcoming recall is lower and decreases with forecast distance because the model must infer propagation from precursor states. The task should therefore not be summarized by aggregate F1 alone. An operational deployment would use the upcoming metric to judge intervention lead time and the ongoing metric to judge continuity monitoring.
+For RQ1, the strongest operational pattern is the separation between ongoing monitoring and genuine early warning. Machine-only observations retain ongoing recall above $0.90$ but almost eliminate upcoming recall, whereas retaining heterogeneous observations or cross-type relations preserves substantially more precursor information. This is directionally consistent with the first contribution: workers, buffers, handling resources, and material-flow channels matter most before the target machine itself exhibits a bottleneck.
 
-\zhpara{对于 RQ1，BNPDFormer 的工位 F1 与严格报告 F1 始终接近，说明开始时间容差很少使原本正确的工位预测失效。主要差异来自 ongoing 与 upcoming 事件。ongoing 召回率较高，是因为历史中已经存在直接占用证据；upcoming 召回率较低且随预测距离下降，是因为模型必须从前驱状态推断传播。因此，该任务不能只用聚合 F1 总结：实际部署应使用 upcoming 指标判断干预提前量，使用 ongoing 指标判断持续监测能力。}
+\zhpara{对于 RQ1，最重要的运营现象是 ongoing 监测与真正提前预警之间的差异。仅机器观测仍可保持高于 $0.90$ 的 ongoing 召回率，却几乎失去 upcoming 召回能力；保留异构实体观测或跨类型关系能够保存更多前驱信息。这一结果从方向上支持第一项贡献：人员、缓冲区、搬运资源和物料流通道的主要价值，体现在目标机器自身尚未显现瓶颈之前。}
 
-For RQ2, the shared representation retains order-progress information and separates the four supported process symptoms well above the training-derived majority baseline. These outputs make the event report more actionable, but they answer different questions. Remaining time estimates line-level consequence, whereas cause classification explains observed production evidence. Neither output proves the physical root cause of an injected disturbance, and neither should be used to mask an event miss.
+For RQ2, process rules and persistence convert transient threshold crossings into sustained, resource-specific events, while clustering organizes recurrent regimes and precursor patterns. Removing clustering consistently reduces report F1, upcoming recall, and cause accuracy across all three onset caps. The result supports improved operational separability and prediction accuracy from combining process-informed labels with clustering. The cause output further links predictions to observable production symptoms, providing traceability over four represented classes.
 
-\zhpara{对于 RQ2，共享表示能够保留订单进度信息，并在四个有样本支持的过程现象上明显超过训练集多数类基线。这些输出提高了事件报告的可操作性，但回答的是不同问题：订单剩余时间估计产线层后果，原因分类解释可观测生产证据。二者都不能证明注入扰动的物理根因，也不能用于掩盖事件漏检。}
+\zhpara{对于 RQ2，过程规则和持续性约束把瞬时阈值穿越转换为持续的资源类型相关事件，聚类则组织重复工况与前驱模式。移除聚类后，三个起点范围的 report F1、upcoming 召回率和原因准确率均一致下降，支持过程启发式标签与聚类相结合能够提高运营状态可分性和预测准确率。原因输出进一步把预测联系到可观测生产现象，并在四个已有样本类别上提供可追溯性。}
 
-For RQ3, removing graph relations is associated with the largest loss in long-range upcoming recall and remaining-time estimation, whereas removing grouped representation causes a smaller but consistent event degradation. The completed no-pattern experiment further shows that short-pattern injection contributes beyond static graph proximity, particularly to report F1 and queue-buildup diagnosis. Together, the results support the proposed division of labour: the graph transports cross-resource evidence, grouped embedding preserves heterogeneous semantics, and pattern keys condition geographic interaction on recurrent short-term evolution. Semantic attention is not independently isolated because the no-semantic run failed before training.
+For RQ3, the no-pattern arm degrades report F1, upcoming recall, and queue-buildup diagnosis at every horizon. Combined with the distance-bucket decline, this supports the architectural motivation for conditioning geographic interaction on recurrent history rather than using static graph proximity alone. The evidence concerns predictive association, not recovery of a physical causal delay.
 
-\zhpara{对于 RQ3，移除图关系与长距离 upcoming 召回率和订单剩余时间估计的最大下降相关；移除分组表示则造成较小但一致的事件性能下降。已完成的无模式实验进一步表明，短模式注入在静态图邻近之外产生作用，尤其影响严格报告 F1 和 queue-buildup 诊断。三组结果共同支持本文提出的功能分工：图结构传递跨资源证据，分组嵌入保留异构语义，模式键依据重复出现的短期演化对地理交互进行条件化。由于无语义实验在训练前失败，语义注意力的独立贡献仍未被识别。}
+\zhpara{对于 RQ3，无模式实验在所有起点范围均降低 report F1、upcoming 召回率和队列积压诊断能力；结合预测距离分桶中的下降，该结果支持以重复历史模式调节地理交互，而不是只依赖静态图邻近。这里验证的是预测关联，而不是恢复物理因果时延。}
 
-The findings are subject to statistical, internal, construct, comparative, and external validity limits. Statistically, all runs use one seed, so variance and significance are unknown. Internally, the structure arms use from-scratch training and a smaller budget than the warm-started full model. At the construct level, different onset caps define different positive sets, and the baseline remaining-time metric uses a different weighting and unit. Comparatively, BTGCN and BSTAN have validation results only and use another split. Externally, the trajectories come from one simulated production line; the mixed-disturbance expansion does not establish transfer to another factory. The cause task also has test support for four classes only. These boundaries restrict causal, state-of-the-art, and generalization claims while preserving the within-protocol observations reported above.
+Five validity limits qualify these findings. First, one random seed does not estimate variance or significance. Second, the full model and the entity/delay ablations have unequal initialization and training budgets. Third, masking entity-derived channels changes the event pool, while changing the onset cap changes the positive definition. Fourth, the clustering experiment is a pipeline-level ablation with different episode counts and splits rather than a single-loss switch, and the semantic-attention arm failed before training. Fifth, the baseline test sets are unevaluated and all retained trajectories come from one simulated production line. Cause evaluation is additionally limited to four supported classes. Consequently, the results support the contribution-level comparisons reported above, but not strict attribution to one coefficient, state-of-the-art ranking, or cross-factory generalization.
 
-\zhpara{上述发现受到统计、内部、构念、比较和外部有效性限制。统计上，所有运行仅使用一个随机种子，因此方差和显著性未知；内部有效性方面，结构实验从头训练且预算小于热启动完整模型；构念层面，不同起点上限定义不同正例集合，基线订单剩余时间指标还使用不同权重和单位；比较层面，BTGCN 与 BSTAN 只有验证结果并使用另一数据划分；外部有效性方面，轨迹来自一条仿真产线，混合扰动扩展不能证明模型可迁移到另一工厂。原因任务在测试集中也只有四类获得样本支持。这些边界限制因果、最先进性能和泛化结论，但不改变上述协议内部观察。}
+\zhpara{上述结论受到五项有效性限制。第一，单一随机种子无法估计方差和显著性；第二，完整模型与多实体/延迟消融模型的初始化和训练预算不一致；第三，屏蔽实体派生通道会改变事件池，改变起点范围也会改变正例定义；第四，聚类实验属于 episode 数量和划分均不同的数据流程级消融，而不是单一损失开关，计划中的无语义实验也在训练前失败；第五，基线测试集尚未评估，且最终轨迹全部来自一条仿真产线。原因评测还只覆盖四个有样本支持的类别。因此，这些结果支持上述贡献层面的比较，但不能支持对单一系数的严格归因、最先进排名或跨工厂泛化。}
 
 %% ========================================================================
 %% Bibliography
