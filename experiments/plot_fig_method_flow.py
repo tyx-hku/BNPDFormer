@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Four-module method figure: environment, labelling, BNPDFormer, report."""
+"""Four-module method figure: environment, labelling, PHAST-DP, report."""
 
 from __future__ import annotations
 
@@ -141,7 +141,7 @@ def main() -> None:
         [
             (1.2, 23.8, C_BLUE, C_BLUE_E, "Environment"),
             (27.2, 23.2, C_YEL, C_YEL_E, "Data processing"),
-            (52.6, 23.2, C_PNK, C_PNK_E, "BNPDFormer"),
+            (52.6, 23.2, C_PNK, C_PNK_E, "PHAST-DP"),
             (78.0, 20.8, C_GRN, C_GRN_E, "Prediction report"),
         ]
     ):
@@ -186,7 +186,7 @@ def main() -> None:
         ax.add_patch(Circle((x, 6.4), 0.85, fc=c, ec="white", lw=0.4, zorder=4))
     txt(ax, 38.8, 4.2, "process · buffer · logistics", size=5.3, ha="center", color="#666666")
 
-    # ----- 3 BNPDFormer -----
+    # ----- 3 PHAST-DP -----
     rbox(ax, 53.5, 35.2, 21.4, 5.4, "white", C_PNK_E, lw=0.8, rad=0.3)
     txt(ax, 64.2, 37.9, "Grouped resource embedding", size=6.1, weight="bold", ha="center")
     txt(ax, 64.2, 36.2, "queue · stall · logistics · type", size=5.3, ha="center", color="#555555")

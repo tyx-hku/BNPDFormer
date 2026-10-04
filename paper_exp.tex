@@ -34,8 +34,8 @@
 
 \begin{center}
 {\LARGE\bfseries Experiments / 实验}\\[4pt]
-{\large BNPDFormer Main Results, Ablation Studies, and Baseline Comparisons}\\[2pt]
-{\large BNPDFormer 主模型结果、消融实验与基线对比}
+{\large PHAST-DP Main Results, Ablation Studies, and Baseline Comparisons}\\[2pt]
+{\large PHAST-DP 主模型结果、消融实验与基线对比}
 \end{center}
 
 \section{Research Questions / 研究问题}
@@ -43,10 +43,10 @@ The experiments are designed to answer the following four research questions.
 \zh{本文实验围绕以下四个研究问题展开。}
 
 \begin{enumerate}
-\item \textbf{RQ1:} Can BNPDFormer accurately identify station-level bottleneck
+\item \textbf{RQ1:} Can PHAST-DP accurately identify station-level bottleneck
 events at one-minute resolution across Start$\leq5$, Start$\leq10$, and
 Start$\leq15$ prediction ranges?
-\zh{\textbf{RQ1：}BNPDFormer 能否以一分钟分辨率，在 Start$\leq5$、Start$\leq10$ 和 Start$\leq15$ 三种预测范围内准确识别工位级瓶颈事件？}
+\zh{\textbf{RQ1：}PHAST-DP 能否以一分钟分辨率，在 Start$\leq5$、Start$\leq10$ 和 Start$\leq15$ 三种预测范围内准确识别工位级瓶颈事件？}
 
 \item \textbf{RQ2:} How accurately can the model estimate event onset,
 duration, remaining order time, and process cause while distinguishing ongoing
@@ -102,10 +102,10 @@ significance is made.
 \toprule
 Family & Dataset & Episodes & Main selection metric & Training budget & Test status \\
 \midrule
-Final BNPDFormer (\texttt{12\_3})
+Final PHAST-DP (\texttt{12\_3})
  & \texttt{dense\_i1} & 140/28/36
  & validation \texttt{will15\_f1} & 100 epochs, patience 40 & evaluated \\
-Earlier BNPDFormer (\texttt{12\_2})
+Earlier PHAST-DP (\texttt{12\_2})
  & \texttt{dense\_i1} & 140/28/36
  & validation \texttt{report\_f1} & 100 epochs & evaluated \\
 No-clustering mixed-data experiment
@@ -122,13 +122,13 @@ B4 BTGCN / B5 BSTAN
 \end{center}
 
 \section{Implementation Details / 实现细节}
-The BNPDFormer encoder contains five blocks with an embedding dimension of 80
+The PHAST-DP encoder contains five blocks with an embedding dimension of 80
 and an eight-dimensional Laplacian positional encoding. Graph, semantic, and
 temporal attention use 2, 2, and 4 heads, respectively; these are separate
 attention modules and should not be described as a single eight-head module.
 The event head has hidden dimension 80. Training uses batch size 16, a 30-min
 input history, one-minute windows, and a 20-grid future label range.
-\zh{BNPDFormer 编码器包含 5 个块，嵌入维度为 80，并使用 8 维拉普拉斯位置编码。图注意力、语义注意力和时间注意力分别使用 2、2 和 4 个头；它们属于不同的注意力模块，因此不能表述为一个统一的“8 头注意力模块”。事件预测头的隐藏维度为 80。训练 batch size 为 16，输入历史长度为 30 分钟，时间窗口为 1 分钟，未来标签范围为 20 个网格。}
+\zh{PHAST-DP 编码器包含 5 个块，嵌入维度为 80，并使用 8 维拉普拉斯位置编码。图注意力、语义注意力和时间注意力分别使用 2、2 和 4 个头；它们属于不同的注意力模块，因此不能表述为一个统一的“8 头注意力模块”。事件预测头的隐藏维度为 80。训练 batch size 为 16，输入历史长度为 30 分钟，时间窗口为 1 分钟，未来标签范围为 20 个网格。}
 
 Optimization uses AdamW with a fine-tuning learning rate of $5\times10^{-5}$,
 weight decay $0.05$, cosine learning-rate decay, and minimum learning rate
@@ -142,7 +142,7 @@ remaining-time, and cause objectives. STGNPP and the legacy
 the retained configuration.
 \zh{优化器采用 AdamW，微调学习率为 $5\times10^{-5}$，权重衰减为 $0.05$，使用余弦学习率衰减，最低学习率为 $10^{-6}$。最终实验最多训练 100 个 epoch，早停 patience 为 40；事件正例窗口按 4 倍过采样。模型从较早的召回导向 checkpoint \texttt{dense\_i1\_a1\_prefix8} 初始化，解冻最后 5 个编码器块和占用解码器，并联合优化事件、占用、剩余时间和原因任务。最终配置关闭 STGNPP，以及旧版 \texttt{score}/\texttt{will}/\texttt{mark}/\texttt{tts} 预测头。}
 
-The final BNPDFormer configurations are
+The final PHAST-DP configurations are
 \texttt{FactoryBN\_dense\_12\_3\_start\{5,10,15\}\_min8\_opt.json}.
 They use the shared threshold set
 $\{0.45,0.50,0.55,0.60,0.65,0.70,0.75,0.80,0.85,0.90,0.94\}$,
@@ -151,7 +151,7 @@ positive weights of 9/10/11, hard false-positive weighting, occupancy union, and
 progress-weighted remaining-time training. Start10 extends Start5 and Start15
 extends Start10. The prediction threshold is selected independently for each
 checkpoint but never on test data.
-\zh{最终 BNPDFormer 使用配置 \texttt{FactoryBN\_dense\_12\_3\_start\{5,10,15\}\_min8\_opt.json}。三档实验共享阈值候选集合 $\{0.45,0.50,0.55,0.60,0.65,0.70,0.75,0.80,0.85,0.90,0.94\}$，验证集门槛为 $P\geq0.80$ 且 $R\geq0.70$；Start5/10/15 的 upcoming 与远起点正例权重分别为 9/10/11，并使用困难假阳性加权、占用并集和按生产进度加权的剩余时间训练。Start10 继承 Start5，Start15 再继承 Start10。每个 checkpoint 独立选择预测阈值，但测试集从不参与该选择。}
+\zh{最终 PHAST-DP 使用配置 \texttt{FactoryBN\_dense\_12\_3\_start\{5,10,15\}\_min8\_opt.json}。三档实验共享阈值候选集合 $\{0.45,0.50,0.55,0.60,0.65,0.70,0.75,0.80,0.85,0.90,0.94\}$，验证集门槛为 $P\geq0.80$ 且 $R\geq0.70$；Start5/10/15 的 upcoming 与远起点正例权重分别为 9/10/11，并使用困难假阳性加权、占用并集和按生产进度加权的剩余时间训练。Start10 继承 Start5，Start15 再继承 Start10。每个 checkpoint 独立选择预测阈值，但测试集从不参与该选择。}
 
 \section{Main Results / 主实验结果}
 \subsection{Selection of the Retained Main-Model Family / 最终主模型系列的选择}
@@ -221,7 +221,7 @@ majority-class accuracy was $0.409$. All three runs completed 100 epochs.
 \subsection{Final Main-Model Performance / 最终主模型表现}
 \subsubsection{Station-Level Bottleneck Prediction / 工位级瓶颈预测}
 \begin{center}
-\captionof{table}{Final BNPDFormer (\texttt{12\_3}) station-level results; validation is the selected epoch and test uses the frozen checkpoint/threshold. / 最终 BNPDFormer（\texttt{12\_3}）工位级结果；验证列来自入选 epoch，测试列使用冻结的 checkpoint 和阈值。}
+\captionof{table}{Final PHAST-DP (\texttt{12\_3}) station-level results; validation is the selected epoch and test uses the frozen checkpoint/threshold. / 最终 PHAST-DP（\texttt{12\_3}）工位级结果；验证列来自入选 epoch，测试列使用冻结的 checkpoint 和阈值。}
 \label{tab:main-event}
 \scriptsize
 \resizebox{\textwidth}{!}{
@@ -252,7 +252,7 @@ rather than ongoing detection, as the principal limitation.
 
 \subsubsection{Remaining Time and Cause Classification / 剩余时间与原因分类}
 \begin{center}
-\captionof{table}{Final BNPDFormer auxiliary-head results; remaining-time MAE is in minutes. / 最终 BNPDFormer 辅助任务结果；剩余时间 MAE 的单位为分钟。}
+\captionof{table}{Final PHAST-DP auxiliary-head results; remaining-time MAE is in minutes. / 最终 PHAST-DP 辅助任务结果；剩余时间 MAE 的单位为分钟。}
 \scriptsize
 \begin{tabular}{llrrrr}
 \toprule
@@ -269,7 +269,7 @@ $\leq15$ & Test &  9.7 & .974 & .978 & 579 \\
 \end{center}
 
 \begin{center}
-\captionof{table}{Final BNPDFormer per-class cause recall on test; the final two classes have no test support. / 最终 BNPDFormer 测试集逐类别原因召回率；最后两类在测试集中无样本。}
+\captionof{table}{Final PHAST-DP per-class cause recall on test; the final two classes have no test support. / 最终 PHAST-DP 测试集逐类别原因召回率；最后两类在测试集中无样本。}
 \scriptsize
 \begin{tabular}{lrrrrrr}
 \toprule
@@ -516,19 +516,19 @@ metrics. This failed arm is reported rather than silently excluded.
 \subsection{Comparable Setup and Limitations / 对齐设置与局限}
 B4 is BTGCN with a GCN+GRU128 backbone; B5 is BSTAN with scalar
 GAT+GRU128. Each baseline retains its own near-history input and parent
-checkpoint and does not receive BNPDFormer-specific branches. Training follows
+checkpoint and does not receive PHAST-DP-specific branches. Training follows
 Start5$\rightarrow$Start10$\rightarrow$Start15. The six runs use the same
 Start/Min8 semantics, 20 future grids, threshold candidates, 3-min start
-tolerance, and validation checkpoint rule as the final BNPDFormer protocol.
+tolerance, and validation checkpoint rule as the final PHAST-DP protocol.
 All six use the fallback F1 rule because none meets both $P\geq.80$ and
 $R\geq.70$.
-\zh{B4 为采用 GCN+GRU128 骨干的 BTGCN，B5 为采用标量 GAT+GRU128 骨干的 BSTAN。每个基线保留自身的 near 历史输入和父 checkpoint，不引入 BNPDFormer 专有分支。训练顺序为 Start5$\rightarrow$Start10$\rightarrow$Start15。六组实验与最终 BNPDFormer 采用相同的 Start/Min8 语义、20 个未来网格、阈值候选集合、3 分钟起点容差以及验证集选模规则。由于六组都未同时满足 $P\geq.80$ 和 $R\geq.70$，最终均采用 F1 fallback 规则。}
+\zh{B4 为采用 GCN+GRU128 骨干的 BTGCN，B5 为采用标量 GAT+GRU128 骨干的 BSTAN。每个基线保留自身的 near 历史输入和父 checkpoint，不引入 PHAST-DP 专有分支。训练顺序为 Start5$\rightarrow$Start10$\rightarrow$Start15。六组实验与最终 PHAST-DP 采用相同的 Start/Min8 语义、20 个未来网格、阈值候选集合、3 分钟起点容差以及验证集选模规则。由于六组都未同时满足 $P\geq.80$ 和 $R\geq.70$，最终均采用 F1 fallback 规则。}
 
 The baseline split is 138/30/40 rather than 140/28/36, and the 40 baseline test
 episodes have not been evaluated. Therefore, Tables~\ref{tab:b45-val} and
 \ref{tab:b45-train} are complete validation/training reports, but they are not
-test-set evidence that BNPDFormer outperforms B4/B5.
-\zh{基线的数据划分为 138/30/40，而不是主模型的 140/28/36，并且基线的 40 个测试 episode 尚未参与评测。因此，表~\ref{tab:b45-val} 和表~\ref{tab:b45-train} 是完整的验证集/训练集报告，但不能作为 BNPDFormer 在测试集上优于 B4/B5 的证据。}
+test-set evidence that PHAST-DP outperforms B4/B5.
+\zh{基线的数据划分为 138/30/40，而不是主模型的 140/28/36，并且基线的 40 个测试 episode 尚未参与评测。因此，表~\ref{tab:b45-val} 和表~\ref{tab:b45-train} 是完整的验证集/训练集报告，但不能作为 PHAST-DP 在测试集上优于 B4/B5 的证据。}
 
 \begin{landscape}
 \begin{center}
@@ -588,24 +588,24 @@ $0.4778/0.0280$.
 \zh{B5 在三个 Start 档位上的验证 F1 分别比 B4 高 $0.0066$、$0.0292$ 和 $0.0140$，且每一档的剩余时间 MAE 都更低。但 B5 并未在严格 upcoming 召回率上全面占优：Start$\leq10$ 时，B5 为 $0.0314$，低于 B4 的 $0.0353$。两个基线在 upcoming 事件上都较弱。最严重的泛化差距出现在 B4 Start$\leq15$：训练 F1/严格 upcoming 召回率为 $0.8816/0.7332$，验证集则降至 $0.4778/0.0280$。}
 
 \subsection{Overall Discussion and Validity Boundaries / 总体讨论与有效性边界}
-The retained \texttt{12\_3} BNPDFormer reaches test station-level F1 of
+The retained \texttt{12\_3} PHAST-DP reaches test station-level F1 of
 $0.805/0.783/0.772$ and strict upcoming recall of
 $0.539/0.528/0.534$ for Start$\leq5/10/15$. The graph and station-group
 ablations both reduce F1, and graph removal nearly eliminates upcoming recall at
 long horizons. The no-clustering mixed-data experiment also underperforms the
 retained model, but it changes both data composition and clustering, so it
 cannot isolate either factor.
-\zh{最终保留的 \texttt{12\_3} BNPDFormer 在 Start$\leq5/10/15$ 三档上的测试集工位级 F1 分别为 $0.805/0.783/0.772$，严格 upcoming 召回率分别为 $0.539/0.528/0.534$。移除图结构或工位分组都会降低 F1，其中移除图结构几乎使长预测范围的 upcoming 召回能力消失。无聚类混扰数据实验也弱于最终模型，但由于它同时改变了数据组成和聚类设置，因此无法单独识别任何一个因素的影响。}
+\zh{最终保留的 \texttt{12\_3} PHAST-DP 在 Start$\leq5/10/15$ 三档上的测试集工位级 F1 分别为 $0.805/0.783/0.772$，严格 upcoming 召回率分别为 $0.539/0.528/0.534$。移除图结构或工位分组都会降低 F1，其中移除图结构几乎使长预测范围的 upcoming 召回能力消失。无聚类混扰数据实验也弱于最终模型，但由于它同时改变了数据组成和聚类设置，因此无法单独识别任何一个因素的影响。}
 
 Four validity limits must accompany these results. First, all runs use one seed,
 so uncertainty and significance are unknown. Second, B4/B5 currently have no
 test result and use a different episode split; their validation scores cannot be
 presented as a final test ranking. Third, the structure ablations use a smaller,
 from-scratch budget than the warm-started full model. Fourth, remaining-time
-metrics are not uniformly comparable: BNPDFormer reports minute-scale
+metrics are not uniformly comparable: PHAST-DP reports minute-scale
 \texttt{remain\_len\_mae}, while B4/B5 retain middle-progress-weighted values in
 window units. These boundaries are preserved in the tables rather than being
 hidden by a single pooled score.
-\zh{这些结果必须同时说明四项有效性限制。第一，所有实验只使用一个随机种子，因此无法估计不确定性或统计显著性。第二，B4/B5 尚无测试集结果，且采用不同的 episode 划分，所以不能将其验证分数作为最终测试排名。第三，结构消融采用比完整模型更小的、从头训练的预算。第四，剩余时间指标并非完全可比：BNPDFormer 报告以分钟为单位的 \texttt{remain\_len\_mae}，B4/B5 则保留以窗口为单位的中段进度加权值。本文在各表中明确保留这些边界，而不是用一个混合总分掩盖差异。}
+\zh{这些结果必须同时说明四项有效性限制。第一，所有实验只使用一个随机种子，因此无法估计不确定性或统计显著性。第二，B4/B5 尚无测试集结果，且采用不同的 episode 划分，所以不能将其验证分数作为最终测试排名。第三，结构消融采用比完整模型更小的、从头训练的预算。第四，剩余时间指标并非完全可比：PHAST-DP 报告以分钟为单位的 \texttt{remain\_len\_mae}，B4/B5 则保留以窗口为单位的中段进度加权值。本文在各表中明确保留这些边界，而不是用一个混合总分掩盖差异。}
 
 \end{document}

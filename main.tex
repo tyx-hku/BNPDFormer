@@ -85,10 +85,10 @@
 \let\WriteBookmarks\relax
 \def\floatpagepagefraction{1}
 \def\textpagefraction{.001}
-\shorttitle{BNPDFormer for Dynamic Factory Bottleneck Prediction}
+\shorttitle{PHAST-DP for Dynamic Bottleneck Prediction}
 \shortauthors{Yuxiao Tian}
 
-\title [mode = title]{BNPDFormer: Station-Level Dynamic Bottleneck Prediction for Heterogeneous Factory Resources in Digital Manufacturing}
+\title [mode = title]{PHAST-DP: A Process-Informed Heterogeneous-Graph Spatiotemporal Transformer\\for Dynamic Bottleneck Prediction with Delayed Propagation}
 
 \author[1]{Yuxiao Tian}[]
 \cormark[1]
@@ -100,9 +100,9 @@
 
 
 \begin{abstract}
-Dynamic bottleneck prediction is important to digital manufacturing because timely knowledge of a changing throughput constraint enables production intervention before its effects spread across the line. The task is to determine which resource will constrain throughput and to characterize when the event begins, how long it persists, and what observable production condition explains it. Existing studies are limited by the scarcity of bottleneck events in physical factories and by data that predominantly describe machines while underrepresenting workers, buffers, materials, and logistics. Consequently, conventional time-series models and local graph predictors may not fully capture heterogeneous cross-resource interaction or the delayed propagation of a disturbance into a remote station-level constraint. This paper proposes \textbf{BNPDFormer}, a delay-aware spatiotemporal Transformer for fine-grained dynamic bottleneck prediction. A disturbance-controlled digital production line generates traceable human-, material-, machine-, and logistics-related trajectories without disrupting physical production. Process-informed labelling and clustering distinguish sustained bottleneck regimes from normal production patterns, improving data separability and providing operational evidence for cause prediction. A heterogeneous factory graph preserves typed process and logistics relations, while recurrent short-term patterns condition spatiotemporal interaction so that lagged precursors can contribute to prediction. BNPDFormer jointly reports the bottleneck station, onset, duration, process cause, and remaining order time at minute resolution. On the held-out simulation set, report F1 is $0.804/0.778/0.768$ for 5/10/15-min onset caps, with upcoming-event recall near $0.53$. Removing clustering from the data pipeline lowers report F1 to $0.735/0.646/0.637$ and upcoming recall to $0.299/0.324/0.320$, supporting improved operational separability and prediction accuracy from the combined labelling--clustering strategy. Directional entity and delay-pattern ablations further associate heterogeneous observations, cross-type relations, and recurrent pattern conditioning with stronger early warning and process diagnosis. These results support a fine-grained and operationally traceable approach to dynamic bottleneck prediction.
+Dynamic bottleneck prediction is important to digital manufacturing because timely knowledge of a changing throughput constraint enables production intervention before its effects spread across the line. The task is to determine which resource will constrain throughput and to characterize when the event begins, how long it persists, and what observable production condition explains it. Existing studies are limited by the scarcity of bottleneck events in physical factories and by data that predominantly describe machines while underrepresenting workers, buffers, materials, and logistics. Consequently, conventional time-series models and local graph predictors may not fully capture heterogeneous cross-resource interaction or the delayed propagation of a disturbance into a remote station-level constraint. This paper proposes \textbf{PHAST-DP}, a process-informed heterogeneous-graph spatiotemporal Transformer for fine-grained dynamic bottleneck prediction with delayed propagation. A disturbance-controlled digital production line generates traceable human-, material-, machine-, and logistics-related trajectories without disrupting physical production. Process-informed labelling and clustering distinguish sustained bottleneck regimes from normal production patterns, improving data separability and providing operational evidence for cause prediction. A heterogeneous factory graph preserves typed process and logistics relations, while recurrent short-term patterns condition spatiotemporal interaction so that lagged precursors can contribute to prediction. PHAST-DP jointly reports the bottleneck station, onset, duration, process cause, and remaining order time at minute resolution. On the held-out simulation set, report F1 is $0.804/0.778/0.768$ for 5/10/15-min onset caps, with upcoming-event recall near $0.53$. Removing clustering from the data pipeline lowers report F1 to $0.735/0.646/0.637$ and upcoming recall to $0.299/0.324/0.320$, supporting improved operational separability and prediction accuracy from the combined labelling--clustering strategy. Directional entity and delay-pattern ablations further associate heterogeneous observations, cross-type relations, and recurrent pattern conditioning with stronger early warning and process diagnosis. These results support a fine-grained and operationally traceable approach to dynamic bottleneck prediction.
 
-\zhpara{动态瓶颈预测对于数字制造具有重要意义，因为及时获知不断变化的吞吐约束，能够使生产干预在其影响扩散至整条产线之前实施。该任务不仅需要判断未来由哪一资源限制吞吐量，还需要说明事件何时开始、持续多久，以及何种可观测生产状态能够解释该事件。现有研究受到两方面限制：实体工厂中的瓶颈事件样本稀缺；可获取数据又主要描述机器，对人员、缓冲区、物料和物流的表征不足。因此，传统时间序列模型和局部图预测方法难以充分捕捉异构资源之间的交互，以及局部扰动经过一定时延后演变为远端工位约束的过程。为此，本文提出 \textbf{BNPDFormer}，一种面向细粒度动态瓶颈预测的延迟感知时空 Transformer。可控扰动的数字化生产线在不干扰实体生产的条件下生成可追溯的人员、物料、机器和物流轨迹。过程启发式标签与聚类相结合，用于区分持续性瓶颈工况与正常生产模式，从而提高数据可分性，并为原因预测提供运营证据。异构工厂图保留具有类型差异的工艺和物流关系，重复出现的短时模式进一步调节时空交互，使具有时滞的前驱信息能够参与预测。BNPDFormer 以分钟为分辨率，联合报告瓶颈工位、开始时间、持续时间、过程原因和订单剩余时间。在留出仿真测试集上，五/十/十五分钟起点范围的 report F1 分别为 $0.804/0.778/0.768$，upcoming 事件召回率约为 $0.53$。从数据流程中移除聚类后，report F1 降至 $0.735/0.646/0.637$，upcoming 召回率降至 $0.299/0.324/0.320$，支持过程标签—聚类组合能够提高运营状态可分性和预测准确率。方向性多实体与延迟模式消融进一步表明，异构观测、跨类型关系和重复模式条件化与更好的提前预警及过程诊断相关。上述结果支持一种细粒度且具有运营可追溯性的动态瓶颈预测方法。}
+\zhpara{动态瓶颈预测对于数字制造具有重要意义，因为及时获知不断变化的吞吐约束，能够使生产干预在其影响扩散至整条产线之前实施。该任务不仅需要判断未来由哪一资源限制吞吐量，还需要说明事件何时开始、持续多久，以及何种可观测生产状态能够解释该事件。现有研究受到两方面限制：实体工厂中的瓶颈事件样本稀缺；可获取数据又主要描述机器，对人员、缓冲区、物料和物流的表征不足。因此，传统时间序列模型和局部图预测方法难以充分捕捉异构资源之间的交互，以及局部扰动经过一定时延后演变为远端工位约束的过程。为此，本文提出 \textbf{PHAST-DP}，一种面向延迟传播动态瓶颈预测的过程启发式异构图时空 Transformer。可控扰动的数字化生产线在不干扰实体生产的条件下生成可追溯的人员、物料、机器和物流轨迹。过程启发式标签与聚类相结合，用于区分持续性瓶颈工况与正常生产模式，从而提高数据可分性，并为原因预测提供运营证据。异构工厂图保留具有类型差异的工艺和物流关系，重复出现的短时模式进一步调节时空交互，使具有时滞的前驱信息能够参与预测。PHAST-DP 以分钟为分辨率，联合报告瓶颈工位、开始时间、持续时间、过程原因和订单剩余时间。在留出仿真测试集上，五/十/十五分钟起点范围的 report F1 分别为 $0.804/0.778/0.768$，upcoming 事件召回率约为 $0.53$。从数据流程中移除聚类后，report F1 降至 $0.735/0.646/0.637$，upcoming 召回率降至 $0.299/0.324/0.320$，支持过程标签—聚类组合能够提高运营状态可分性和预测准确率。方向性多实体与延迟模式消融进一步表明，异构观测、跨类型关系和重复模式条件化与更好的提前预警及过程诊断相关。上述结果支持一种细粒度且具有运营可追溯性的动态瓶颈预测方法。}
 \end{abstract}
 
 \begin{keywords}
@@ -133,17 +133,17 @@ Despite progress in bottleneck prediction, three limitations remain. First, exis
 
 \zhpara{尽管瓶颈预测已取得进展，现有研究仍存在三方面不足。第一，已有研究主要建模机器或工位数据。时间序列和循环方法通常依据以机器为中心的观测预测活跃期、阻塞、饥饿或瓶颈评分~\cite{li2011throughput,subramaniyan2018data,lai2018twolayer,liu2023lstmdam}；图模型进一步引入工位、任务或物料流关系~\cite{lai2023bstan,yin2025btgcn,ma2023tusb,cen2025dstnn,wu2025knowledge}。然而，人员、物料可用性、缓冲区、龙门和运输机器人很少被纳入统一表示，尽管这些资源之间的交互会共同决定吞吐约束在何处、何时出现。第二，瓶颈监督数据难以构造。正常生产中的瓶颈正样本稀少，而在实体工厂主动制造设备故障、人员离岗、物料短缺或物流中断成本高且会干扰生产。由利用率、阻塞或饥饿构成的传统标量评分与转折点指标~\cite{li2009data,subramaniyan2023throughput,lai2021data,su2022dynamic}能够支持事后分析，但孤立阈值穿越容易混淆瞬时波动与持续性约束，并且对运营原因提供的证据有限。正常状态与瓶颈状态之间可分性不足，不仅增加模型学习难度，也削弱预测结果的可解释性。第三，动态瓶颈具有跨资源延迟传播属性。扰动可能经过运输和缓冲后，才在下游工位表现为阻塞或饥饿，因此扰动起源资源可能不同于随后限制吞吐量的资源。循环传递和局部图聚合能够刻画时间或邻域依赖，却没有显式对齐更早的跨资源模式与其延迟后果。上述不足共同要求一种能够统一处理异构观测、过程一致监督和延迟感知预测的方法。}
 
-To address these limitations, we propose \textbf{BNPDFormer}. A disturbance-controlled digital-twin production line provides traceable trajectories of machines, workers, material supply, buffers, gantries, and transport robots without interrupting physical production~\cite{lu2020digital,isaacsim2026,xue2026safe}. These observations are organized as a heterogeneous process--logistics graph: machines and handling resources are represented as interacting entities, while material shortage, buffer occupancy, labour availability, and transport delay provide resource-specific operational context. Process-informed rules then combine queue, blockage, starvation, availability, shortage, and logistics evidence with persistence requirements to construct sustained bottleneck events. Clustering complements these rules by grouping recurrent operating regimes and short-term precursor patterns, thereby increasing the separability of bottleneck and normal states and linking predictions to recognizable production evidence rather than an opaque score. Finally, a delay-pattern module is incorporated into a spatiotemporal Transformer adapted from PDFormer~\cite{jiang2023pdformer}. The module uses recurrent short-term patterns to condition cross-resource attention, enabling earlier resource states to contribute to the prediction of constraints that emerge elsewhere after a lag. The resulting model produces a minute-level report of bottleneck station, onset, duration, observable process cause, and remaining order time.
+To address these limitations, we propose \textbf{PHAST-DP}. A disturbance-controlled digital-twin production line provides traceable trajectories of machines, workers, material supply, buffers, gantries, and transport robots without interrupting physical production~\cite{lu2020digital,isaacsim2026,xue2026safe}. These observations are organized as a heterogeneous process--logistics graph: machines and handling resources are represented as interacting entities, while material shortage, buffer occupancy, labour availability, and transport delay provide resource-specific operational context. Process-informed rules then combine queue, blockage, starvation, availability, shortage, and logistics evidence with persistence requirements to construct sustained bottleneck events. Clustering complements these rules by grouping recurrent operating regimes and short-term precursor patterns, thereby increasing the separability of bottleneck and normal states and linking predictions to recognizable production evidence rather than an opaque score. Finally, a delay-pattern module is incorporated into a spatiotemporal Transformer adapted from PDFormer~\cite{jiang2023pdformer}. The module uses recurrent short-term patterns to condition cross-resource attention, enabling earlier resource states to contribute to the prediction of constraints that emerge elsewhere after a lag. The resulting model produces a minute-level report of bottleneck station, onset, duration, observable process cause, and remaining order time.
 
-\zhpara{为解决上述问题，本文提出 \textbf{BNPDFormer}。可控扰动的数字孪生生产线在不干扰实体生产的条件下，提供机器、人员、物料供给、缓冲区、龙门和运输机器人的可追溯轨迹~\cite{lu2020digital,isaacsim2026,xue2026safe}。这些观测被组织为异构工艺—物流图：机器与搬运资源作为相互作用的实体，物料短缺、缓冲区占用、人员可用性和运输延迟则提供与资源类型相关的运营上下文。随后，过程启发式规则将队列、阻塞、饥饿、可用性、缺料和物流证据与持续性条件结合，构造持续性瓶颈事件。聚类作为规则的补充，对重复出现的运行工况和短时前驱模式进行分组，从而提高瓶颈状态与正常状态的可分性，并使预测能够对应可识别的生产证据，而不是停留在不透明的评分层面。最后，本文在由 PDFormer~\cite{jiang2023pdformer}改造的时空 Transformer 中加入延迟模式模块。该模块利用重复短时模式调节跨资源注意力，使较早资源状态能够参与预测经过一定时滞后在其他位置显现的约束。最终模型生成分钟级瓶颈报告，包括瓶颈工位、开始时间、持续时间、可观测过程原因和订单剩余时间。}
+\zhpara{为解决上述问题，本文提出 \textbf{PHAST-DP}。可控扰动的数字孪生生产线在不干扰实体生产的条件下，提供机器、人员、物料供给、缓冲区、龙门和运输机器人的可追溯轨迹~\cite{lu2020digital,isaacsim2026,xue2026safe}。这些观测被组织为异构工艺—物流图：机器与搬运资源作为相互作用的实体，物料短缺、缓冲区占用、人员可用性和运输延迟则提供与资源类型相关的运营上下文。随后，过程启发式规则将队列、阻塞、饥饿、可用性、缺料和物流证据与持续性条件结合，构造持续性瓶颈事件。聚类作为规则的补充，对重复出现的运行工况和短时前驱模式进行分组，从而提高瓶颈状态与正常状态的可分性，并使预测能够对应可识别的生产证据，而不是停留在不透明的评分层面。最后，本文在由 PDFormer~\cite{jiang2023pdformer}改造的时空 Transformer 中加入延迟模式模块。该模块利用重复短时模式调节跨资源注意力，使较早资源状态能够参与预测经过一定时滞后在其他位置显现的约束。最终模型生成分钟级瓶颈报告，包括瓶颈工位、开始时间、持续时间、可观测过程原因和订单剩余时间。}
 
 The contributions of this work are summarized as follows. (1) We extend dynamic bottleneck prediction from machine-centred observations to heterogeneous multi-entity factory data. Machines, workers, material-supply states, buffers, gantries, and transport robots are jointly represented with their process and logistics relations, enabling the model to capture bottlenecks arising from production, labour, material, and handling interactions rather than from machine states alone. (2) We develop a process-informed labelling and clustering strategy for bottleneck data whose positive events are scarce and weakly separable from normal fluctuations. Resource-specific rules and persistence constraints provide operationally meaningful event labels, while clustering organizes recurrent regimes and precursor patterns. Their combination improves data separability and supports interpretation through observable evidence associated with event formation and process cause. (3) We propose a delay-aware spatiotemporal Transformer for dynamic bottleneck propagation. Its delay-pattern module conditions cross-resource interaction on relevant historical patterns, allowing the model to associate an upstream precursor with a downstream constraint that appears after transport, buffering, or service delay.
 
 \zhpara{本文的主要贡献如下。（1）将动态瓶颈预测从以机器为中心的观测扩展到工厂异构多实体数据。机器、人员、物料供给状态、缓冲区、龙门和运输机器人及其工艺与物流关系被纳入联合表示，使模型能够捕捉由生产、人员、物料和搬运交互形成的瓶颈，而不再只依赖机器状态。（2）针对瓶颈正事件稀缺、且与正常生产波动可分性不足的问题，提出过程启发式标签与聚类相结合的数据构造策略。资源类型相关规则与持续性约束提供具有运营含义的事件标签，聚类则组织重复出现的运行工况和前驱模式。两者结合提高数据可分性，并通过与事件形成和过程原因相关的可观测证据支持预测解释。（3）针对动态瓶颈的延迟传播问题，提出延迟感知时空 Transformer。其延迟模式模块依据相关历史模式调节跨资源交互，使模型能够将上游前驱状态与经过运输、缓冲或服务时延后出现的下游约束联系起来。}
 
-The remainder of this paper is organized as follows. Section~\ref{sec:review} reviews bottleneck detection and prediction methods and spatiotemporal graph forecasting. Section~\ref{sec:problem} formulates the station-level dynamic bottleneck prediction problem. Section~\ref{sec:method} presents the disturbance-controlled data pipeline and BNPDFormer architecture. Section~\ref{sec:exp} reports the experimental setup and results.
+The remainder of this paper is organized as follows. Section~\ref{sec:review} reviews bottleneck detection and prediction methods and spatiotemporal graph forecasting. Section~\ref{sec:problem} formulates the station-level dynamic bottleneck prediction problem. Section~\ref{sec:method} presents the disturbance-controlled data pipeline and PHAST-DP architecture. Section~\ref{sec:exp} reports the experimental setup and results.
 
-\zhpara{本文其余部分组织如下：第~\ref{sec:review}节综述瓶颈检测与预测方法以及时空图预测研究；第~\ref{sec:problem}节形式化工位级动态瓶颈预测问题；第~\ref{sec:method}节介绍可控扰动的数据处理流程与 BNPDFormer 架构；第~\ref{sec:exp}节报告实验设置与结果。}
+\zhpara{本文其余部分组织如下：第~\ref{sec:review}节综述瓶颈检测与预测方法以及时空图预测研究；第~\ref{sec:problem}节形式化工位级动态瓶颈预测问题；第~\ref{sec:method}节介绍可控扰动的数据处理流程与 PHAST-DP 架构；第~\ref{sec:exp}节报告实验设置与结果。}
 
 %% ========================================================================
 \section{Literature review} \label{sec:review}
@@ -215,9 +215,9 @@ Three gaps emerge from the reviewed literature. First, delayed cross-resource in
 
 \zhpara{上述文献揭示出三项研究空白。第一，制造瓶颈预测对跨资源延迟影响的表示仍不充分。现有循环模型和图模型能够刻画时间依赖与资源关系，但通常不会依据约束传播前反复出现的历史模式来调节跨工位交互。第二，资源表示仍较为狭窄。多数瓶颈预测器以机器、工位或管理任务为中心，对于机器、人员、缓冲区、龙门、运输机器人及其类型化工艺—物流关系的统一表示尚不充分。第三，面向制造瓶颈预测的 Transformer 研究仍较少。交通模型提供了长距离与延迟感知交互机制，但将其迁移到制造场景需要重新定义状态语义、事件、图关系，并通过实验证明这些机制确实改善即将发生事件的预测。}
 
-BNPDFormer is positioned at the intersection of these gaps. It treats bottlenecks as sustained station events rather than isolated score peaks, represents heterogeneous production and logistics resources in one graph, and adapts delay-pattern-enhanced spatial and temporal attention to predict event location, onset, duration, process cause, and order-level consequence. The model does not assume that clustering labels are bottleneck truth or that learned attention is a physical causal path. Instead, these mechanisms are evaluated as representation choices through the protocol and structure analyses reported in Section~\ref{sec:exp}.
+PHAST-DP is positioned at the intersection of these gaps. It treats bottlenecks as sustained station events rather than isolated score peaks, represents heterogeneous production and logistics resources in one graph, and adapts delay-pattern-enhanced spatial and temporal attention to predict event location, onset, duration, process cause, and order-level consequence. The model does not assume that clustering labels are bottleneck truth or that learned attention is a physical causal path. Instead, these mechanisms are evaluated as representation choices through the protocol and structure analyses reported in Section~\ref{sec:exp}.
 
-\zhpara{BNPDFormer 位于上述研究空白的交叉点：它将瓶颈定义为持续性工位事件而非孤立评分峰值，在同一图中表示异构生产与物流资源，并将延迟模式增强的空间和时间注意力用于预测事件位置、起点、持续时间、过程原因及订单层后果。本文不假设聚类标签就是瓶颈真值，也不把学习到的注意力视为物理因果路径，而是通过第~\ref{sec:exp}节的协议与结构分析，将这些机制作表示选择加以检验。}
+\zhpara{PHAST-DP 位于上述研究空白的交叉点：它将瓶颈定义为持续性工位事件而非孤立评分峰值，在同一图中表示异构生产与物流资源，并将延迟模式增强的空间和时间注意力用于预测事件位置、起点、持续时间、过程原因及订单层后果。本文不假设聚类标签就是瓶颈真值，也不把学习到的注意力视为物理因果路径，而是通过第~\ref{sec:exp}节的协议与结构分析，将这些机制作表示选择加以检验。}
 
 %% ========================================================================
 \section{Problem Formulation}\label{sec:problem}
@@ -225,9 +225,9 @@ BNPDFormer is positioned at the intersection of these gaps. It treats bottleneck
 
 \subsection{Production task and resource entities}
 
-This section defines the prediction problem before introducing the learning method. We first specify the production task and heterogeneous entities, then formalize observations and graph relations, construct operational bottleneck events, and finally define the model input, outputs, and report-level success criterion. This ordering separates what must be predicted from how BNPDFormer performs the prediction.
+This section defines the prediction problem before introducing the learning method. We first specify the production task and heterogeneous entities, then formalize observations and graph relations, construct operational bottleneck events, and finally define the model input, outputs, and report-level success criterion. This ordering separates what must be predicted from how PHAST-DP performs the prediction.
 
-\zhpara{本节在介绍学习方法之前定义预测问题。首先说明生产任务和异构实体，随后形式化观测状态与图关系，再构造运营瓶颈事件，最后定义模型输入、输出及报告级成功条件。这样的顺序将“需要预测什么”与“BNPDFormer 如何完成预测”明确分开。}
+\zhpara{本节在介绍学习方法之前定义预测问题。首先说明生产任务和异构实体，随后形式化观测状态与图关系，再构造运营瓶颈事件，最后定义模型输入、输出及报告级成功条件。这样的顺序将“需要预测什么”与“PHAST-DP 如何完成预测”明确分开。}
 
 We consider a shared digital-manufacturing line that produces water pipes through cutting, grooving, spot welding, root welding, surface welding, and finishing operations. The process is coupled with storage, gantry handling, transport-robot delivery, and human service. The graph implementation represents the primary process backbone with seven workstation nodes because parallel workbench and rotary-welding resources are retained as separate stations. Each production episode contains one order of ten products, and the nominal controller admits at most five products as concurrent WIP. It coordinates admission, process precedence, resource availability, and handling tasks; bottleneck prediction observes this controlled process but does not replace the controller.
 
@@ -313,9 +313,9 @@ The raw binary grid is converted into sustained occupancy. In the retained confi
 o_{:,n}=\mathcal{F}_{g}\!\left(\mathcal{D}_{m}
 \left(b^{\mathrm{raw}}_{:,n}\right)\right).
 \end{equation}
-This persistence requirement rejects isolated threshold crossings. It should not be confused with the offline event CSV, whose score-event merge can retain a one-window event; BNPDFormer training targets are generated from the operational occupancy grid and use the eight-window criterion.
+This persistence requirement rejects isolated threshold crossings. It should not be confused with the offline event CSV, whose score-event merge can retain a one-window event; PHAST-DP training targets are generated from the operational occupancy grid and use the eight-window criterion.
 
-\zhpara{原始二值网格随后被转换为持续性占用。在最终配置中，首先删除短于 $m=8$ 个窗口的热段；若保留热段之间存在不超过 $g=1$ 个窗口的冷间隙，再将该间隙填补。以 $\mathcal{D}_m$ 表示短段删除、$\mathcal{F}_g$ 表示间隙填补，则代码采用的 legacy 顺序为 $o_{:,n}=\mathcal{F}_{g}(\mathcal{D}_{m}(b^{\mathrm{raw}}_{:,n}))$。该持续性要求用于排除孤立阈值穿越。它不能与离线事件 CSV 的评分事件合并规则混淆：后者可保留一个窗口的事件，而 BNPDFormer 训练目标来自运营占用网格，并采用八窗口条件。}
+\zhpara{原始二值网格随后被转换为持续性占用。在最终配置中，首先删除短于 $m=8$ 个窗口的热段；若保留热段之间存在不超过 $g=1$ 个窗口的冷间隙，再将该间隙填补。以 $\mathcal{D}_m$ 表示短段删除、$\mathcal{F}_g$ 表示间隙填补，则代码采用的 legacy 顺序为 $o_{:,n}=\mathcal{F}_{g}(\mathcal{D}_{m}(b^{\mathrm{raw}}_{:,n}))$。该持续性要求用于排除孤立阈值穿越。它不能与离线事件 CSV 的评分事件合并规则混淆：后者可保留一个窗口的事件，而 PHAST-DP 训练目标来自运营占用网格，并采用八窗口条件。}
 
 For a history ending immediately before window $t$, the primary target for station $n$ is
 \begin{equation}
@@ -380,7 +380,7 @@ Occurrence precision, recall, and F1 quantify the coverage and reliability of al
 
 \subsection{Method overview}
 
-BNPDFormer is organized around the three contributions established in Section~\ref{sec:intro}. First, controlled simulation, a heterogeneous factory graph, and grouped embedding integrate machine, human, material-flow, buffer, gantry, and transport evidence. Second, process-informed event construction and recurrent-pattern grouping address scarce, weakly separable supervision while retaining traceability to observable production evidence. Third, pattern-enhanced spatiotemporal attention addresses delayed propagation. The complete information flow is
+PHAST-DP is organized around the three contributions established in Section~\ref{sec:intro}. First, controlled simulation, a heterogeneous factory graph, and grouped embedding integrate machine, human, material-flow, buffer, gantry, and transport evidence. Second, process-informed event construction and recurrent-pattern grouping address scarce, weakly separable supervision while retaining traceability to observable production evidence. Third, pattern-enhanced spatiotemporal attention addresses delayed propagation. The complete information flow is
 \begin{equation}
 \begin{aligned}
 \text{simulation}&\rightarrow\text{window/event construction}\\
@@ -389,16 +389,16 @@ BNPDFormer is organized around the three contributions established in Section~\r
 \end{equation}
 The first two stages create reproducible observations and targets. The latter two parameterize the mapping $f_\theta$ defined in Section~\ref{sec:problem}.
 
-\zhpara{BNPDFormer 围绕第~\ref{sec:intro}节提出的三项贡献组织。第一，可控仿真、异构工厂图和分组嵌入联合机器、人员、物料流、缓冲区、龙门和运输证据；第二，过程启发式事件构造与重复模式分组面向正样本稀缺和监督可分性不足，并保持预测对可观测生产证据的可追溯性；第三，模式增强时空注意力用于处理延迟传播。完整信息流为“仿真生成—窗口与事件构造—工厂图—联合预测”。前两个阶段形成可复现观测与目标，后两个阶段参数化第~\ref{sec:problem}节定义的映射 $f_\theta$。}
+\zhpara{PHAST-DP 围绕第~\ref{sec:intro}节提出的三项贡献组织。第一，可控仿真、异构工厂图和分组嵌入联合机器、人员、物料流、缓冲区、龙门和运输证据；第二，过程启发式事件构造与重复模式分组面向正样本稀缺和监督可分性不足，并保持预测对可观测生产证据的可追溯性；第三，模式增强时空注意力用于处理延迟传播。完整信息流为“仿真生成—窗口与事件构造—工厂图—联合预测”。前两个阶段形成可复现观测与目标，后两个阶段参数化第~\ref{sec:problem}节定义的映射 $f_\theta$。}
 
-Figure~\ref{fig:method-flow} organizes the method into four modules. The environment is a disturbance-controlled water-pipe line. Data processing converts its logs into minute windows, process-informed sustained labels, and clustered short-term patterns. BNPDFormer then encodes these inputs with grouped embeddings and temporal, graph, and semantic attention, using the clustered patterns to condition delayed cross-station interaction. The report states the bottleneck station, onset, duration, process cause, and remaining order time.
+Figure~\ref{fig:method-flow} presents the complete PHAST-DP workflow. A disturbance-controlled water-pipe line produces multi-entity trajectories, which are converted into minute-level states, process-informed sustained labels, clustered short-term patterns, and a heterogeneous factory graph. Grouped resource embeddings and temporal, geographic, and semantic attention then integrate these inputs, while the clustered pattern keys condition delayed cross-station interaction. Multi-task heads finally report the bottleneck station, onset, duration, process cause, and remaining order time.
 
-\zhpara{图~\ref{fig:method-flow} 将方法组织为四个模块。环境是一条可控扰动的水管产线。数据处理把日志转为分钟窗口、过程启发式持续性标签和短时模式聚类。BNPDFormer 再用分组嵌入以及时间、图和语义注意力编码这些输入，并用聚类模式调节跨工位的延迟交互。报告给出瓶颈工位、开始时间、持续时间、过程原因和订单剩余时间。}
+\zhpara{图~\ref{fig:method-flow} 展示 PHAST-DP 的完整流程。可控扰动的水管产线生成多实体轨迹，随后构造分钟级状态、过程启发式持续性标签、短时模式聚类和异构工厂图。分组资源嵌入以及时间、地理和语义注意力对这些输入进行联合编码，聚类模式键进一步调节跨工位的延迟交互。最终，多任务预测头输出瓶颈工位、开始时间、持续时间、过程原因和订单剩余时间。}
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=\textwidth]{figures/fig_method_flow.pdf}
-\caption{Four modules of station-level dynamic bottleneck prediction: the disturbance-controlled environment, process-informed labelling with short-pattern clustering, the BNPDFormer encoder, and the multi-attribute prediction report.}
+\includegraphics[width=\textwidth]{figures/fig_method_framework.pdf}
+\caption{Overview of PHAST-DP. Disturbance-controlled simulation supplies heterogeneous factory trajectories; process-informed event construction, short-pattern clustering, and the heterogeneous graph provide supervision and structured inputs; and the spatiotemporal Transformer produces a multi-attribute bottleneck report. Coloured banners mark the three contributions, each contrasting the limitation of prior work with the PHAST-DP design: a multi-entity heterogeneous graph instead of machine-only nodes, sustained process-informed events instead of threshold spikes, and a delay-propagation module that captures lagged precursors instead of same-time links.}
 \label{fig:method-flow}
 \end{figure*}
 
@@ -584,9 +584,9 @@ The occupancy term combines type-balanced binary cross-entropy, soft Dice, and s
 
 \subsection{Validation-controlled decoding}
 
-Training loss alone does not define an operational report. At inference, BNPDFormer first chooses the continuation logit for historically hot stations and the onset logit for historically cold stations. Prefix evidence can lift an ongoing occurrence and set its onset to zero. Predicted occupancy runs can be united with the event head when they satisfy the minimum-duration rule, including a separate upcoming union. Type-specific report thresholds are retained for gantries and transport robots, and events whose predicted onset exceeds the active cap are removed.
+Training loss alone does not define an operational report. At inference, PHAST-DP first chooses the continuation logit for historically hot stations and the onset logit for historically cold stations. Prefix evidence can lift an ongoing occurrence and set its onset to zero. Predicted occupancy runs can be united with the event head when they satisfy the minimum-duration rule, including a separate upcoming union. Type-specific report thresholds are retained for gantries and transport robots, and events whose predicted onset exceeds the active cap are removed.
 
-\zhpara{训练损失本身并不能完整定义运营报告。推理时，BNPDFormer 对历史热工位使用持续事件 logit，对历史冷工位使用未来起点 logit；prefix 证据可以提升 ongoing 发生概率并将其起点设为零；满足最短持续时间的预测占用段可以与事件头取并集，其中 upcoming 事件采用独立并集逻辑。模型还为龙门和运输机器人保留资源类型相关报告阈值，并删除预测起点超过当前上限的事件。}
+\zhpara{训练损失本身并不能完整定义运营报告。推理时，PHAST-DP 对历史热工位使用持续事件 logit，对历史冷工位使用未来起点 logit；prefix 证据可以提升 ongoing 发生概率并将其起点设为零；满足最短持续时间的预测占用段可以与事件头取并集，其中 upcoming 事件采用独立并集逻辑。模型还为龙门和运输机器人保留资源类型相关报告阈值，并删除预测起点超过当前上限的事件。}
 
 The global report threshold is not tuned on the test set. Candidate thresholds are swept on validation data. The retained checkpoint must satisfy the configured validation precision and recall gate when possible, after which station F1 determines selection; if no candidate opens the gate, the documented fallback rule is used. The chosen checkpoint and threshold are then frozen for held-out evaluation. This separation is essential because the decoder contains several event-consistency rules and could otherwise be inadvertently fitted to the test distribution.
 
@@ -606,9 +606,9 @@ The NVIDIA Isaac Sim line described in Section~\ref{sec:method} records complete
 
 \zhpara{第~\ref{sec:method}节所述 NVIDIA Isaac Sim 产线记录从正常运行到事件形成、持续和恢复的完整轨迹。最终 \texttt{dense\_i1} 数据包包含二百零四个 episode 和三十八个资源，并按 episode 划分为 140/28/36 个训练、验证和测试 episode，对应 20,826/4,331/5,354 个窗口。每个样本包含三十分钟历史和一分钟分辨率的二十分钟未来标签网格；允许的事件起点上限分别为五、十和十五分钟，upcoming 事件必须满足八窗口持续性条件。由于改变起点上限会改变正例集合，本文不合并不同预测范围的结果。}
 
-The retained BNPDFormer uses five encoder blocks, latent dimension 80, eight-dimensional Laplacian encoding, temporal/geographic/semantic head allocation $4/2/2$, a four-hop geographic mask, five semantic neighbours, and sixteen length-three pattern keys. AdamW uses batch size 16, learning rate $5\times10^{-5}$, weight decay $0.05$, cosine decay to $10^{-6}$, and fourfold positive-window oversampling. The retained model is warm-started and trained for at most 100 epochs; the 10- and 15-min tasks continue from the preceding horizon.
+The retained PHAST-DP uses five encoder blocks, latent dimension 80, eight-dimensional Laplacian encoding, temporal/geographic/semantic head allocation $4/2/2$, a four-hop geographic mask, five semantic neighbours, and sixteen length-three pattern keys. AdamW uses batch size 16, learning rate $5\times10^{-5}$, weight decay $0.05$, cosine decay to $10^{-6}$, and fourfold positive-window oversampling. The retained model is warm-started and trained for at most 100 epochs; the 10- and 15-min tasks continue from the preceding horizon.
 
-\zhpara{最终 BNPDFormer 使用五个编码器模块、八十维潜表示、八维拉普拉斯编码、$4/2/2$ 的时间/地理/语义注意力头、四跳地理掩码、五个语义邻居，以及十六个长度为三的模式键。AdamW 的 batch size 为 16，学习率为 $5\times10^{-5}$，权重衰减为 $0.05$，并采用余弦衰减至 $10^{-6}$ 和四倍正例窗口过采样。最终模型使用热启动且最多训练一百个 epoch；十分钟和十五分钟任务分别从前一预测范围继续训练。}
+\zhpara{最终 PHAST-DP 使用五个编码器模块、八十维潜表示、八维拉普拉斯编码、$4/2/2$ 的时间/地理/语义注意力头、四跳地理掩码、五个语义邻居，以及十六个长度为三的模式键。AdamW 的 batch size 为 16，学习率为 $5\times10^{-5}$，权重衰减为 $0.05$，并采用余弦衰减至 $10^{-6}$ 和四倍正例窗口过采样。最终模型使用热启动且最多训练一百个 epoch；十分钟和十五分钟任务分别从前一预测范围继续训练。}
 
 Station precision, recall, and F1 evaluate location identification. Report F1 additionally requires $|\hat{s}-s|\leq3$ min. Upcoming report recall is the primary early-warning measure, whereas ongoing station recall measures continuity monitoring. Remaining-order-time uses minute-scale MAE, and process-cause prediction uses accuracy and macro recall over the four supported classes. Checkpoints and thresholds are selected on validation only; test values are reported after freezing both. All runs use seed 42, so differences are observed effect sizes, not significance estimates.
 
@@ -632,7 +632,7 @@ RQ3 & disable short-pattern injection in geographic attention & Report F1, $R_{\
 \end{tabularx}
 \end{table}
 
-\subsection{Performance of the retained BNPDFormer}
+\subsection{Performance of the retained PHAST-DP}
 
 \subsubsection{Held-out station identification}
 
@@ -642,7 +642,7 @@ Table~\ref{tab:main-event} presents the held-out results of the retained model. 
 
 \begin{table}[t]
 \centering
-\caption{Held-out station-level performance of the retained BNPDFormer.}
+\caption{Held-out station-level performance of the retained PHAST-DP.}
 \label{tab:main-event}
 \scriptsize
 \setlength{\tabcolsep}{3pt}
@@ -836,9 +836,9 @@ As in RQ1, this is not an equal-budget causal estimate: the retained model is wa
 
 \subsection{Context experiments and comparison boundary}
 
-BTGCN and BSTAN were evaluated on a separate 138/30/40 split and have validation results only. Their longest-range validation F1 values are $0.4778$ and $0.4918$, with upcoming recall $0.0280$ and $0.0291$, but their test subset is unevaluated and their remaining-time metric uses a different weighting and unit. These runs motivate the early-warning problem but cannot establish BNPDFormer test superiority or a state-of-the-art ranking.
+BTGCN and BSTAN were evaluated on a separate 138/30/40 split and have validation results only. Their longest-range validation F1 values are $0.4778$ and $0.4918$, with upcoming recall $0.0280$ and $0.0291$, but their test subset is unevaluated and their remaining-time metric uses a different weighting and unit. These runs motivate the early-warning problem but cannot establish PHAST-DP test superiority or a state-of-the-art ranking.
 
-\zhpara{BTGCN 和 BSTAN 使用另一份 138/30/40 划分且只有验证结果；其最长范围验证 F1 分别为 $0.4778$ 和 $0.4918$，upcoming 召回率为 $0.0280$ 和 $0.0291$，但测试子集尚未评估，订单剩余时间指标的权重和单位也不同。这些运行可以说明提前预警的困难，但不能证明 BNPDFormer 在测试集上优于基线或达到最先进水平。}
+\zhpara{BTGCN 和 BSTAN 使用另一份 138/30/40 划分且只有验证结果；其最长范围验证 F1 分别为 $0.4778$ 和 $0.4918$，upcoming 召回率为 $0.0280$ 和 $0.0291$，但测试子集尚未评估，订单剩余时间指标的权重和单位也不同。这些运行可以说明提前预警的困难，但不能证明 PHAST-DP 在测试集上优于基线或达到最先进水平。}
 
 \subsection{Discussion and validity boundaries}
 
