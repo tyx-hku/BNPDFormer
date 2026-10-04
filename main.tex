@@ -54,18 +54,26 @@
 \usepackage{booktabs}
 \usepackage{subcaption}
 \captionsetup{font={small,rm},labelfont={bf,rm}}
-\usepackage{utfsym}
 \usepackage{xcolor}
 \usepackage{soul}
 \usepackage{amsthm}
 \usepackage{amsmath}
 \usepackage{xeCJK}
-\setmainfont{Times New Roman}
-\setsansfont{Arial}
-\setmonofont{Consolas}
-\setCJKmainfont{Microsoft YaHei}
-\setCJKsansfont{Microsoft YaHei}
-\setCJKmonofont{Microsoft YaHei}
+% Prefer the manuscript's system fonts on the local Mac. The file-existence
+% checks select bundled TeX fonts when the built-in compiler cannot access the
+% system-font paths.
+\IfFileExists{/System/Library/Fonts/Supplemental/Times New Roman.ttf}
+  {\setmainfont{Times New Roman}}
+  {\setmainfont{lmroman10-regular.otf}}
+\IfFileExists{/System/Library/Fonts/Supplemental/Arial.ttf}
+  {\setsansfont{Arial}}
+  {\setsansfont{lmsans10-regular.otf}}
+\IfFileExists{/System/Library/Fonts/Supplemental/Consolas.ttf}
+  {\setmonofont{Consolas}}
+  {\setmonofont{lmmono10-regular.otf}}
+\setCJKmainfont{FandolSong-Regular.otf}
+\setCJKsansfont{FandolHei-Regular.otf}
+\setCJKmonofont{FandolHei-Regular.otf}
 \newcommand{\zhpara}[1]{%
   \par\begingroup\small\color{black!72}\noindent #1\par\endgroup}
 \newcommand{\uprep}{$R_{\mathrm{up}}^{\mathrm{rep}}$}
@@ -397,7 +405,9 @@ Figure~\ref{fig:method-flow} organizes the method into four modules. The environ
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=\textwidth]{figures/fig_method_flow.pdf}
+\IfFileExists{figures/fig_method_flow.png}{%
+\includegraphics[width=\textwidth]{figures/fig_method_flow.png}%
+}{}
 \caption{Four modules of station-level dynamic bottleneck prediction: the disturbance-controlled environment, process-informed labelling with short-pattern clustering, the BNPDFormer encoder, and the multi-attribute prediction report.}
 \label{fig:method-flow}
 \end{figure*}
@@ -594,227 +604,349 @@ The global report threshold is not tuned on the test set. Candidate thresholds a
 
 %% ========================================================================
 \section{Experiments}\label{sec:exp}
-%% ========================================================================
 
-The evaluation is organized one-to-one around the three contributions rather than around training runs. \textbf{RQ1} asks whether heterogeneous entity observations and cross-type relations improve station-level prediction relative to machine-centred information. \textbf{RQ2} asks whether process-informed labels together with recurrent-pattern grouping produce a more discriminative and operationally traceable event representation. \textbf{RQ3} asks whether delay-pattern conditioning improves prediction of bottlenecks that emerge after cross-resource lag. Before these mechanism questions, the complete model is evaluated on the common station-event task; afterwards, limitations and non-comparable development baselines are stated explicitly.
+This chapter evaluates BNPDFormer in the order required to assess the complete method: the data and common protocol are first fixed, the retained model is then evaluated on event, temporal, and auxiliary tasks, and the same metrics are used to compare representative baselines. Ablation studies isolate heterogeneous observations, process-informed data construction, and delay-pattern conditioning. A traceability case study and a generalization analysis complete the empirical evaluation.
 
-\zhpara{实验不再按训练批次组织，而是与三项贡献一一对应。\textbf{RQ1}：与以机器为中心的信息相比，异构实体观测和跨类型关系是否改善工位级预测？\textbf{RQ2}：过程启发式标签与重复模式分组能否形成可分性更强、且具有运营可追溯性的事件表示？\textbf{RQ3}：延迟模式条件化是否改善经过跨资源时滞后才显现的瓶颈预测？在回答上述机制问题之前，本文先在统一的工位事件任务上评价完整模型；随后明确说明有效性边界及不可直接比较的开发阶段基线。}
+\zhpara{本章按照完整评价流程组织实验：首先固定数据与统一实验协议，随后在事件、时间和辅助任务上评价最终模型，并使用相同指标与具有代表性的基线进行比较；接着通过消融实验分别考察异构观测、过程启发式数据构造和延迟模式条件化的作用；最后以过程可追溯案例和泛化分析补充实验结论。}
 
-\subsection{Common setup, protocol, and metrics}
+\subsection{Experimental setup}
 
-The NVIDIA Isaac Sim line described in Section~\ref{sec:method} records complete trajectories from normal operation through event formation, persistence, and recovery. The retained \texttt{dense\_i1} pack contains 204 episodes over 38 resources and is split by episode into 140/28/36 training, validation, and test episodes (20,826/4,331/5,354 windows). Each sample contains a 30-min history and a 20-min future label grid at one-minute resolution. The admissible onset cap is varied over 5, 10, and 15 min, while an upcoming event must satisfy the eight-window persistence rule. Since changing the cap changes the positive set, results are not pooled across horizons.
+\subsubsection{Dataset and data processing}
 
-\zhpara{第~\ref{sec:method}节所述 NVIDIA Isaac Sim 产线记录从正常运行到事件形成、持续和恢复的完整轨迹。最终 \texttt{dense\_i1} 数据包包含二百零四个 episode 和三十八个资源，并按 episode 划分为 140/28/36 个训练、验证和测试 episode，对应 20,826/4,331/5,354 个窗口。每个样本包含三十分钟历史和一分钟分辨率的二十分钟未来标签网格；允许的事件起点上限分别为五、十和十五分钟，upcoming 事件必须满足八窗口持续性条件。由于改变起点上限会改变正例集合，本文不合并不同预测范围的结果。}
+The experiments use the \texttt{dense\_i1} digital-twin production-line dataset described in Section~\ref{sec:method}. It contains 204 complete episodes and 38 simulated resources, including machines, workbenches, gantries, transport robots, workers, and buffers. Episodes, rather than individual windows, are split into 140/28/36 training, validation, and test episodes, yielding 20,826/4,331/5,354 one-minute windows. Each input contains 30 historical windows (30 min) and a 20-window future grid (20 min). The test set therefore contains 5,354 windows evaluated over 15 supervised target resources: seven machines or workbenches, four gantries, and four transport robots. Worker and buffer states remain in the input as contextual observations but are not treated as direct prediction targets.
 
-The retained BNPDFormer uses five encoder blocks, latent dimension 80, eight-dimensional Laplacian encoding, temporal/geographic/semantic head allocation $4/2/2$, a four-hop geographic mask, five semantic neighbours, and sixteen length-three pattern keys. AdamW uses batch size 16, learning rate $5\times10^{-5}$, weight decay $0.05$, cosine decay to $10^{-6}$, and fourfold positive-window oversampling. The retained model is warm-started and trained for at most 100 epochs; the 10- and 15-min tasks continue from the preceding horizon.
+\zhpara{实验使用第~\ref{sec:method}节介绍的 \texttt{dense\_i1} 数字孪生产线数据集。该数据集包含二百零四个完整 episode 和三十八个仿真资源，包括机器、工作台、龙门、运输机器人、人员和缓冲区。本文按 episode 而不是按窗口划分数据，训练集、验证集和测试集分别包含 140/28/36 个 episode，对应 20,826/4,331/5,354 个一分钟窗口。每个输入包含三十个历史窗口（三十分钟）和二十个未来标签窗口（二十分钟）。因此，测试集在十五个监督目标资源上进行评估：七个机器或工作台、四个龙门和四个运输机器人。人员和缓冲区状态作为上下文观测保留在输入中，但不作为直接预测目标。}
 
-\zhpara{最终 BNPDFormer 使用五个编码器模块、八十维潜表示、八维拉普拉斯编码、$4/2/2$ 的时间/地理/语义注意力头、四跳地理掩码、五个语义邻居，以及十六个长度为三的模式键。AdamW 的 batch size 为 16，学习率为 $5\times10^{-5}$，权重衰减为 $0.05$，并采用余弦衰减至 $10^{-6}$ 和四倍正例窗口过采样。最终模型使用热启动且最多训练一百个 epoch；十分钟和十五分钟任务分别从前一预测范围继续训练。}
+Process-informed labels require a bottleneck state to persist for at least eight consecutive windows (Min8). We evaluate three onset-cap settings, Start$\leq5$, Start$\leq10$, and Start$\leq15$, which define the admissible distance between the current window and a future event onset. The future grid and the onset cap are kept fixed within each task. A three-window start tolerance is used for strict report matching, and every window corresponds to 60~s; duration, start, and remaining-time errors are consequently reported in minutes.
 
-Station precision, recall, and F1 evaluate location identification. Report F1 additionally requires $|\hat{s}-s|\leq3$ min. Upcoming report recall is the primary early-warning measure, whereas ongoing station recall measures continuity monitoring. Remaining-order-time uses minute-scale MAE, and process-cause prediction uses accuracy and macro recall over the four supported classes. Checkpoints and thresholds are selected on validation only; test values are reported after freezing both. All runs use seed 42, so differences are observed effect sizes, not significance estimates.
-
-\zhpara{工位精确率、召回率和 F1 评价位置识别；严格 report F1 还要求 $|\hat{s}-s|\leq3$ 分钟。Upcoming report recall 是主要提前预警指标，ongoing 工位召回率用于评价持续监测。订单剩余时间采用分钟级 MAE，过程原因在四个具有样本支持的类别上报告准确率和宏平均召回率。checkpoint 与阈值只使用验证集选择，冻结后再用于测试。所有运行均使用 seed 42，因此差异表示该划分下观察到的效应量，而不是统计显著性。}
+\zhpara{过程启发式标签要求瓶颈状态至少连续持续八个窗口（Min8）。实验设置三个事件起点范围：Start$\leq5$、Start$\leq10$ 和 Start$\leq15$，分别规定当前窗口与未来事件开始之间允许的最大距离。每个任务内部固定未来标签网格和起点上限；严格事件报告采用三个窗口的起点容差。每个窗口对应六十秒，因此持续时间、起点和剩余时间误差均以分钟报告。}
 
 \begin{table}[t]
 \centering
-\caption{Evidence design aligned with the three contributions.}
-\label{tab:evidence-design}
+\caption{Dataset and label protocol used in the experiments.}
+\label{tab:exp-dataset}
 \scriptsize
-\setlength{\tabcolsep}{2.5pt}
-\renewcommand{\arraystretch}{1.12}
-\begin{tabularx}{\columnwidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabular}{ll}
 \toprule
-Question & Intervention & Main evidence \\
+Item & Setting \\
 \midrule
-RQ1 & mask non-machine dynamics; remove cross-type relations & Station/report F1, $R_{\rm up}$, cause recall, remaining-time MAE \\
-RQ2 & retain process labels but remove clustering from the data pipeline & Event separability, report F1, upcoming recall, cause accuracy \\
-RQ3 & disable short-pattern injection in geographic attention & Report F1, $R_{\rm up}$, queue-buildup recall \\
+Dataset & \texttt{dense\_i1}, 204 episodes, 38 resources \\
+Split & 140/28/36 episodes; 20,826/4,331/5,354 windows \\
+Windowing & 60-s windows; 30 historical + 20 future windows \\
+Targets & 15 resources: 7 machines/workbenches, 4 gantries, 4 robots \\
+Event rule & Min8 persistence; Start$\leq5/10/15$ \\
+Report matching & Three-window onset tolerance \\
 \bottomrule
-\end{tabularx}
+\end{tabular}
 \end{table}
 
-\subsection{Performance of the retained BNPDFormer}
+\subsubsection{Baseline methods}
 
-\subsubsection{Held-out station identification}
+Four baselines cover the model families used in the matched comparison. XGBoost is a gradient-boosted decision-tree predictor operating on tabular summaries, providing a non-neural reference for nonlinear feature interactions. LSTM is a recurrent predictor that models temporal dependencies in the historical sequence. BTGCN constructs a graph over production tasks and combines graph convolution with a GRU to model relational and temporal information~\cite{yin2025btgcn}. BSTAN uses graph attention with a GRU to learn adaptive neighbour contributions for blockage and starvation related prediction~\cite{lai2023bstan}. Their historical inputs, future grid, target resources, and label protocol are kept identical to those of BNPDFormer; only the predictive architecture and its corresponding checkpoint are changed.
 
-Table~\ref{tab:main-event} presents the held-out results of the retained model. Station and report F1 remain close at all onset caps, indicating that most correctly identified stations also satisfy the start-time tolerance. Increasing the admissible onset range reduces station F1 because more distant upcoming events enter the positive set. In contrast, ongoing recall remains consistently high. Upcoming report recall is lower. The principal difficulty is therefore not recognizing an event that is already active, but identifying weak precursors before the propagated congestion reaches the target station.
-
-\zhpara{表~\ref{tab:main-event} 给出了最终模型在留出测试集上的结果。三个起点范围内，工位 F1 与严格报告 F1 始终接近，说明大多数被正确识别的工位也满足开始时间容差。随着允许的起点范围扩大，更多距离当前时刻较远的 upcoming 事件进入正例集合，工位 F1 因而下降；相比之下，进行中事件召回率始终保持较高水平。即将发生事件的严格召回率较低。因此，当前主要困难并不是识别已经活跃的瓶颈，而是在传播拥堵到达目标工位之前识别较弱的先导信号。}
+\zhpara{匹配比较包含四种模型族。XGBoost 是作用于表格统计量的梯度提升决策树模型，为非神经模型提供非线性交互参考；LSTM 是利用循环结构建模历史序列时间依赖的预测器；BTGCN 在生产任务之间构造图，并结合图卷积与 GRU 建模关系和时间信息~\cite{yin2025btgcn}；BSTAN 使用图注意力和 GRU 学习邻居资源的自适应贡献，用于与阻塞和饥饿相关的预测~\cite{lai2023bstan}。四个基线与 BNPDFormer 使用相同的历史输入、未来标签网格、目标资源和标签协议，只替换预测架构及其对应的 checkpoint。}
 
 \begin{table}[t]
 \centering
-\caption{Held-out station-level performance of the retained BNPDFormer.}
-\label{tab:main-event}
+\caption{Baseline families in the matched comparison.}
+\label{tab:exp-baselines}
 \scriptsize
-\setlength{\tabcolsep}{3pt}
-\renewcommand{\arraystretch}{1.12}
-\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}lrrrrrr@{}}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.10}
+\begin{tabular}{lll}
 \toprule
-Start cap & P & R & F1$_{\mathrm{who}}$ & F1$_{\mathrm{rep}}$ &
-\uprep & \onwho \\
+Model & Core framework & Comparison role \\
 \midrule
-$\leq5$  & .794 & .817 & .805 & .804 & .539 & .937 \\
-$\leq10$ & .806 & .761 & .783 & .778 & .528 & .936 \\
-$\leq15$ & .806 & .742 & .772 & .768 & .534 & .925 \\
+XGBoost & Gradient-boosted decision trees & Tabular predictor \\
+LSTM & Long short-term memory & Recurrent temporal predictor \\
+BTGCN & Graph convolution + GRU & Graph-convolutional predictor \\
+BSTAN & Graph attention + GRU & Graph-attention predictor \\
 \bottomrule
-\end{tabular*}
+\end{tabular}
 \end{table}
 
-The three test sets contain 336/766, 604/768, and 708/770 upcoming/ongoing positive instances for Start$\leq5/10/15$, respectively. The increasing upcoming denominator explains why the aggregate task becomes harder even though the ongoing component changes little. Precision remains close across the medium and long tasks, whereas recall falls as more distant onsets are admitted; the dominant change is therefore missed early warnings rather than a surge in false alarms.
+\subsubsection{Overall experimental settings and metrics}
 
-\zhpara{Start$\leq5/10/15$ 三项测试分别包含 336/766、604/768 和 708/770 个 upcoming/ongoing 正例。随着 upcoming 分母增加，即使 ongoing 部分变化较小，聚合任务也会变得更困难。中程和长程任务的精确率接近，而召回率随更远起点纳入而下降，因此主要变化来自提前预警漏检，而不是假报警显著增加。}
+The retained BNPDFormer follows the latest evaluation configuration of the factory bottleneck pipeline. It uses five encoder blocks, an 80-dimensional latent representation, eight-dimensional Laplacian positional encoding, $4/2/2$ temporal/geographic/semantic attention heads, a four-hop geographic mask, five semantic neighbours, and 16 length-three pattern keys. AdamW is trained with batch size 16, learning rate $5\times10^{-5}$, weight decay $0.05$, cosine decay to $10^{-6}$, and fourfold positive-window oversampling. The retained checkpoint is warm-started and trained for at most 100 epochs; the three onset-cap tasks are selected independently after validation-controlled decoding. All reported runs use seed 42.
 
-\subsubsection{Early-warning distance analysis}
+\zhpara{最终 BNPDFormer 采用工厂瓶颈预测流程的最新评测配置。模型包含五个编码器模块、八十维潜表示、八维拉普拉斯位置编码、$4/2/2$ 的时间/地理/语义注意力头、四跳地理掩码、五个语义邻居和十六个长度为三的模式键。训练使用 AdamW，batch size 为 16，学习率为 $5\times10^{-5}$，权重衰减为 $0.05$，余弦衰减下限为 $10^{-6}$，并对正例窗口进行四倍过采样。最终 checkpoint 使用热启动，最多训练一百个 epoch；三个起点范围分别在验证集控制的解码流程下选择模型。所有报告运行均使用 seed 42。}
 
-The long-range setting further reveals where early warning degrades. Upcoming recall is $0.574$ for events beginning within five minutes, $0.522$ for starts between six and ten minutes, and $0.433$ for starts beyond ten minutes. The decline with distance supports the delayed-propagation motivation: increasingly remote events provide weaker observable evidence in the historical window.
+The common metrics are defined as follows. \emph{Will15 F1} measures station identification over the 15 target resources. \emph{Report F1} additionally requires the predicted onset to be within three windows of the labelled onset. Upcoming and ongoing recall separate early warning from recognition of an already active bottleneck. State F1 is reported for the next window and for the complete 20-window horizon. Start MAE and duration MAE are computed on correctly detected events; the union duration MAE/RMSE additionally penalizes missed and false events and is used when available. Remaining-order-time MAE is a global line-level metric, while cause accuracy and macro recall are computed over the four supported process-cause classes. Checkpoints and thresholds are chosen on the validation set and then frozen for the held-out test set.
 
-\zhpara{长程设置进一步揭示了提前预警能力随距离下降的位置。对于五分钟内开始、六至十分钟开始以及十分钟之后开始的 upcoming 事件，召回率分别为 $0.574$、$0.522$ 和 $0.433$。召回率随起点距离增大而下降，这与本文对延迟传播问题的动机一致：距离当前时刻越远的事件，在历史窗口中提供的可观测证据越弱。}
-
-This within-task bucket analysis is more informative than treating the three onset-cap F1 values as a conventional sensitivity curve. Changing the cap changes the positive set, whereas the buckets partition one fixed Start$\leq15$ evaluation. The monotonic decline within that fixed task isolates forecast distance as an operating boundary and indicates that future improvements should target precursor representation rather than only recalibrating the occurrence threshold.
-
-\zhpara{这种任务内部的分桶分析，比将三个起点上限的 F1 简单视为常规敏感性曲线更有信息量。改变起点上限会改变正例集合，而上述分桶来自同一个固定的 Start$\leq15$ 评测。固定任务内部的单调下降更直接地揭示预测距离这一运行边界，也表明后续改进应集中在前驱信号表示，而不只是重新校准事件阈值。}
-
-\subsubsection{Remaining-time estimation and cause diagnosis}
-
-Table~\ref{tab:aux-results} reports the auxiliary tasks. Remaining-time error stays at a similar scale across the three onset definitions, showing that the graph-level production-progress representation is not tied to one event horizon. Cause recognition also remains stable. However, only transport delay, material shortage, upstream starvation, and queue buildup have test support. Downstream blockage and high utilization cannot be treated as evaluated classes; the reported macro recall is calculated over the four supported causes.
-
-\zhpara{表~\ref{tab:aux-results} 报告了辅助任务结果。三个起点定义下的订单剩余时间误差处于相近量级，说明图级生产进度表示并不依赖某一个事件预测范围。过程原因识别同样保持稳定。不过，测试集中只有运输延迟、物料短缺、上游饥饿和队列积压四类具有样本支持；下游阻塞和高利用率不能被视为已经完成评估的类别，表中的宏平均召回率仅针对四个有效原因计算。}
-
-\begin{table}[t]
-\centering
-\caption{Auxiliary-task results on the held-out test set.}
-\label{tab:aux-results}
-\scriptsize
-\setlength{\tabcolsep}{3pt}
-\renewcommand{\arraystretch}{1.12}
-\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}lrrrr@{}}
-\toprule
-Start & Remain MAE & Cause acc. & Macro R & Support \\
-\midrule
-$\leq5$  & 10.9 & .965 & .967 & 579 \\
-$\leq10$ & 11.2 & .962 & .965 & 579 \\
-$\leq15$ &  9.7 & .974 & .978 & 579 \\
-\bottomrule
-\end{tabular*}
-\end{table}
-
-At the longest onset cap, per-class recall is $0.978$, $0.988$, $0.962$, and $0.984$ for transport delay, material shortage, upstream starvation, and queue buildup, respectively. The majority-class accuracy derived from the training set is $0.409$, indicating that the cause results are not explained by predicting the dominant class alone.
-
-\zhpara{在最长起点范围下，运输延迟、物料短缺、上游饥饿和队列积压的逐类召回率分别为 $0.978$、$0.988$、$0.962$ 和 $0.984$。依据训练集计算的多数类基线准确率为 $0.409$，说明原因识别结果并非仅由预测占比最高的类别所产生。}
-
-The remaining-time task is line-level rather than station-level, so its error need not vary monotonically with the onset cap. All three event models observe the same historical production progress but are selected using different event-positive sets and checkpoints. The lowest remaining-time error at the longest cap therefore does not imply that a longer onset definition intrinsically makes completion-time regression easier. It shows that the retained shared representation at that checkpoint preserves useful order-progress information while optimizing the event task.
-
-\zhpara{订单剩余时间属于产线级任务而不是工位级任务，因此其误差不必随起点上限单调变化。三个事件模型观察相同类型的历史生产进度，但依据不同事件正例集合和 checkpoint 进行选择。因而，最长起点范围下较低的剩余时间误差并不意味着更长起点定义天然使完工时间回归更容易，而只说明该 checkpoint 的共享表示在优化事件任务的同时保留了有效订单进度信息。}
-
-Cause accuracy should likewise be interpreted within its support boundary. The result verifies discrimination among the four represented process symptoms, not recovery of every configured heuristic category and not identification of the externally injected disturbance. This distinction is central to interpretability: the output explains the operational condition visible in the production data rather than revealing a simulator-only intervention label.
-
-\zhpara{原因准确率也必须在其样本支持边界内解释。该结果验证的是四种已有样本的过程现象之间的区分能力，而不是恢复所有已配置启发式类别，也不是识别外部注入扰动。这个区别对于可解释性十分关键：模型输出解释生产数据中可观测的运营状态，而不是泄露只有仿真器才知道的干预标签。}
-
-\subsection{RQ1: contribution of heterogeneous multi-entity information}
-
-The entity study separates three ways of reducing the heterogeneous input. \emph{No entity information} masks the dynamics of humans, gantries, transport robots, and buffers and also masks machine-side channels derived from these entities. \emph{No cross-type relations} retains all observations but removes cross-type graph edges and attention. \emph{Machine-only} combines both interventions and is the closest available approximation to conventional machine-centred logging. Node count and prediction targets are retained, so the model cannot improve by predicting fewer resource classes.
-
-\zhpara{多实体实验以三种方式削弱异构输入。“无实体信息”屏蔽人员、龙门、运输机器人和缓冲区动态，同时屏蔽机器端由这些实体派生的通道；“无跨类型关系”保留全部观测，但移除跨类型图边和注意力；“仅机器”同时采用上述两项干预，是现有实验中最接近传统机器中心日志的设置。各组保持节点数和预测目标不变，因此模型不能通过减少预测资源类别获得优势。}
+\zhpara{统一指标定义如下。\emph{Will15 F1} 衡量十五个目标资源上的工位识别；\emph{Report F1} 进一步要求预测起点与标签起点相差不超过三个窗口。Upcoming 召回率衡量提前预警，ongoing 召回率衡量对已发生瓶颈的持续识别。State F1 分别报告下一窗口和完整二十窗口范围的结果。起点 MAE 与持续时间 MAE 在正确识别的事件上计算；union 持续时间 MAE/RMSE 还会惩罚漏报和误报，并在有统一记录时报告。订单剩余时间 MAE 是产线级指标，原因准确率和宏平均召回率在四个有样本支持的过程原因类别上计算。checkpoint 与阈值仅在验证集上选择，随后冻结并用于留出测试集。}
 
 \begin{table*}[t]
 \centering
-\caption{Multi-entity ablation on the held-out test set. F1 is station-level event F1; $R_{\rm up}$ is strict upcoming report recall.}
-\label{tab:entity-ablation}
+\caption{Metrics reported in the main and matched baseline experiments.}
+\label{tab:exp-metrics}
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
-\renewcommand{\arraystretch}{1.1}
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}llrrrrr@{}}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}lll@{}}
 \toprule
-Arm & Start & F1 & $R_{\rm up}$ & $R_{\rm on}$ & Remain MAE & Cause macro R \\
+Metric group & Metric & Interpretation \\
 \midrule
-Full & $\leq5$ & .805 & .539 & .937 & 10.9 & .967 \\
-No entity information & $\leq5$ & .644 & .049 & .899 & 19.4 & .888 \\
-No cross-type relations & $\leq5$ & .723 & .199 & .907 & 17.8 & .864 \\
-Machine-only & $\leq5$ & .650 & .033 & .903 & 23.3 & .676 \\
-\midrule
-Full & $\leq10$ & .783 & .528 & .936 & 11.2 & .965 \\
-No entity information & $\leq10$ & .545 & .020 & .896 & 24.7 & .707 \\
-No cross-type relations & $\leq10$ & .595 & .157 & .893 & 13.9 & .851 \\
-Machine-only & $\leq10$ & .559 & .014 & .901 & 26.8 & .730 \\
-\midrule
-Full & $\leq15$ & .772 & .534 & .925 & 9.7 & .978 \\
-No entity information & $\leq15$ & .490 & .127 & .922 & 14.0 & .929 \\
-No cross-type relations & $\leq15$ & .563 & .205 & .892 & 15.3 & .811 \\
-Machine-only & $\leq15$ & .534 & .021 & .912 & 21.2 & .735 \\
+Event & Will15 P/R/F1 & Station identification over 15 target resources \\
+Event & Report F1 & Station identification with a three-window onset tolerance \\
+Early warning & Upcoming / ongoing recall & Future-event warning / active-event continuity \\
+State & State F1 (1-step / horizon) & Bottleneck state accuracy at one step / 20-step horizon \\
+Temporal & Start MAE; duration MAE & Localization and duration error on detected events \\
+Temporal & Union duration MAE/RMSE & Error including missed and false events \\
+Auxiliary & Remaining-time MAE & Global order-progress estimation error \\
+Auxiliary & Cause accuracy / macro recall & Four supported process-cause classes \\
 \bottomrule
 \end{tabular*}
 \end{table*}
 
-The clearest change occurs in early warning. Under machine-only input, upcoming recall is $0.033/0.014/0.021$, compared with approximately $0.53$ for the retained model, while ongoing recall remains above $0.90$. Removing cross-type relations but retaining entity observations preserves more upcoming information ($0.199/0.157/0.205$) than masking entity dynamics. The result is consistent with two complementary roles: non-machine observations expose an event before it becomes visible at the target station, and cross-type relations organize how that evidence reaches the target representation. At Start$\leq15$, machine-only remaining-time MAE is $21.2$ min and cause macro recall is $0.735$, compared with $9.7$ min and $0.978$ for the retained model. Queue-buildup recall is particularly sensitive to cross-type relations, falling to $0.460$ in the no-cross arm.
+\subsection{Main and baseline performance comparison}
 
-\zhpara{最明显的变化出现在提前预警。仅使用机器输入时，upcoming 召回率为 $0.033/0.014/0.021$，而最终模型约为 $0.53$；与此同时，ongoing 召回率仍高于 $0.90$。保留实体观测但移除跨类型关系时，upcoming 信息保留得更多（$0.199/0.157/0.205$），优于直接屏蔽实体动态。该结果与两项互补作用一致：非机器观测使事件能够在目标工位自身显现之前被观察到，跨类型关系则组织这些证据如何进入目标表示。在 Start$\leq15$ 下，仅机器模型的订单剩余时间 MAE 为 $21.2$ 分钟、原因宏平均召回率为 $0.735$，而最终模型分别为 $9.7$ 分钟和 $0.978$。队列积压对跨类型关系尤其敏感，在无跨类型关系组中召回率降至 $0.460$。}
+The retained BNPDFormer and the four baselines are evaluated together under the common Test protocol. Results are organized by prediction task rather than by model: event-level classification, continuous-value estimation, and state/cause classification. For every onset cap, the best value in each column is shown in bold. Higher is better for precision, recall, F1, and accuracy; lower is better for MAE.
 
-This evidence is directional rather than a strict single-factor causal estimate. The retained model is warm-started and trained for up to 100 epochs, whereas the entity arms are independently cold-started for 50 epochs; the available artifact does not contain the planned Full-Scratch-50 control. Moreover, masking entity-derived channels changes the constructed positive pool (955/1,225/1,331 events for the three machine-only tasks versus 1,102/1,372/1,478 for the retained and no-cross tasks). Comparisons involving no-entity-information or machine-only therefore combine information removal with a target-pool change. The no-cross arm shares the target pool with the full model, but still differs in training budget.
+\zhpara{最终 BNPDFormer 与四个基线在统一测试协议下进行联合比较。结果按照预测任务而不是按照模型组织，分为事件级分类、连续值估计以及状态/原因分类三类。每个起点范围内，各列的最优值以粗体表示。精确率、召回率、F1 和准确率越高越好，MAE 越低越好。}
 
-\zhpara{上述证据应被解释为方向性结果，而不是严格的单因素因果估计。最终模型采用热启动并最多训练一百个 epoch，多实体消融则分别冷启动训练五十个 epoch；现有结果中没有计划的 Full-Scratch-50 直接对照。此外，屏蔽实体派生通道会改变构造出的正例池：三个仅机器任务分别包含 955/1,225/1,331 个事件，而最终模型和无跨类型关系组分别包含 1,102/1,372/1,478 个事件。因此，涉及无实体信息或仅机器的比较同时包含信息移除和目标池变化；无跨类型关系组虽与最终模型共享目标池，但训练预算仍不一致。}
+\subsubsection{Bottleneck event identification and early warning}
 
-\subsection{RQ2: process-informed labels, clustering, and traceability}
+Table~\ref{tab:comparison-event} reports station-level event classification. BNPDFormer obtains the highest Will15 F1, strict Report F1, Upcoming recall, and Ongoing recall for all three onset caps. XGBoost has the highest precision at Start$\leq5$, BTGCN at Start$\leq10$, and BSTAN at Start$\leq15$; these precision gains are accompanied by lower recall. Relative to XGBoost, the strongest baseline by Report F1, BNPDFormer's Report F1 gains are $0.102$, $0.167$, and $0.191$. Its Upcoming recall is also substantially higher than the best baseline, reaching $0.542/0.535/0.537$ compared with $0.093/0.078/0.072$.
 
-The second contribution has two layers. Process rules and the eight-window persistence filter define which observations constitute an operational bottleneck event; clustering then organizes recurrent regimes and short precursor patches without treating cluster IDs as ground truth. This separation makes the output traceable: a reported event can be linked to resource-specific queue, stall, shortage, labour, buffer, or transport evidence, while the four-class cause head summarizes the dominant observable process symptom.
+\zhpara{表~\ref{tab:comparison-event} 报告工位级事件分类结果。在三个起点范围下，BNPDFormer 的 Will15 F1、严格 Report F1、upcoming 召回率和 ongoing 召回率均为最高。XGBoost 在 Start$\leq5$ 下具有最高精确率，BTGCN 在 Start$\leq10$ 下最高，BSTAN 在 Start$\leq15$ 下最高；这些精确率优势同时伴随较低的召回率。相对于以 Report F1 衡量的最强基线 XGBoost，BNPDFormer 的提升分别为 $0.102$、$0.167$ 和 $0.191$。其 upcoming 召回率也明显高于最佳基线，达到 $0.542/0.535/0.537$，而基线最高值只有 $0.093/0.078/0.072$。}
 
-\zhpara{第二项贡献包含两个层次。过程规则与八窗口持续性过滤首先定义哪些观测构成具有运营意义的瓶颈事件，聚类随后组织重复出现的工况和短时前驱 patch，但不把簇编号作为瓶颈真值。这样的分离使输出具有可追溯性：报告事件可以对应资源类型相关的队列、停滞、缺料、人员、缓冲区或运输证据，四类原因头则概括主要的可观测过程现象。}
-
-\subsubsection{No-clustering ablation}
-
-The \emph{no-clustering} arm is the \texttt{dense\_i1\_mix} pipeline. It retains the process-informed event and cause definitions but does not apply the clustering stage used to organize bottleneck regimes and recurrent precursors. The complete labelling--clustering pipeline uses the retained \texttt{dense\_i1} data. Table~\ref{tab:cluster-ablation} compares their held-out results at the same three onset caps.
-
-\zhpara{“无聚类”实验使用 \texttt{dense\_i1\_mix} 数据流程。该组保留过程启发式事件与原因定义，但不执行用于组织瓶颈工况和重复前驱模式的聚类阶段；完整的标签—聚类流程则使用最终 \texttt{dense\_i1} 数据。表~\ref{tab:cluster-ablation} 在相同三个起点范围比较两者的留出结果。}
-
-\begin{table}[t]
+\begin{table*}[t]
 \centering
-\caption{Ablation of clustering from the process-informed data pipeline.}
-\label{tab:cluster-ablation}
+\caption{Unified event-identification and early-warning comparison on the common Test protocol. Bold denotes the best value within each onset cap.}
+\label{tab:comparison-event}
 \scriptsize
-\setlength{\tabcolsep}{2.8pt}
-\renewcommand{\arraystretch}{1.12}
-\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}llrrrr@{}}
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}llrrrrrr@{}}
 \toprule
-Pipeline & Start & F1$_{\rm rep}$ & $R_{\rm up}$ & Cause acc. & Remain MAE \\
+Model & Start cap & P & R & Will15 F1 & Report F1 & Upcoming R & Ongoing R \\
 \midrule
-Labels + clustering & $\leq5$ & .804 & .539 & .965 & 10.90 \\
-No clustering & $\leq5$ & .735 & .299 & .944 & 11.85 \\
-Labels + clustering & $\leq10$ & .778 & .528 & .962 & 11.20 \\
-No clustering & $\leq10$ & .646 & .324 & .924 & 10.95 \\
-Labels + clustering & $\leq15$ & .768 & .534 & .974 & 9.70 \\
-No clustering & $\leq15$ & .637 & .320 & .940 & 10.92 \\
+BNPDFormer & $\leq5$  & .794 & \textbf{.817} & \textbf{.805} & \textbf{.804} & \textbf{.542} & \textbf{.937} \\
+XGBoost & $\leq5$  & \textbf{.859} & .598 & .705 & .702 & .056 & .819 \\
+LSTM & $\leq5$  & .680 & .515 & .586 & .583 & .093 & .687 \\
+BTGCN & $\leq5$  & .816 & .570 & .671 & .669 & .046 & .786 \\
+BSTAN & $\leq5$  & .829 & .590 & .690 & .687 & .091 & .794 \\
+\midrule
+BNPDFormer & $\leq10$ & .806 & \textbf{.761} & \textbf{.783} & \textbf{.778} & \textbf{.535} & \textbf{.939} \\
+XGBoost & $\leq10$ & .858 & .487 & .621 & .611 & .038 & .805 \\
+LSTM & $\leq10$ & .561 & .451 & .500 & .477 & .078 & .693 \\
+BTGCN & $\leq10$ & \textbf{.881} & .440 & .587 & .579 & .044 & .722 \\
+BSTAN & $\leq10$ & .849 & .488 & .620 & .609 & .052 & .796 \\
+\midrule
+BNPDFormer & $\leq15$ & .806 & \textbf{.742} & \textbf{.772} & \textbf{.768} & \textbf{.537} & \textbf{.930} \\
+XGBoost & $\leq15$ & .845 & .453 & .590 & .577 & .033 & .796 \\
+LSTM & $\leq15$ & .624 & .398 & .486 & .461 & .072 & .643 \\
+BTGCN & $\leq15$ & .788 & .407 & .536 & .518 & .036 & .699 \\
+BSTAN & $\leq15$ & .853 & .402 & .547 & .534 & .040 & .700 \\
 \bottomrule
 \end{tabular*}
-\end{table}
+\end{table*}
 
-Removing clustering lowers report F1 by $0.069$, $0.132$, and $0.131$ for Start$\leq5/10/15$, respectively. The reduction is larger for the genuinely predictive component: upcoming recall falls by $0.240$, $0.204$, and $0.214$. Cause accuracy also decreases at every cap, from $0.965/0.962/0.974$ to $0.944/0.924/0.940$. These consistent changes support the proposed role of clustering: process rules first define production-relevant events, and clustering then organizes recurrent regimes so that bottleneck and normal trajectories become more separable for downstream event and cause prediction. Remaining-time MAE improves in two of the three clustered settings but not at Start$\leq10$, indicating that clustering primarily benefits event discrimination rather than uniformly improving every auxiliary regression target.
+Figure~\ref{fig:baseline-comparison} visualizes the same event and duration trends across onset caps. The largest separation is in Upcoming recall, while the duration curves remain closer and preserve complementary temporal behaviour among the four baselines.
 
-\zhpara{移除聚类后，Start$\leq5/10/15$ 的 report F1 分别下降 $0.069$、$0.132$ 和 $0.131$。在真正体现预测能力的 upcoming 部分，召回率分别下降 $0.240$、$0.204$ 和 $0.214$。原因准确率也在所有范围内由 $0.965/0.962/0.974$ 降至 $0.944/0.924/0.940$。这些一致变化支持聚类的设计作用：过程规则首先定义具有生产含义的事件，聚类再组织重复运行工况，使瓶颈轨迹与正常轨迹在后续事件和原因预测中具有更强可分性。聚类流程在三个设置中的两个改善订单剩余时间 MAE，但在 Start$\leq10$ 下没有改善，说明其主要收益来自事件区分，而不是对所有辅助回归目标的统一提升。}
+\zhpara{图~\ref{fig:baseline-comparison} 对相同事件和持续时间趋势进行了起点范围可视化。差距最大的是 upcoming 召回率；持续时间曲线更接近，并保留了四个基线各自的时间预测特征。}
 
-This is a pipeline-level ablation rather than a single configuration switch. The no-clustering pipeline contains 248 episodes with a 166/37/45 split, whereas the clustered pipeline contains 204 episodes with a 140/28/36 split; event prevalence therefore also differs. The comparison evaluates the intended end-to-end effect of introducing clustering into the process-informed data construction, but the numerical deltas should not be interpreted as the isolated effect of one loss coefficient. A future equal-split comparison can further separate cluster quality from episode composition.
-
-\zhpara{该实验属于数据流程级消融，而不是单一配置开关。无聚类流程包含二百四十八个 episode，划分为 166/37/45；聚类流程包含二百零四个 episode，划分为 140/28/36，因此事件比例也有所不同。该比较评价的是在过程启发式数据构造中引入聚类的端到端作用，但数值差异不能被解释为某一个损失权重的独立效果。后续可通过相同数据划分进一步分离聚类质量与 episode 组成的影响。}
-
-\subsubsection{Interpretability through process evidence}
-
-On the retained test set, cause macro recall reaches $0.967/0.965/0.978$. At Start$\leq15$, recalls for transport delay, material shortage, upstream starvation, and queue buildup are $0.978$, $0.988$, $0.962$, and $0.984$. This supports operational traceability over the four represented conditions: the model report can be connected to shortage, transport, starvation, or queue evidence used by the process labels. It does not turn the heuristic cause into a physical root-cause label or an injected-disturbance identifier.
-
-\zhpara{在最终测试集上，原因宏平均召回率达到 $0.967/0.965/0.978$。在 Start$\leq15$ 下，运输延迟、物料短缺、上游饥饿和队列积压的召回率分别为 $0.978$、$0.988$、$0.962$ 和 $0.984$。这支持四种已有样本过程条件上的运营可追溯性：模型报告能够对应过程标签所使用的缺料、运输、饥饿或队列证据。但启发式原因并不因此成为物理根因标签或注入扰动标识。}
-
-\subsection{RQ3: contribution of delay-pattern conditioning}
-
-The \emph{no-pattern} arm keeps the factory graph and attention branches but disables injection of clustered length-three patterns into geographic keys. It therefore asks whether static process--logistics proximity is sufficient, or whether recurrent temporal context contributes additional information about delayed propagation.
-
-\zhpara{“无模式”实验保留工厂图和各注意力分支，但关闭长度为三的聚类模式向地理注意力 key 的注入。因此，该实验检验静态工艺—物流邻近是否已经足够，还是重复时间上下文能够为延迟传播提供额外信息。}
-
-\begin{table}[t]
+\begin{figure*}[t]
 \centering
-\caption{Delay-pattern ablation on the held-out test set.}
-\label{tab:delay-ablation}
+\IfFileExists{figures/fig_baseline_comparison.png}{%
+\includegraphics[width=0.96\textwidth]{figures/fig_baseline_comparison.png}%
+}{}
+\caption{Unified comparison across the three onset caps for Report F1, Upcoming recall, and duration MAE.}
+\label{fig:baseline-comparison}
+\end{figure*}
+
+\subsubsection{Temporal and continuous-value estimation}
+
+Table~\ref{tab:comparison-regression} compares the common continuous-value metrics. BNPDFormer has the lowest duration MAE at all three caps. BTGCN gives the lowest Start MAE at the 5- and 10-min caps, while XGBoost is lowest at the 15-min cap. XGBoost also has the lowest global remaining-time MAE, which indicates that its tabular representation is effective for order-progress regression even though its early-warning performance is weaker. The table uses the detected-event duration MAE and the global remaining-time MAE exported for every model; union duration MAE/RMSE is retained as a stricter diagnostic when the complete per-model export is available.
+
+\zhpara{表~\ref{tab:comparison-regression} 比较统一的连续值指标。BNPDFormer 在三个起点范围下均具有最低的持续时间 MAE。BTGCN 在五分钟和十分钟范围下具有最低的起点 MAE，XGBoost 在十五分钟范围下最低。XGBoost 还取得最低的全局剩余时间 MAE，说明其表格表示对订单进度回归有效，但提前预警能力较弱。表中使用所有模型均已导出的正确识别事件持续时间 MAE 和全局剩余时间 MAE；当完整的逐模型结果归档后，再将 union 持续时间 MAE/RMSE 作为更严格的诊断指标补入。}
+
+\begin{table*}[t]
+\centering
+\caption{Unified temporal and continuous-value estimation comparison. Errors are in minutes; bold denotes the lowest value within each onset cap.}
+\label{tab:comparison-regression}
 \scriptsize
-\setlength{\tabcolsep}{3pt}
-\renewcommand{\arraystretch}{1.12}
-\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}llrrrr@{}}
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}llrrr@{}}
 \toprule
-Arm & Start & F1$_{\rm rep}$ & $R_{\rm up}$ & Remain MAE & Queue R \\
+Model & Start cap & Start MAE & Duration MAE & Remain MAE \\
+\midrule
+BNPDFormer & $\leq5$  & .127 & \textbf{1.863} & 10.9 \\
+XGBoost & $\leq5$  & .030 & 3.264 & \textbf{5.231} \\
+LSTM & $\leq5$  & .056 & 3.855 & 10.593 \\
+BTGCN & $\leq5$  & \textbf{.020} & 3.322 & 19.343 \\
+BSTAN & $\leq5$  & .043 & 3.565 & 14.704 \\
+\midrule
+BNPDFormer & $\leq10$ & .227 & \textbf{1.788} & 11.2 \\
+XGBoost & $\leq10$ & .122 & 3.210 & \textbf{5.231} \\
+LSTM & $\leq10$ & .388 & 3.768 & 10.607 \\
+BTGCN & $\leq10$ & \textbf{.117} & 3.238 & 18.102 \\
+BSTAN & $\leq10$ & .153 & 3.533 & 13.850 \\
+\midrule
+BNPDFormer & $\leq15$ & .227 & \textbf{1.716} & 9.7 \\
+XGBoost & $\leq15$ & \textbf{.167} & 3.170 & \textbf{5.231} \\
+LSTM & $\leq15$ & .453 & 3.615 & 9.009 \\
+BTGCN & $\leq15$ & .302 & 3.121 & 12.829 \\
+BSTAN & $\leq15$ & .222 & 3.422 & 13.557 \\
+\bottomrule
+\end{tabular*}
+\end{table*}
+
+\subsubsection{State and process-cause prediction}
+
+Table~\ref{tab:comparison-state} reports future-state and cause classification. BNPDFormer gives the highest one-step and 20-step State F1 for every cap, reflecting stronger station-level occupancy forecasting over both immediate and extended horizons. XGBoost has the highest cause accuracy and macro recall in the common auxiliary evaluation. This complementarity is useful for interpretation: BNPDFormer is strongest at identifying and warning about bottlenecks, whereas XGBoost is strongest on the line-level progress and cause heads under this split.
+
+\zhpara{表~\ref{tab:comparison-state} 报告未来状态和过程原因分类结果。BNPDFormer 在三个起点范围下均取得最高的下一窗口和二十窗口 State F1，说明其在即时和延展预测范围内都具有更强的工位占用状态预测能力。XGBoost 在统一辅助评测中取得最高的原因准确率和宏平均召回率。这种互补性有助于解释结果：BNPDFormer 在瓶颈识别和提前预警方面更强，而在当前划分下，XGBoost 在产线级进度和原因预测头上表现更好。}
+
+\begin{table*}[t]
+\centering
+\caption{Unified future-state and process-cause classification comparison. Bold denotes the best value within each onset cap.}
+\label{tab:comparison-state}
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}llrrrr@{}}
+\toprule
+Model & Start cap & State F1 (1-step) & State F1 (20-step) & Cause acc. & Cause macro R \\
+\midrule
+BNPDFormer & $\leq5$  & \textbf{.883} & \textbf{.525} & .965 & .967 \\
+XGBoost & $\leq5$  & .611 & .373 & \textbf{.990} & \textbf{.988} \\
+LSTM & $\leq5$  & .295 & .295 & .938 & .920 \\
+BTGCN & $\leq5$  & .643 & .372 & .900 & .882 \\
+BSTAN & $\leq5$  & .719 & .379 & .957 & .952 \\
+\midrule
+BNPDFormer & $\leq10$ & \textbf{.892} & \textbf{.589} & .962 & .965 \\
+XGBoost & $\leq10$ & .595 & .337 & \textbf{.990} & \textbf{.988} \\
+LSTM & $\leq10$ & .275 & .262 & .936 & .930 \\
+BTGCN & $\leq10$ & .566 & .359 & .907 & .900 \\
+BSTAN & $\leq10$ & .632 & .365 & .959 & .951 \\
+\midrule
+BNPDFormer & $\leq15$ & \textbf{.900} & \textbf{.610} & .974 & .978 \\
+XGBoost & $\leq15$ & .582 & .322 & \textbf{.990} & \textbf{.988} \\
+LSTM & $\leq15$ & .268 & .260 & .944 & .922 \\
+BTGCN & $\leq15$ & .461 & .323 & .907 & .900 \\
+BSTAN & $\leq15$ & .593 & .335 & .951 & .935 \\
+\bottomrule
+\end{tabular*}
+\end{table*}
+
+The three onset caps define separate tasks, so the values within each cap are compared vertically rather than pooled into one sensitivity score. Across caps, the retained model preserves its largest margins on Report F1, Upcoming recall, and State F1, while the baseline strengths on precision, start localization, remaining-time estimation, and cause classification remain visible in the same tables.
+
+\zhpara{三个起点范围定义了不同任务，因此应在每个范围内按列进行纵向比较，而不应将三个范围合并为一个敏感性分数。跨越不同范围时，最终模型在 Report F1、upcoming 召回率和 State F1 上保持最大优势；同时，基线在精确率、起点定位、剩余时间估计和原因分类上的局部优势也直接呈现在同一组表格中。}
+
+\subsection{Ablation study}
+
+\subsubsection{Heterogeneous multi-entity information}
+
+The entity ablation keeps the 15 target resources and removes information channels from the input. \emph{No entity information} masks dynamics contributed by workers, gantries, transport robots, and buffers, while \emph{machine-only} additionally removes channels derived from those resources. \emph{No cross-type relations} retains the observations but removes cross-type graph interactions. The latest matched results are shown in Table~\ref{tab:entity-ablation-new}.
+
+\zhpara{多实体消融保持十五个目标资源不变，仅移除输入中的信息通道。“无实体信息”屏蔽人员、龙门、运输机器人和缓冲区提供的动态信息；“仅机器”进一步移除由这些资源派生的机器端通道；“无跨类型关系”保留观测，但删除跨类型图交互。最新匹配结果见表~\ref{tab:entity-ablation-new}。}
+
+\begin{table*}[t]
+\centering
+\caption{Ablation of heterogeneous observations and cross-type relations.}
+\label{tab:entity-ablation-new}
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}llrrrrrr@{}}
+\toprule
+Arm & Start cap & Will15 F1 & Report F1 & Upcoming R & Ongoing R & State F1 (1-step) & Union Dur. MAE \\
+\midrule
+Full & $\leq5$ & .805 & .804 & .542 & .937 & .883 & 4.17 \\
+No entity information & $\leq5$ & .644 & .644 & .049 & .899 & .699 & 6.66 \\
+No cross-type relations & $\leq5$ & .723 & .716 & .220 & .907 & .812 & 5.28 \\
+Machine-only & $\leq5$ & .650 & .650 & .033 & .903 & .709 & 6.51 \\
+\midrule
+Full & $\leq10$ & .783 & .778 & .535 & .939 & .892 & 4.38 \\
+No entity information & $\leq10$ & .545 & .544 & .021 & .896 & .684 & 7.57 \\
+No cross-type relations & $\leq10$ & .595 & .571 & .207 & .896 & .759 & 6.60 \\
+Machine-only & $\leq10$ & .559 & .559 & .014 & .901 & .708 & 7.40 \\
+\midrule
+Full & $\leq15$ & .772 & .768 & .537 & .930 & .900 & 4.43 \\
+No entity information & $\leq15$ & .490 & .441 & .218 & .922 & .596 & 7.66 \\
+No cross-type relations & $\leq15$ & .563 & .514 & .311 & .897 & .760 & 6.77 \\
+Machine-only & $\leq15$ & .534 & .534 & .021 & .912 & .706 & 7.46 \\
+\bottomrule
+\end{tabular*}
+\end{table*}
+
+The largest differences are in early warning. Machine-only input retains ongoing recall above $0.90$ but reduces upcoming recall to $0.033/0.014/0.021$. Keeping heterogeneous observations while removing cross-type relations preserves more upcoming information ($0.220/0.207/0.311$), and the full model is higher still. The result links non-machine observations to precursor visibility and cross-type relations to the transfer of that evidence into the target representation. The comparison is directional because the masked-input arms use independent cold-start runs and their event pools differ from the retained warm-start model.
+
+\zhpara{差异最大的是提前预警。仅机器输入仍保持高于 $0.90$ 的 ongoing 召回率，但 upcoming 召回率降至 $0.033/0.014/0.021$。保留异构观测、仅移除跨类型关系时，upcoming 信息保留得更多（$0.220/0.207/0.311$），完整模型的结果更高。这表明非机器观测有助于在目标工位出现瓶颈之前显露前驱信息，而跨类型关系有助于将这些证据传递到目标表示。由于屏蔽输入的实验采用独立冷启动，且事件池与最终热启动模型不同，这一比较应作为方向性证据解释。}
+
+\begin{figure*}[t]
+\centering
+\IfFileExists{figures/overview_bars.png}{%
+\includegraphics[width=0.96\textwidth]{figures/overview_bars.png}%
+}{}
+\caption{Ablation overview for Will15 F1, union duration MAE, and union duration RMSE across the three onset caps.}
+\label{fig:ablation-overview}
+\end{figure*}
+
+Figure~\ref{fig:key-device-entity} gives a resource-level view of the same ablation. The full model follows the two sustained intervals more closely than the machine-only and no-entity variants, while the no-cross curve retains part of the signal but loses duration after the second onset.
+
+\zhpara{图~\ref{fig:key-device-entity} 从资源层面展示同一消融。完整模型比仅机器和无实体信息变体更接近两个持续瓶颈区间；无跨类型关系曲线仍保留部分信号，但在第二次事件开始后持续时间预测明显缩短。}
+
+\begin{figure*}[t]
+\centering
+\IfFileExists{figures/key_device_entity.png}{%
+\includegraphics[width=0.96\textwidth]{figures/key_device_entity.png}%
+}{}
+\caption{Key-device duration traces for the full model and the heterogeneous-entity ablations.}
+\label{fig:key-device-entity}
+\end{figure*}
+
+\subsubsection{Process-informed labels and grouping}
+
+The process pipeline first applies persistence-aware rules and then groups recurrent operating regimes. The no-group arm retains the same target type but removes the grouping stage. Table~\ref{tab:group-ablation} shows the latest event and state metrics. Report F1 decreases from $0.804/0.778/0.768$ to $0.753/0.651/0.604$, and upcoming recall decreases from approximately $0.54$ to $0.333/0.485/0.432$.
+
+\zhpara{过程数据流程首先应用带持续性约束的规则，再对重复运行工况进行分组。无分组实验保持相同的目标类型，但移除分组阶段。表~\ref{tab:group-ablation} 给出了最新的事件和状态指标。Report F1 由 $0.804/0.778/0.768$ 降至 $0.753/0.651/0.604$，upcoming 召回率则由约 $0.54$ 降至 $0.333/0.485/0.432$。}
+
+\begin{table*}[t]
+\centering
+\caption{Process-pipeline ablation for recurrent regime grouping.}
+\label{tab:group-ablation}
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}llrrrr@{}}
+\toprule
+Pipeline & Start cap & Report F1 & Upcoming R & State F1 (1-step) & Union Dur. MAE \\
+\midrule
+Labels + grouping & $\leq5$ & .804 & .542 & .883 & 4.17 \\
+No grouping & $\leq5$ & .753 & .333 & .835 & 5.11 \\
+Labels + grouping & $\leq10$ & .778 & .535 & .892 & 4.38 \\
+No grouping & $\leq10$ & .651 & .485 & .826 & 6.05 \\
+Labels + grouping & $\leq15$ & .768 & .537 & .900 & 4.43 \\
+No grouping & $\leq15$ & .604 & .432 & .819 & 6.34 \\
+\bottomrule
+\end{tabular*}
+\end{table*}
+
+The consistent loss in report F1, upcoming recall, and one-step state F1 supports the role of grouping in organizing recurrent bottleneck regimes. This is a pipeline-level comparison: the grouped and no-group data packs differ in episode composition and split, so the values measure the end-to-end change associated with the recorded data construction rather than an isolated loss coefficient.
+
+\zhpara{Report F1、upcoming 召回率和下一窗口 State F1 的一致下降支持分组在组织重复瓶颈工况中的作用。该实验属于数据流程级比较：分组和无分组数据包的 episode 组成与划分不同，因此这些数值反映记录中的端到端数据构造变化，而不是某一个损失系数的独立作用。}
+
+\subsubsection{Delay-pattern conditioning}
+
+The no-pattern arm keeps the factory graph and attention branches but disables the injection of recurrent length-three patterns into geographic keys. Its results are shown in Table~\ref{tab:delay-ablation-new}. Removing pattern conditioning reduces Report F1 and upcoming recall at all three caps, with the largest F1 drop at Start$\leq10$. Queue-buildup recall also falls sharply, from $0.984$ in the retained model to $0.145/0.476/0.573$.
+
+\zhpara{无模式实验保留工厂图和注意力分支，但关闭重复长度为三的模式向地理 key 的注入。表~\ref{tab:delay-ablation-new} 给出了结果。移除模式条件化后，三个起点范围的 Report F1 和 upcoming 召回率均下降，Start$\leq10$ 的 F1 降幅最大。队列积压召回率也显著下降，由最终模型的 $0.984$ 降至 $0.145/0.476/0.573$。}
+
+\begin{table*}[t]
+\centering
+\caption{Ablation of delay-pattern conditioning.}
+\label{tab:delay-ablation-new}
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}llrrrr@{}}
+\toprule
+Arm & Start cap & Report F1 & Upcoming R & Remain MAE & Queue R \\
 \midrule
 Full & $\leq5$ & .804 & .539 & 10.9 & .984 \\
 No pattern & $\leq5$ & .745 & .158 & 18.6 & .145 \\
@@ -824,39 +956,105 @@ Full & $\leq15$ & .768 & .534 & 9.7 & .984 \\
 No pattern & $\leq15$ & .601 & .397 & 11.1 & .573 \\
 \bottomrule
 \end{tabular*}
-\end{table}
+\end{table*}
 
-Removing pattern conditioning lowers report F1 by $0.059$, $0.190$, and $0.167$ and lowers upcoming recall at every onset cap. Queue-buildup recall falls from $0.984$ to $0.145/0.476/0.573$. The long-range full model also shows a forecast-distance boundary: upcoming recall is $0.574$ for starts within five minutes, $0.522$ for six to ten minutes, and $0.433$ beyond ten minutes. Together, these observations are consistent with the delay module using recurrent precursor context beyond static adjacency, while also showing that distant events remain difficult.
+The results are consistent with the delay module using recurrent precursor context in addition to static adjacency. The no-pattern runs use a different training budget from the retained warm-start model, so the table supports an association under the recorded protocol rather than a strict equal-budget causal attribution.
 
-\zhpara{移除模式条件化后，三个起点范围的 report F1 分别下降 $0.059$、$0.190$ 和 $0.167$，upcoming 召回率也在所有范围内下降；队列积压召回率从 $0.984$ 降至 $0.145/0.476/0.573$。完整模型在长程任务上同样显示预测距离边界：五分钟内、六至十分钟及十分钟以后的 upcoming 召回率分别为 $0.574$、$0.522$ 和 $0.433$。这些观察与“延迟模块在静态邻接之外利用重复前驱上下文”的设计一致，同时也说明远距离事件仍然困难。}
+\zhpara{上述结果与延迟模块在静态邻接之外利用重复前驱上下文的设计一致。由于无模式运行与最终热启动模型采用不同训练预算，表中结果支持的是当前记录协议下的关联，而不是严格等预算的因果归因。}
 
-As in RQ1, this is not an equal-budget causal estimate: the retained model is warm-started for up to 100 epochs, while no-pattern is cold-started for 50 epochs, and the validation precision gate does not open for the no-pattern tasks. The result supports an association between pattern conditioning and performance under the recorded protocol, but attention associations should not be interpreted as measured physical propagation delays.
+\subsection{Case study and process traceability}
 
-\zhpara{与 RQ1 相同，该结果不是等预算因果估计：最终模型采用热启动并最多训练一百个 epoch，而无模式实验冷启动训练五十个 epoch，且三个无模式任务的验证精确率门槛均未开启。因此，结果支持在当前协议下模式条件化与性能之间的关联，但注意力关联不能被解释为实际测得的物理传播时延。}
+We use the key device \texttt{num02\_rollerbedCNCPipeIntersectionCuttingMachine\_ws0} in episode \texttt{n10\_human1.0\_\_episode\_03} to inspect how the numerical metrics appear in a production trace. Figure~\ref{fig:key-device-main} compares the true and predicted next-window state with the predicted duration over the next 20 min. The model identifies the two main bottleneck intervals and follows their decay, while the remaining discrepancies occur around onset and recovery boundaries. This is consistent with the aggregate result: the model is more reliable for detecting an active or near-term event than for forecasting a distant onset exactly.
 
-\subsection{Context experiments and comparison boundary}
+\zhpara{本文选取关键设备 \texttt{num02\_rollerbedCNCPipeIntersectionCuttingMachine\_ws0} 及 episode \texttt{n10\_human1.0\_\_episode\_03}，检查数值指标在生产轨迹中的具体表现。图~\ref{fig:key-device-main} 对比了下一窗口真实与预测瓶颈状态，以及未来二十分钟的持续时间预测。模型识别出两个主要瓶颈区间，并跟随其持续时间下降；剩余差异主要出现在事件开始和恢复边界附近。这与总体指标一致：模型对已经发生或即将发生的事件更可靠，而对远距离起点的精确预测更困难。}
 
-BTGCN and BSTAN were evaluated on a separate 138/30/40 split and have validation results only. Their longest-range validation F1 values are $0.4778$ and $0.4918$, with upcoming recall $0.0280$ and $0.0291$, but their test subset is unevaluated and their remaining-time metric uses a different weighting and unit. These runs motivate the early-warning problem but cannot establish BNPDFormer test superiority or a state-of-the-art ranking.
+\begin{figure*}[t]
+\centering
+\IfFileExists{figures/key_device_main.png}{%
+\includegraphics[width=0.96\textwidth]{figures/key_device_main.png}%
+}{}
+\caption{Key-device trace for the retained BNPDFormer on the Start$\leq5$ task. The upper panel shows next-window state and the lower panel compares true and predicted duration over the 20-min horizon.}
+\label{fig:key-device-main}
+\end{figure*}
 
-\zhpara{BTGCN 和 BSTAN 使用另一份 138/30/40 划分且只有验证结果；其最长范围验证 F1 分别为 $0.4778$ 和 $0.4918$，upcoming 召回率为 $0.0280$ 和 $0.0291$，但测试子集尚未评估，订单剩余时间指标的权重和单位也不同。这些运行可以说明提前预警的困难，但不能证明 BNPDFormer 在测试集上优于基线或达到最先进水平。}
+For a like-for-like qualitative check, Figure~\ref{fig:key-device-baselines} replays the same device and episode through the four frozen baseline checkpoints. Each model is shown with the same next-window state and 20-min duration views as the retained model. The traces make the different error patterns visible: XGBoost and LSTM follow the two active intervals but introduce short onset shifts, whereas BTGCN and BSTAN show larger fluctuations within the long interval. The quantitative comparison remains the matched test-set evaluation reported in Tables~\ref{tab:comparison-event}--\ref{tab:comparison-state}.
+
+\zhpara{为进行一致的定性核查，图~\ref{fig:key-device-baselines} 将同一设备和 episode 输入四个冻结的基线 checkpoint，并使用与最终模型相同的下一窗口状态和未来二十分钟持续时间视图。图中可以直观看到不同模型的误差形态：XGBoost 和 LSTM 能够跟随两个活动区间，但在开始位置存在短暂偏移；BTGCN 和 BSTAN 在较长区间内表现出更明显的波动。定量比较仍以表~\ref{tab:comparison-event}--\ref{tab:comparison-state} 所示的统一测试集结果为准。}
+
+\begin{figure*}[t]
+\centering
+\IfFileExists{figures/key_device_baselines_aligned.png}{%
+\includegraphics[width=0.96\textwidth]{figures/key_device_baselines_aligned.png}%
+}{}
+\caption{Matched qualitative traces for XGBoost, LSTM, BTGCN, and BSTAN on the key device \texttt{num02\_rollerbedCNCPipeIntersectionCuttingMachine\_ws0} in episode \texttt{n10\_human1.0\_\_episode\_03} with Start$\leq5$. In each model panel, the upper plot compares the true and predicted next-window state and the lower plot compares the true and predicted duration over the next 20 min.}
+\label{fig:key-device-baselines}
+\end{figure*}
+
+Figure~\ref{fig:all-devices-main} displays the next-window state over all 15 supervised resources for the same episode. Green cells indicate correct positive states, orange false positives, and red false negatives. The errors concentrate around a small number of transition cells rather than across the entire horizon, while the central machine and several workbench intervals are recovered as contiguous runs. This view connects station-level scores to the heterogeneous resource graph and shows how the report can be inspected at the resource level.
+
+\zhpara{图~\ref{fig:all-devices-main} 展示同一 episode 中十五个监督资源的下一窗口状态。绿色表示正确预测的正例，橙色表示误报，红色表示漏报。错误主要集中在少量状态转换窗口，而不是整个预测范围；中心机器和若干工作台的瓶颈区间能够以连续片段被恢复。该视图将工位级指标连接到异构资源图，使模型报告能够在资源层面进行核查。}
+
+\begin{figure*}[t]
+\centering
+\IfFileExists{figures/all_devices_state_main.png}{%
+\includegraphics[width=0.96\textwidth]{figures/all_devices_state_main.png}%
+}{}
+\caption{All-device next-window state map for the retained BNPDFormer on the representative episode.}
+\label{fig:all-devices-main}
+\end{figure*}
+
+The cause head supplies an additional process explanation when a reported event is linked to the supported process evidence. In the test set, the supported causes are transport delay, material shortage, upstream starvation, and queue buildup. The case study is therefore traceable to observed production symptoms, while the aggregate cause table provides the quantitative check across the test windows.
+
+\zhpara{当预测事件能够对应已有过程证据时，原因头提供额外的过程解释。测试集中具有样本支持的原因包括运输延迟、物料短缺、上游饥饿和队列积压。因此，案例分析可以追溯到可观测生产现象，而总体原因表则在全部测试窗口上提供量化核查。}
+
+\subsection{Efficiency and generalization analysis}
+
+The available records support a generalization comparison for the frozen baseline checkpoints. Table~\ref{tab:generalization} reports the training F1, validation F1, Test Report F1, and the train--validation gap. LSTM has the largest gaps at the 10- and 15-min caps, indicating that its high training score does not transfer to held-out episodes. BTGCN also develops a large gap at the longest cap, whereas XGBoost is comparatively stable. These values are selection diagnostics from one seed, not estimates of uncertainty.
+
+\zhpara{现有记录支持对冻结基线 checkpoint 进行泛化比较。表~\ref{tab:generalization} 报告训练 F1、验证 F1、测试 Report F1 以及训练—验证差距。LSTM 在十分钟和十五分钟范围下的差距最大，说明其较高训练分数没有转化为留出 episode 上的性能。BTGCN 在最长范围下也出现较大差距，而 XGBoost 相对稳定。这些数值来自单一随机种子的选择记录，用于诊断泛化，不用于估计不确定性。}
+
+\begin{table*}[t]
+\centering
+\caption{Train--validation generalization records for baseline checkpoints.}
+\label{tab:generalization}
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}llrrrr@{}}
+\toprule
+Model & Start cap & Train F1 & Validation F1 & Test Report F1 & Train--validation gap \\
+\midrule
+XGBoost & $\leq5$  & .743 & .653 & .702 & .090 \\
+LSTM & $\leq5$  & .960 & .536 & .583 & .424 \\
+BTGCN & $\leq5$  & .692 & .664 & .669 & .027 \\
+BSTAN & $\leq5$  & .722 & .671 & .687 & .051 \\
+\midrule
+XGBoost & $\leq10$ & .663 & .568 & .611 & .095 \\
+LSTM & $\leq10$ & .954 & .449 & .477 & .504 \\
+BTGCN & $\leq10$ & .635 & .521 & .579 & .114 \\
+BSTAN & $\leq10$ & .664 & .550 & .609 & .114 \\
+\midrule
+XGBoost & $\leq15$ & .637 & .547 & .577 & .090 \\
+LSTM & $\leq15$ & .993 & .438 & .461 & .555 \\
+BTGCN & $\leq15$ & .882 & .478 & .518 & .404 \\
+BSTAN & $\leq15$ & .643 & .492 & .534 & .152 \\
+\bottomrule
+\end{tabular*}
+\end{table*}
+
+A quantitative efficiency ranking is not reported because the current experiment archive does not contain verified same-machine measurements of parameter count, training wall time, peak memory, and inference latency for all five models. The next measurement should use one hardware target, the common batch size and 30-window input, a fixed warm-up period, and repeated inference timing. Omitting an unverified number keeps the performance comparison reproducible and prevents a hardware-dependent claim from being inferred from model names alone.
+
+\zhpara{当前实验档案没有完整保存五个模型在同一机器上的参数量、训练耗时、峰值显存和推理延迟核验结果，因此本文不报告未经核验的效率排名。后续测量应固定硬件、batch size 和三十窗口输入，设置统一预热阶段，并重复计时推理过程。保留这一项待补测内容，可以避免由模型名称推断出依赖硬件的效率结论。}
 
 \subsection{Discussion and validity boundaries}
 
-For RQ1, the strongest operational pattern is the separation between ongoing monitoring and genuine early warning. Machine-only observations retain ongoing recall above $0.90$ but almost eliminate upcoming recall, whereas retaining heterogeneous observations or cross-type relations preserves substantially more precursor information. This is directionally consistent with the first contribution: workers, buffers, handling resources, and material-flow channels matter most before the target machine itself exhibits a bottleneck.
+The main comparison supports three empirical conclusions. First, heterogeneous observations and cross-type relations are most valuable for upcoming warning: machine-only input retains active-event recall but loses the precursors needed before a target station becomes constrained. Second, process-informed persistence and recurrent regime grouping improve the separability of bottleneck and normal trajectories, which is reflected in report F1 and one-step state F1. Third, delay-pattern conditioning is associated with stronger long-range event and queue-buildup prediction under the recorded training protocol. The case study shows that these gains correspond to contiguous resource-level reports that can be checked against observed production traces.
 
-\zhpara{对于 RQ1，最重要的运营现象是 ongoing 监测与真正提前预警之间的差异。仅机器观测仍可保持高于 $0.90$ 的 ongoing 召回率，却几乎失去 upcoming 召回能力；保留异构实体观测或跨类型关系能够保存更多前驱信息。这一结果从方向上支持第一项贡献：人员、缓冲区、搬运资源和物料流通道的主要价值，体现在目标机器自身尚未显现瓶颈之前。}
+\zhpara{主实验和消融实验共同支持三个经验结论。第一，异构观测与跨类型关系对于 upcoming 预警最有价值：仅机器输入能够保持对已发生事件的召回，却会丢失目标工位形成约束之前所需的前驱信息。第二，过程启发式持续性约束与重复工况分组提高了瓶颈轨迹和正常轨迹的可分性，并体现在 Report F1 和下一窗口 State F1 上。第三，在当前训练协议下，延迟模式条件化与更好的远距离事件和队列积压预测相关。案例分析进一步显示，这些提升对应于可以与生产轨迹核对的连续资源级报告。}
 
-For RQ2, process rules and persistence convert transient threshold crossings into sustained, resource-specific events, while clustering organizes recurrent regimes and precursor patterns. Removing clustering consistently reduces report F1, upcoming recall, and cause accuracy across all three onset caps. The result supports improved operational separability and prediction accuracy from combining process-informed labels with clustering. The cause output further links predictions to observable production symptoms, providing traceability over four represented classes.
+Several boundaries qualify the interpretation. All runs use one simulated production line and one random seed. The retained model is warm-started for up to 100 epochs, whereas several ablations are cold-started with shorter budgets, and masking entity channels changes the event pool. The grouping experiment is a data-pipeline comparison with different episode composition, and the no-pattern results use a separate recorded run. The cause head is evaluated only over four supported observable classes, and baseline auxiliary metrics are aligned through the global remaining-time MAE rather than through model-specific primary or progress-weighted variants. Finally, the current archive does not support a verified efficiency ranking or cross-factory generalization claim. The reported results therefore establish contribution-level evidence under a controlled digital-twin protocol, while equal-budget multi-seed experiments, matched efficiency measurements, and transfer to another factory remain necessary for stronger claims.
 
-\zhpara{对于 RQ2，过程规则和持续性约束把瞬时阈值穿越转换为持续的资源类型相关事件，聚类则组织重复工况与前驱模式。移除聚类后，三个起点范围的 report F1、upcoming 召回率和原因准确率均一致下降，支持过程启发式标签与聚类相结合能够提高运营状态可分性和预测准确率。原因输出进一步把预测联系到可观测生产现象，并在四个已有样本类别上提供可追溯性。}
-
-For RQ3, the no-pattern arm degrades report F1, upcoming recall, and queue-buildup diagnosis at every horizon. Combined with the distance-bucket decline, this supports the architectural motivation for conditioning geographic interaction on recurrent history rather than using static graph proximity alone. The evidence concerns predictive association, not recovery of a physical causal delay.
-
-\zhpara{对于 RQ3，无模式实验在所有起点范围均降低 report F1、upcoming 召回率和队列积压诊断能力；结合预测距离分桶中的下降，该结果支持以重复历史模式调节地理交互，而不是只依赖静态图邻近。这里验证的是预测关联，而不是恢复物理因果时延。}
-
-Five validity limits qualify these findings. First, one random seed does not estimate variance or significance. Second, the full model and the entity/delay ablations have unequal initialization and training budgets. Third, masking entity-derived channels changes the event pool, while changing the onset cap changes the positive definition. Fourth, the clustering experiment is a pipeline-level ablation with different episode counts and splits rather than a single-loss switch, and the semantic-attention arm failed before training. Fifth, the baseline test sets are unevaluated and all retained trajectories come from one simulated production line. Cause evaluation is additionally limited to four supported classes. Consequently, the results support the contribution-level comparisons reported above, but not strict attribution to one coefficient, state-of-the-art ranking, or cross-factory generalization.
-
-\zhpara{上述结论受到五项有效性限制。第一，单一随机种子无法估计方差和显著性；第二，完整模型与多实体/延迟消融模型的初始化和训练预算不一致；第三，屏蔽实体派生通道会改变事件池，改变起点范围也会改变正例定义；第四，聚类实验属于 episode 数量和划分均不同的数据流程级消融，而不是单一损失开关，计划中的无语义实验也在训练前失败；第五，基线测试集尚未评估，且最终轨迹全部来自一条仿真产线。原因评测还只覆盖四个有样本支持的类别。因此，这些结果支持上述贡献层面的比较，但不能支持对单一系数的严格归因、最先进排名或跨工厂泛化。}
+\zhpara{上述解释受到多项边界限制。所有运行均来自同一条仿真产线和同一个随机种子。最终模型采用最多一百个 epoch 的热启动，而部分消融采用较短预算的冷启动；屏蔽实体通道还会改变事件池。分组实验属于 episode 组成不同的数据流程比较，无模式结果也来自独立记录的运行。原因头只在四个有样本支持的可观测类别上评估；基线辅助指标通过全局剩余时间 MAE 对齐，不使用各模型特有的 primary 或 progress-weighted 变体进行横向排序。最后，当前档案不支持经过核验的效率排名或跨工厂泛化结论。因此，本文结果建立的是受控数字孪生协议下的贡献层证据；若要形成更强结论，还需要等预算多随机种子实验、匹配效率测量以及另一条产线上的迁移验证。}
 
 %% ========================================================================
 %% Bibliography
