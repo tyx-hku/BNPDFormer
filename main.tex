@@ -407,15 +407,15 @@ The first two stages create reproducible observations and targets. The latter tw
 
 \zhpara{PHAST-DP 围绕第~\ref{sec:intro}节提出的三项贡献组织。第一，可控仿真、异构工厂图和分组嵌入联合机器、人员、物料流、缓冲区、龙门和运输证据；第二，过程启发式事件构造与重复模式分组面向正样本稀缺和监督可分性不足，并保持预测对可观测生产证据的可追溯性；第三，模式增强时空注意力用于处理延迟传播。完整信息流为“仿真生成—窗口与事件构造—工厂图—联合预测”。前两个阶段形成可复现观测与目标，后两个阶段参数化第~\ref{sec:problem}节定义的映射 $f_\theta$。}
 
-Figure~\ref{fig:method-flow} presents the complete PHAST-DP workflow. A disturbance-controlled water-pipe line produces multi-entity trajectories, which are converted into minute-level states, process-informed sustained labels, clustered short-term patterns, and a heterogeneous factory graph. Grouped resource embeddings and temporal, geographic, and semantic attention then integrate these inputs, while the clustered pattern keys condition delayed cross-station interaction. Multi-task heads finally report the bottleneck station, onset, duration, process cause, and remaining order time.
+Figure~\ref{fig:model-architecture} presents the PHAST-DP model architecture. The multi-entity history is partitioned into six semantic feature groups and combined with temporal, graph-Laplacian, and node-identity embeddings. Each encoder block separates temporal, geographic, and semantic dependencies; short-pattern prototypes condition the geographic keys so that recurrent precursors can influence cross-resource interaction after a delay. Station-level and graph-level heads then decode occurrence, onset, duration, future occupancy, process cause, and remaining order time.
 
-\zhpara{图~\ref{fig:method-flow} 展示 PHAST-DP 的完整流程。可控扰动的水管产线生成多实体轨迹，随后构造分钟级状态、过程启发式持续性标签、短时模式聚类和异构工厂图。分组资源嵌入以及时间、地理和语义注意力对这些输入进行联合编码，聚类模式键进一步调节跨工位的延迟交互。最终，多任务预测头输出瓶颈工位、开始时间、持续时间、过程原因和订单剩余时间。}
+\zhpara{图~\ref{fig:model-architecture} 展示 PHAST-DP 的模型架构。多实体历史状态首先按照六类特征语义进行分组投影，并与时间、图拉普拉斯和节点身份嵌入相加。每个编码器模块分别建模时间、地理和语义依赖；短模式原型用于调节地理注意力的键，使重复出现的前驱模式能够参与具有时延的跨资源交互。最后，工位级与图级预测头联合解码事件发生、开始时间、持续时间、未来占用、过程原因和订单剩余时间。}
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=\textwidth]{figures/fig_method_framework.pdf}
-\caption{Overview of PHAST-DP. Disturbance-controlled simulation supplies heterogeneous factory trajectories; process-informed event construction, short-pattern clustering, and the heterogeneous graph provide supervision and structured inputs; and the spatiotemporal Transformer produces a multi-attribute bottleneck report. Coloured banners mark the three contributions, each contrasting the limitation of prior work with the PHAST-DP design: a multi-entity heterogeneous graph instead of machine-only nodes, sustained process-informed events instead of threshold spikes, and a delay-propagation module that captures lagged precursors instead of same-time links.}
-\label{fig:method-flow}
+\includegraphics[width=\textwidth]{figures/fig_model_architecture.pdf}
+\caption{Architecture of PHAST-DP. Grouped heterogeneous embeddings combine the multi-entity history with temporal, structural, and node-identity context. Five encoder blocks model temporal, geographic, and semantic dependencies, while pattern attention injects recurrent short-pattern context into geographic keys for delay-aware cross-resource interaction. Multi-task heads produce station-level event attributes and graph-level process explanations.}
+\label{fig:model-architecture}
 \end{figure*}
 
 \subsection{Disturbance-controlled digital production line}
