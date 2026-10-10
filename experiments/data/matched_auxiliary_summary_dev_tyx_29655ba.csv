@@ -1,0 +1,6 @@
+arm,seed,start_cap,max_epochs,log_who_f1,log_cause_acc,cause_selected_acc,cause_selected_macro_recall
+Backbone,42,5,50,0.735,0.195,0.252,0.255
++Cause,42,5,50,0.733,0.895,0.922,0.937
++State,42,5,50,0.732,0.185,0.212,0.247
++Cause+State,42,5,50,0.726,0.895,0.917,0.936
++Cause+State+Lift,42,5,50,0.726,0.895,0.917,0.936

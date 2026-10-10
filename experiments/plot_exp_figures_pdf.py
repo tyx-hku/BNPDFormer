@@ -23,6 +23,8 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parent.parent
 SUMMARY = Path(__file__).resolve().parent / "data" / "bottleneck_eval_summary.csv"
+MAIN_EVENTS = SUMMARY.parent / "main_event_metrics_dev_tyx_29655ba.csv"
+BASELINE_EVENTS = SUMMARY.parent / "baseline_metrics_common_archived.csv"
 
 PALETTE = {
     "blue_main": "#0F4D92",
@@ -48,13 +50,6 @@ ARMS = {
     "MachineOnly": "entity_machineonly_start{s}_min8_cold_ep50_seed42",
 }
 
-BASELINES = {
-    "PHAST-DP": {"report_f1": (0.804, 0.778, 0.768), "upcoming_r": (0.542, 0.535, 0.537), "dur_mae": (1.863, 1.788, 1.716)},
-    "XGBoost": {"report_f1": (0.702, 0.611, 0.577), "upcoming_r": (0.056, 0.038, 0.033), "dur_mae": (3.264, 3.210, 3.170)},
-    "LSTM": {"report_f1": (0.583, 0.477, 0.461), "upcoming_r": (0.093, 0.078, 0.072), "dur_mae": (3.855, 3.768, 3.615)},
-    "BTGCN": {"report_f1": (0.669, 0.579, 0.518), "upcoming_r": (0.046, 0.044, 0.036), "dur_mae": (3.322, 3.238, 3.121)},
-    "BSTAN": {"report_f1": (0.687, 0.609, 0.534), "upcoming_r": (0.091, 0.052, 0.040), "dur_mae": (3.565, 3.533, 3.422)},
-}
 BASELINE_COLORS = {
     "PHAST-DP": PALETTE["blue_main"],
     "XGBoost": PALETTE["red_strong"],
@@ -105,14 +100,26 @@ def _read_summary(path: Path) -> dict[str, dict[str, float | None]]:
 
 
 def plot_baseline_comparison(out: Path) -> None:
+    main = _read_summary(MAIN_EVENTS)
+    with BASELINE_EVENTS.open(encoding="utf-8") as fh:
+        baseline = {(r["model"], int(r["start_cap"])): r for r in csv.DictReader(fh)}
+    values = {"PHAST-DP": {
+        key: [main[f"bestmodel_start{s}_seed42"][field] for s in STARTS]
+        for key, field in (("report_f1", "report_f1"), ("upcoming_r", "who_recall_upcoming"), ("dur_mae", "dur_mae_tp"))
+    }}
+    for model, code in (("XGBoost", "B2"), ("LSTM", "B3"), ("BTGCN", "B4"), ("BSTAN", "B5")):
+        values[model] = {
+            key: [float(baseline[(code, s)][field]) for s in STARTS]
+            for key, field in (("report_f1", "report_f1"), ("upcoming_r", "upcoming_who_recall"), ("dur_mae", "duration_mae"))
+        }
     panels = (
         ("report_f1", "Report F1", (0.4, 0.85)),
-        ("upcoming_r", "Upcoming recall", (0.0, 0.6)),
+        ("upcoming_r", "Upcoming station recall", (0.0, 0.6)),
         ("dur_mae", "Duration MAE (min)", (1.5, 4.0)),
     )
     fig, axes = plt.subplots(1, 3, figsize=(7.2, 2.5))
     for ax, (key, title, ylim) in zip(axes, panels):
-        for model, vals in BASELINES.items():
+        for model, vals in values.items():
             ax.plot(
                 STARTS,
                 vals[key],
@@ -133,12 +140,13 @@ def plot_baseline_comparison(out: Path) -> None:
     fig.legend(handles, labels, loc="lower center", ncol=5, bbox_to_anchor=(0.5, -0.04), fontsize=9)
     fig.tight_layout(rect=(0, 0.08, 1, 1))
     fig.savefig(out)
+    fig.savefig(out.with_suffix(".png"), dpi=250)
     plt.close(fig)
     print(f"[plot] wrote {out}")
 
 
-def _bars(summary: dict, panels: tuple[tuple[str, str], ...], out: Path, f1_axis: bool) -> None:
-    arms = {a: p for a, p in ARMS.items() if any(p.format(s=s) in summary for s in STARTS)}
+def _bars(summary: dict, panels: tuple[tuple[str, str], ...], out: Path, f1_axis: bool, arm_patterns: dict | None = None) -> None:
+    arms = {a: p for a, p in (ARMS if arm_patterns is None else arm_patterns).items() if any(p.format(s=s) in summary for s in STARTS)}
     x = np.arange(len(arms))
     w = 0.26
     colors = (PALETTE["blue_main"], PALETTE["teal"], PALETTE["neutral"])
@@ -167,6 +175,7 @@ def _bars(summary: dict, panels: tuple[tuple[str, str], ...], out: Path, f1_axis
     fig.legend(handles, labels, loc="upper center", ncol=3, bbox_to_anchor=(0.5, 1.04), fontsize=9)
     fig.tight_layout(rect=(0, 0, 1, 0.93))
     fig.savefig(out)
+    fig.savefig(out.with_suffix(".png"), dpi=250)
     plt.close(fig)
     print(f"[plot] wrote {out}")
 
@@ -189,6 +198,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--out", type=Path, default=ROOT / "figures")
     ap.add_argument("--summary", type=Path, default=SUMMARY)
+    ap.add_argument("--charts-only", action="store_true", help="Redraw metric charts without rewrapping the existing trace PNGs")
     args = ap.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
     apply_style()
@@ -206,8 +216,9 @@ def main() -> None:
         (("remain_mae", "Remaining-time MAE (min)"), ("remain_mae_early", "Early-phase MAE (min)"), ("remain_mae_late", "Late-phase MAE (min)")),
         args.out / "remain_bars.pdf",
         False,
+        {"PHAST-DP (stage 1)": "full_farboost_start{s}_seed42", **{a: p for a, p in ARMS.items() if a != "PHAST-DP"}},
     )
-    for name in RASTER_FIGURES:
+    for name in (() if args.charts_only else RASTER_FIGURES):
         png = args.out / f"{name}.png"
         if png.is_file():
             wrap_png(png, args.out / f"{name}.pdf")

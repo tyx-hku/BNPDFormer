@@ -1,0 +1,16 @@
+{
+  "main_code_commit": "29655baee57b9095119589a211ae1e2113b84078",
+  "main_metrics_path": "source/isaaclab_tasks/isaaclab_tasks/direct/hc_factory/PDFormer/libcity/cache/bottleneck_eval/<run>/metrics.json",
+  "baseline_source": "isaac_factory/doc/experiments/baseline_metrics_common.csv",
+  "baseline_test_windows": 6886,
+  "common_test_windows": 5354,
+  "baseline_common_sample_status": "pending; archived values are not a completed matched-sample comparison",
+  "upcoming_field_main": "who_recall_upcoming",
+  "upcoming_field_baseline": "upcoming_who_recall",
+  "matched_auxiliary_source": "isaac_factory@29655baee57b9095119589a211ae1e2113b84078:瓶颈真值有效性实验.plan.md, E.1",
+  "matched_auxiliary_evidence": "reported summary in repository document; raw run logs are not in this checkout",
+  "baseline_snapshot_sha256": "ef17fdd8ba29d168a75d067e53bb3edfcf174ab9e5a8bc0b57102113814610d1",
+  "baseline_source_checkout_commit": "5cace458544be9516070fd739d1f45f688a506d4",
+  "matched_auxiliary_metric_note": "log who_f1 and cause_acc; not decoded Will15; precision gate inactive in source summary",
+  "remain_figure_reference": "bottleneck_eval_summary.csv: full_farboost_start{5,10,15}_seed42 (stage 1)"
+}
