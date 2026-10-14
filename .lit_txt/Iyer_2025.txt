@@ -1,0 +1,2159 @@
+=====PAGE 1=====
+Journal of Industrial and Production Engineering
+ISSN: 2168-1015 (Print) 2168-1023 (Online) Journal homepage: www.tandfonline.com/journals/tjci21
+A cognitive digital twin for process chain anomaly
+detection and bottleneck analysis
+Suveg V. Iyer, Kuldip Singh Sangwan & Dhiraj
+To cite this article: Suveg V. Iyer, Kuldip Singh Sangwan & Dhiraj (2025) A cognitive digital
+twin for process chain anomaly detection and bottleneck analysis, Journal of Industrial and
+Production Engineering, 42:1, 65-87, DOI: 10.1080/21681015.2024.2381728
+To link to this article:  https://doi.org/10.1080/21681015.2024.2381728
+Published online: 26 Jul 2024.
+Submit your article to this journal 
+Article views: 351
+View related articles 
+View Crossmark data
+Citing articles: 1 View citing articles 
+Full Terms & Conditions of access and use can be found at
+https://www.tandfonline.com/action/journalInformation?journalCode=tjci21
+
+=====PAGE 2=====
+ARTICLE
+A cognitive digital twin for process chain anomaly detection and bottleneck 
+analysis
+Suveg V. Iyera, Kuldip Singh Sangwana and  Dhirajb
+aDepartment of Mechanical Engineering, Birla Institute of Technology and Science Pilani, Pilani, India; bAdvanced Information 
+Technologies Group, CSIR-Central Electronics Engineering Research Institute, Pilani, India
+ABSTRACT
+Bottleneck detection and management plays a significant role in the context of Industry 4.0, 
+wherein process chains have become more intricate. The dynamic nature of process chains shifts 
+the bottleneck location, which requires an integrated methodology capable of identifying current 
+as well as predicting future bottlenecks. The paper proposes a cognitive digital twin (CDT) with 
+a novel explainable artificial intelligence (XAI) model. The proposed CDT is capable of (i) detecting 
+existing bottlenecks, (ii) detecting data anomalies and process chain anomalies (iii) estimating 
+shifting bottlenecks due to anomalies, (iv) predicting near future bottlenecks, and (v) the XAI model 
+supports operational and strategic decision making. The usefulness of proposed CDT is demon­
+strated and validated experimentally on an industry 4.0 compliant learning factory. The proposed 
+novel CDT effectively addresses the process chain bottlenecks (existing, shifting, and future) while 
+the XAI model enhances transparency and trustworthiness for practical implementation.
+ARTICLE HISTORY 
+Received 16 February 2024  
+Revised 8 July 2024  
+Accepted 12 July 2024 
+KEYWORDS 
+Cognitive digital twin; 
+explainable AI; bottleneck 
+analysis; anomaly detection
+1. Introduction
+The manufacturing industry has undergone a significant 
+transformation with the introduction of industry 4.0 and 
+the advancements in its enabling technologies. The 
+data-driven evolution is fueling the sector’s resilience 
+and ability to better manage disruptions. In order to 
+meet the changing demands and expectations of cus­
+tomers, as well as address environmental challenges, 
+the industry is now focused on faster production, better 
+customization capabilities, and sustainable manufactur­
+ing processes. The process chain needs to be agile and 
+reconfigurable to handle the variability [1]. However, 
+the intricate manufacturing process chains often experi­
+ence a decline in throughput as a result of several 
+anomalies due to unexpected machine downtime, 
+prolonged process time, unavailability of materials, 
+and location of internal buffers [2].
+Timely detection of process chain anomalies in 
+Industry 4.0 environment is critical due to limited 
+human intervention in the case of automated systems. 
+These anomalies can be related to hardware, software, 
+data, or communication. Variation in input signals 
+received by the actuators, loss of input data, physical 
+damage, or disruption in power can cause deviation of 
+process parameters. These factors directly or indirectly 
+affect the throughput of the process chain. The decrease 
+in throughput due to bottleneck(s) is a pain point for 
+every manufacturing process chain – assembly, produc­
+tion, inspection, packaging – and requires swift and 
+precise management.
+CONTACT Kuldip Singh Sangwan 
+kss@pilani.bits-pilani.ac.in 
+Department of Mechanical Engineering, Birla Institute of Technology and Science 
+Pilani, Pilani Campus, Rajasthan 333031, India
+JOURNAL OF INDUSTRIAL AND PRODUCTION ENGINEERING 
+2025, VOL. 42, NO. 1, 65–87 
+https://doi.org/10.1080/21681015.2024.2381728
+© 2024 Chinese Institute of Industrial Engineers 
+
+=====PAGE 3=====
+The paradigms under the fourth industrial revolution 
+offer a promising path to address the challenges faced 
+by the manufacturing industry [3]. But the industry is yet 
+to reach the maturity level for the wider application of 
+industry 4.0 technologies to make them immune to 
+disruption. Application of industry 4.0 enabling technol­
+ogies through digital twins (DT), intelligent models, 
+improved simulation techniques, and better visualiza­
+tion have become imperative for better monitoring, 
+control, visualization, and informed decision making 
+[4]. The bottleneck management and anomaly detec­
+tion methods require an integrated approach for cap­
+turing the root causes and their impacts in the context 
+of complex manufacturing systems. Therefore, in order 
+to tackle the aforementioned challenges, this paper 
+proposes a novel cognitive DT (CDT) approach.
+DT is a digital representation of a physical asset that 
+can be used to describe its behavior and characteristics 
+by simulating the virtual model in the virtual space [5]. 
+Penetration of DT solutions in industrial applications 
+have been slow despite the increased interests in aca­
+demic and industrial research [6]. This primarily may be 
+due to the lack of availability of unified frameworks to 
+support DT development. DT based methodologies for 
+automated anomaly detection, self-diagnosis and 
+response are relatively new but seems to be prospec­
+tive tool [7]. For process improvement, DT is a highly 
+efficient method by analyzing a product and its pro­
+duction system across its life cycle [8].
+Integration of cognitive models with manufacturing 
+processes and systems supports the organizations to 
+identify imbalances and to make informed decisions. 
+Ahmed [9] defined CDT as an augmentation and intel­
+ligent companion of physical system with its DT. CDT 
+extend the traditional boundaries of model based 
+approaches [10] by integrating the data driven predic­
+tion models. Jiang et al. [11] in their study on cognitive 
+manufacturing opined that the manufacturing system 
+should have performance cognitive, optimal decision- 
+making, real-time warning, knowledge learning, and 
+reasoning learning. In this paper a CDT is proposed to 
+detect, estimate, and predict the process chain bottle­
+neck and serve as a decision support system for both 
+operational and strategic decision making.
+The future bottleneck prediction plays a key role in 
+the efficient planning, scheduling, and control of man­
+ufacturing process chains. The bottleneck prediction for 
+the near future [12,13] has gained wider attention espe­
+cially when dealing with the shifting bottleneck pro­
+blem. Sustainability of artificial intelligence (AI) models 
+can be achieved only by improving the capabilities of 
+interpreting and explaining their results [14]. The 
+explainable AI (XAI) models with DT bring the elements 
+of transparency and justification along with the uncer­
+tainty reduction in decision-making [15]. The explain­
+ability makes the continuous improvement of models 
+possible [16] and is important for maintaining the model 
+effectiveness throughout the life cycle of the process 
+chain. An XAI model – temporal fusion transformer 
+(TFT) – is proposed and developed in this paper to 
+predict future bottlenecks and interpret its results.
+The key contributions (Figure 1) of the proposed 
+cognitive digital twin methodology are:
+(1) Detect the existing bottlenecks in the process 
+chain.
+(2) Detect data anomalies and process chain 
+anomalies.
+(3) Estimate the shifting bottlenecks due to the 
+anomalies in the process chain.
+(4) Predict and explain the future bottlenecks in the 
+process chain using XAI model.
+(5) An XAI model to support strategic and opera­
+tional decision making.
+The paper is structured as: Section 2 explains the 
+related literature covering the concepts of bottleneck 
+analysis in process chains, CDT and XAI in the manu­
+facturing industry. Section 3 presents the proposed 
+framework and methodology. Section 4 demonstrates 
+Cognitive digital
+twin
+Digitalization of process line
+with live dashboard
+Explainable AI model for
+better decision making
+Detect existing bottleneck
+Estimate shifting bottleneck
+Predict future bottleneck
+Anomaly in data and/or
+process: detection and
+effect analysis
+3.2
+3.4
+3.3
+3.2.1
+Figure 1. Key contributions of the paper (the circles in the figure represents the corresponding section numbers).
+66
+S. V. IYER ET AL.
+
+=====PAGE 4=====
+the methodology with an experimental validation with 
+its results and discussion, and the paper is concluded 
+with the challenges and the future research direction.
+2. Related literature
+The section provides an overview of the existing litera­
+ture on managing bottlenecks in process chains and the 
+concepts of CDT and XAI in the manufacturing industry.
+2.1. Bottleneck management
+The initial work on bottleneck identification in produc­
+tion lines was presented by Kuot et al. [17] in which an 
+information based bottleneck identification rule for 
+a serial production line was presented. The analysis of 
+the data-driven bottleneck techniques reveals that 
+numerous methods have been studied in literature for 
+managing bottlenecks. Roser and Nakano [18] in their 
+work compared six different bottleneck methods – cycle 
+time and utilization, waiting time and queue lengths, 
+arrow method, turning point method, active period 
+method, and bottleneck walk. The bottleneck detection 
+methods discussed in literature are tabulated (Table 1) 
+with their relevance to the bottleneck detection state 
+(current, future, shifting) and time (real-time, offline).
+Bottleneck detection based on its state can be classi­
+fied into current, future, and shifting bottleneck. The 
+majority of the studies have proposed and developed 
+methodologies – turning point method [20,31], 
+hierarchical clustering [30], constrained resource identifi­
+cation with factory physics [32] – for detecting the current 
+bottleneck. Recent studies show that the detection of 
+bottlenecks in real-time is important in an automated 
+industry 4.0 production environment. Latsou et al. [36] 
+proposed a multi agent cyber physical system for current 
+bottleneck detection in real-time. The authors developed 
+an agent-based simulation method to capture the prob­
+abilistic variability and parallel dynamic interactions. A DT 
+based framework to detect, diagnose and improve cur­
+rent bottlenecks in real-time using utilization based tech­
+nique was suggested by Kumbhar et al. [34].
+Few studies have dealt with managing shifting bottle­
+necks [25]. Fang et al. [28], proposed a methodology for 
+detecting shifting bottlenecks while capturing temporal 
+correlation and simultaneously depicting the production 
+status through the parallel gated recurrent units’ model 
+(p-GRUs). Future bottleneck prediction models have been 
+developed with data driven techniques like neural net­
+works [13,29], moving average – Auto Regressive Moving 
+Average [21], Auto Regressive Integrated Moving 
+Average [26] and Long Short Term Memory model [27].
+Bottleneck detection based on its time of detection 
+can be classified into offline and real-time. The majority 
+of the studies have developed an offline method to 
+detect bottlenecks or manage shifting bottlenecks. 
+Most of the real time bottleneck management techni­
+ques have been used to predict future bottleneck 
+[12,13] with a few studies [34,35] detecting current 
+bottleneck in real-time.
+Table 1. Overview of data-driven bottleneck management methods.
+Reference
+Objective
+Method
+State
+Time
+Anomaly 
+considered
+Roser et al. [19]
+Shifting bottleneck
+Active period of machine
+Shifting
+Offline
+No
+Li [20]
+Short term and long-term bottleneck
+Blockage and starvation probabilities 
+and buffer content
+Current
+Offline
+No
+Li et al. [21]
+Predicting throughput bottleneck
+Autoregressive moving average
+Future
+Realtime
+No
+Roser et al. [22],
+Momentary and shifting bottleneck
+Observation of processes and 
+inventories
+Current  
+& shifting
+Offline
+No
+Yu & Matta [23],
+Statistical framework to reduce error in 
+bottleneck identification
+Accept and reject based on statistical 
+evidence
+Current
+Offline
+No
+Subramaniyan,  
+et al. [24]
+Identify bottleneck groups
+Active period of machine
+Current
+Offline
+No
+Roh et al. [25]
+Identify moving bottleneck
+Cycle time data
+Current & 
+shifting
+Realtime
+No
+Subramaniyan [26]
+Predict throughput bottlenecks
+Auto-regressive integrated moving 
+average (ARIMA)
+Future
+Realtime
+No
+Lai et al. [27]
+Framework to design two-layer LSTM
+Long-short term memory
+Future
+Realtime
+No
+Fang et al. [28]
+Shifting bottleneck prediction
+P-Gated recurrent units (p-GRU)
+Future/ 
+Shifting
+Realtime
+No
+Huang et al. [29]
+Bottleneck based dispatching method
+Deep neural network
+Future
+Realtime
+Yes
+Subramaniyan  
+et al. [30]
+Bottleneck detection
+Hierarchical clustering
+Current
+Offline
+No
+Lai et al. [31]
+Dynamic bottleneck for complex production 
+lines
+Turning point method
+Current
+Offline
+No
+Kumbhar et al. [32]
+Constrained resource identification
+Factory physics
+Current
+Offline
+No
+Brochado et al. [33]
+Bottleneck detection
+Minimal information from MES
+Current
+Offline
+No
+Kumbhar et al. [34]
+Detection, diagnosis, and improvement of 
+throughput bottlenecks
+Utilization based
+Current
+Real 
+time
+No
+Latsou et al. [35]
+Bottleneck with behaviour of micro-level 
+agents
+Multi agent CPS
+Current
+Real 
+time
+Yes
+Lai et al. [12]
+System bottleneck
+Bottleneck spatial-temporal attention 
+network (BSTAN)
+Future
+Realtime
+No
+Ma et al. [13]
+Bottleneck prediction in high-variety shops
+Neural network
+Future
+Realtime
+No
+JOURNAL OF INDUSTRIAL AND PRODUCTION ENGINEERING
+67
+
+=====PAGE 5=====
+2.1.1. Anomaly detection
+Industry 4.0 technologies support the continuous 
+monitoring of process chains, enabling the detection 
+of deviations of the system from its intended working 
+characteristics. The anomaly may be due to a range of 
+factors, but if left undetected/unattended the system 
+performance gets affected. Chiang et al. [37] pre­
+sented one of the initial works for bottleneck detec­
+tion considering unreliable machine as anomaly. 
+Anomaly detection is critical in automated process 
+chains, and some studies have been conducted on 
+detection and management [29,35] of process chain 
+anomalies leading to improvement in process chain 
+throughput. An anomaly detection approach with 1- 
+Dimensional Convolutional AutoEncoders (1d-CAE) 
+and Localized reconstruction error (LRE) to improve 
+anomaly detection performance and interpretability 
+was proposed and demonstrated by Gorman et al. 
+[38]. The anomaly detection techniques in industry 
+4.0 environment are primarily based on the monitor­
+ing of field data with suitable IoT technologies. 
+However, the implications of real-time anomaly 
+detection and its impact on the throughput of 
+a complex process chain in an Industry 4.0 environ­
+ment have not been extensively addressed.
+From the given Table 1, it becomes apparent that 
+the referenced studies have focused on the detection 
+of current bottlenecks through offline methods. The 
+prediction of future bottleneck has been through 
+“Blackbox” [39] models with no interpretation of 
+results. Limited studies have addressed the issue of 
+anomaly detection and shifting bottleneck(s) due to 
+an anomaly. Based on the literature background the 
+desired features of a bottleneck management 
+methodology are compiled and depicted in Figure 2. 
+Since bottleneck analysis is a crucial step in attaining 
+increased production, it cannot be approached par­
+tially as it significantly impacts the overall outcome of 
+the process chain. There exists a major gap in the 
+literature for a comprehensive bottleneck manage­
+ment approach that can effectively detect existing 
+bottlenecks, estimate the potential bottleneck shift 
+due to anomalies, and predict future bottlenecks. The 
+listed features act as the guide for developing the 
+proposed CDT based bottleneck management metho­
+dology. The proposed CDT is capable of detecting 
+existing, shifting as well as future bottlenecks and the 
+proposed XAI model is capable of supporting the 
+operational and strategic decision-making.
+2.2. Cognitive digital twins in manufacturing
+The primary objective of industry 4.0 based manufactur­
+ing systems is to attain self-sufficiency, requiring the 
+ability to adapt to dynamic circumstances. A CDT can 
+be defined as an enhanced version of a digital twin that 
+possesses cognitive capabilities, allowing it to perceive 
+and respond to unforeseen situations, resulting in 
+a constantly evolving system [40]. CDT incorporate cog­
+nition models through machine learning and artificial 
+intelligence [41] which can effectively acquire essential 
+cognitive aspects such as attention, perception, mem­
+ory, reasoning, learning, and problem solving [42]. 
+Development of CDT becomes important to handle 
+the dynamic manufacturing systems and support resi­
+lience in resulting production disruptions [43]. Figure 3 
+depicts the building blocks of a CDT. An efficient CDT 
+model provides the advantages of dynamic perception, 
+Figure 2. Desired features of a bottleneck management methodology.
+68
+S. V. IYER ET AL.
+
+=====PAGE 6=====
+dynamic monitoring, real-time analysis, and perfor­
+mance prediction. It aids the production system in 
+swiftly identifying any potential issues that may arise 
+during the production process [11]. 
+2.2.1. Explainable AI in manufacturing
+The data analysis techniques have been revolutionized 
+by the remarkable capabilities of data-driven AI 
+(Machine learning, Deep learning, & AI) models. 
+However, these models have faced criticism due to 
+their lack of transparency and trustworthiness in practi­
+cal implementation, hindering effective decision mak­
+ing. As a result, XAI techniques have been developed to 
+enhance the transparency of these models [44]. The 
+primary focus of the XAI architecture for manufacturing 
+applications was on the development of supervised 
+learning-based classification and regression models. An 
+instance of this is the creation of a two-stage XAI classi­
+fication model specifically designed for predicting cycle 
+time [45]. Notably, the XAI model developed for unsu­
+pervised learning cluster analysis also has showcased its 
+ability, like the model to analyze multidimensional pro­
+totype clusters by providing rule-based explanations 
+that are easily understandable to humans [46].
+Various XAI methods – SHAP [16], class activation 
+map and Gradient saliency maps [39] – have been 
+explored and demonstrated. The time-series methods 
+include based on the taxonomy of time points, sub­
+sequences – sub-parts of the time series, as well as 
+instance-based approaches [47]. Lim et al. [48] intro­
+duced the TFT interpretable model. The architecture is 
+based on the attention network combining high- 
+performance multi-horizon forecasting with interpre­
+table insights into temporal dynamics. Sanit and 
+Toahchoodee [49] demonstrated the application of 
+TFT model by implementing a discrete event simula­
+tion and demand forecasting for validating the spare 
+parts inventory policy for a petrochemical industry.
+The application of XAI in manufacturing is still in its 
+initial stages. However, its ability to interpret and 
+provide explanations for the outcomes of AI models 
+holds great promise as a potential solution for wider 
+implementation of AI models in manufacturing 
+industry.
+2.3. Research gap
+Based on the aforementioned literature, it is evident 
+that the following disparities exist between the current 
+status and requirements.
+●Prediction of future bottlenecks and their inter­
+pretation through decision support systems 
+needs further investigation.
+●The analysis of the implications of real-time 
+anomaly detection and its impact (potential shifts 
+of bottlenecks) on the throughput of a complex 
+process chain in an Industry 4.0 environment has 
+been lacking in the literature.
+In order to bridge these disparities, this paper presents 
+a CDT approach based on the bottleneck management 
+desired features (Figure 2), that can proficiently manage 
+prevailing, shifting, and forthcoming bottleneck situa­
+tions. The CDT is constructed by combining a TFT-based 
+interpretable AI model with a discrete event simulation- 
+based DT. The DT enables the detection of anomalies, 
+both in the process as well as the data. Meanwhile, the 
+interpretable transformer based TFT model forecasts the 
+upcoming bottleneck station and elucidates the key 
+factors supporting the predicted outcome.
+3. Proposed methodology
+The section illustrates and explains the proposed CDT 
+methodology for the detection of current bottlenecks, 
+estimation of shifting bottleneck due to process chain 
+anomaly, and prediction of future bottleneck with inter­
+pretation of results. Figure 4 depicts the methodology, 
+broadly divided into three phases – data acquisition, 
+IoT Sensor &
+Communication
+channel
+Cognitive
+Digital
+Twin
+Digital Twin
+Physical
+process
+chain
+Cognition model
+•
+Learning
+•
+Memory
+•
+Perception
+•
+Problem solving
+•
+Dynamic
+•
+Replicate
+Figure 3. Building blocks of cognitive digital twins.
+JOURNAL OF INDUSTRIAL AND PRODUCTION ENGINEERING
+69
+
+=====PAGE 7=====
+CDT, and decision support system. Major contributions 
+of this paper are highlighted in the figure. The following 
+explains the working of these three phases with main 
+input(s), output(s) and action(s) required.
+3.1. Data acquisition
+The process chain parameters are acquired for DT devel­
+opment and real time analysis. Depending on the central 
+control system of the physical process chain, appropriate 
+IoT platforms like ThingWorx, Microsoft Azure are 
+selected and configured with the supported communica­
+tion protocol like Message Queuing Telemetry Transport 
+(MQTT), OPC Unified Architecture (OPCUA), Transmission 
+Control Protocol/Internet Protocol (TCP/IP), and so on. 
+Figure 5 depicts the data acquisition process from the 
+physical process chain and storage of values in database. 
+The sensors and the actuators are integrated with the 
+machine controllers. Data communication protocols (like 
+MQTT, OPCUA, TCP/IP, etc.) should be selected and 
+Explainable AI model
+Process
+chain
+IoT platform
+with data logger
+Process chain data
+configuration
+Data selection, pre-processing
+and integration
+Database
+Simulation model of the
+physical process chain
+Integrate data with
+simulation model
+Digital Twin
+Is Data receipt
+Confirmed?
+Are Parameters within
+acceptable range?
+Data anomaly detected
+Process anomaly detected
+Predict future
+bottleneck process
+Detect bottleneck
+process
+(Turning point method)
+Estimate
+shifting bottleneck
+(Active period method)
+Prediction result
+explanation
+Result Dashboard
+Mitigating Action
+N
+N
+Y
+Y
+Data Acquisition
+Decision support
+system
+Communication
+Protocol
+Communication
+Protocol
+Is bottleneck shifting?
+N
+Develop temporal
+fusion transformer
+model
+Reconfigure Digital Twin
+Explainable Cognitive Digital Twin
+Y
+Confirm process
+chain working
+Figure 4. Proposed research methodology.
+70
+S. V. IYER ET AL.
+
+=====PAGE 8=====
+configured between the controller and the IoT platform 
+for information transfer through the communication 
+channel. Depending upon the type of machine control­
+lers on the machine, generally, more than one type of 
+communication protocols are used. Finally, the opera­
+tional values or the key performance indicators are 
+acquired for the development of the DT. Section 4.1 
+demonstrates the IoT platform used, communication pro­
+tocols and the various values acquired in the database for 
+the case study. The values are also stored in a SQL data­
+base for further processing and analysis of historical data.
+The advancement of sensor technologies and IoT 
+software tools has enhanced the capacity to capture 
+a broader range of process variables. It is imperative to 
+configure the system to collect only the essential pro­
+cess variables in order to prevent unnecessary data 
+transmission to the database, thereby conserving digi­
+tal resources. Methods to develop digital solutions 
+with minimal information are widely researched and 
+gaining significant interest.
+Input:       
+Process chain data
+Process/actions:  
+Develop communication proto­
+cols; configure IoT platform with 
+data logger; configure database.
+Output:      
+Database
+3.2. Cognitive digital twin
+Development of DT requires majorly two components: 
+simulation model and real time process data. The static 
+part of the simulation model is developed based on 
+process chain layout information. The layout informa­
+tion provides the physical parameters like the distance 
+the workpiece has to travel between stations, sensor 
+and actuator positions, material handling units routing, 
+and the location of buffer storage and retrieval station. 
+The dynamic part of the simulation model is developed 
+based on the process logic without deviating from the 
+sequence of operation. The process parameters like 
+speed of the conveyors & material handling units, 
+number of workpieces allowed in a station at 
+a particular instance are integrated with the model. 
+The physical process chain data/information in some 
+scenarios can be dynamic, leading to the requirement 
+of self-configuring simulation models, depending upon 
+the maturity level of the solution. The configured data­
+base acquires the live data from the process chain. The 
+required data to develop the DT of the process chain is 
+selected and preprocessed to restrict the error in model 
+due to data discrepancy. The preprocessed data is inte­
+grated with the simulation model to develop the DT of 
+the process chain. The developed DT model is tuned to 
+synchronize with the physical process chain.
+Figure 6 shows the DT development and validation 
+process. The validation process of DT model involves 
+examination of the accuracy and reliability in replicat­
+ing the real system’s functioning and performance [50]. 
+The validation of DTs is a crucial step to ensure the 
+trustworthiness of the results for decision making. The 
+procedure initiates with the validation of the simula­
+tion model, followed by the data validation. Several 
+quantitative methods have been discussed in the lit­
+erature [51] supporting the validation of DTs. 
+Performance value comparison is one of the most pre­
+ferred methods of model validation where the error 
+percentage of the performance criteria are taken into 
+account [52]. According to ISO 23,247 standards for 
+digital twin, the error percentage for synchronization 
+is not fixed but depends on the application for the 
+information exchange between the physical process 
+chain and its digital twin [53]. Understanding the 
+requirements of the DT, credibility assessment, and 
+identifying the potential uncertainty areas of the DT 
+[54] helps in developing an effective validation frame­
+work and define the basic rules [55] that are needed to 
+be satisfied throughout the lifecycle of the DTs.
+Input:      
+Live process chain data, historical 
+data from database
+Process/actions:  
+Develop simulation model; select 
+and pre-process the data; Integrate 
+Process
+chain
+IoT platform
+with data logger
+Communication
+protocol
+Process chain data
+configuration
+Database
+Data Acquisition
+Communication
+protocol
+Figure 5. Data acquisition.
+JOURNAL OF INDUSTRIAL AND PRODUCTION ENGINEERING
+71
+
+=====PAGE 9=====
+data and simulation model to 
+develop DT; reconfigure DT if 
+anomaly detected.
+Output:      
+Developed DT
+3.2.1. Explainable AI model
+Predictive models have found widespread applications in 
+the manufacturing industry due to their ability to provide 
+insights for taking critical decisions. The data-driven AI 
+models are trained and validated to work with DT for 
+better decision making. But the general drawback among 
+these models is the opaqueness, referred to as the 
+Blackbox model [46]. This opaqueness hinders the deci­
+sion-making factor and constraints the model from being 
+used practically. The explainable AI models provide the 
+capability of interpreting and explaining the reasons for 
+the predictions made by the model. This helps in under­
+standing the critical parameters based on which the pre­
+dictions are made. The AI model can be developed based 
+on neural network or reinforcement learning. Figure 7 
+depicts the flow of data in the cognition model to predict 
+and interpret the bottleneck process. The process of 
+development of the XAI model are as follows:
+Step 1: Preprocess the data for training, testing, and 
+validating the prediction model.
+Step 2: The prediction length, lookback value and 
+the training set split value is defined.
+Step 3: The training set is developed with the para­
+meters timestamp id, target variable, minimum enco­
+der length, maximum encoder length, minimum 
+prediction length, time varying unknown variables, 
+target scales, encoder length.
+Step 4: The validation and test datasets are split 
+with the parameter of randomization. In this study 
+the randomization is set to be true.
+Step 5: From the developed datasets the data- 
+loaders are generated by providing the batch size.
+Step 6: The stop criteria is defined to save time. 
+During the model training if the criteria is satisfied 
+the current epoch will stop and proceed for the next 
+epoch. Also, the trainer module is developed with the 
+controller configuration, callback configuration, num­
+ber of epochs. The trainer module is used to train and 
+optimize the model further.
+Step 7: The trainer module is used to fit and train the 
+data from the training dataset. The trained model is 
+tested for its accuracy by predicting the target variable 
+for the input features from the test set. On getting the 
+satisfactory results the model is validated against the 
+validation dataset.
+Explainable AI model
+Predict future
+bottleneck process
+Prediction result
+explanation
+Develop temporal
+fusion transformer
+model
+Digital Twin
+Result
+Dashboard
+Figure 7. Cognition model training and bottleneck process prediction.
+Data selection, pre-processing
+and integration
+Simulation model
+of the physical process line
+Integrate data with
+simulation model
+Digital Twin
+Digital Twin
+Information from
+process chain
+Reconfigure
+Digital twin if
+data anomaly
+detected
+Database
+Figure 6. Process chain digital twin development and validation.
+72
+S. V. IYER ET AL.
+
+=====PAGE 10=====
+Step 8: The optimal learning rate for the given 
+application is determined and integrated along with 
+the trained model for further optimization.
+Step 9: The validated model is optimized by using 
+the hyperparameter tuning framework like Optuna, 
+Ray-tune, Hyperopt, etc.
+This completes the development and optimization 
+of the XAI prediction model, which is used for predict­
+ing the future bottleneck of the process chain. The 
+integrated feature of the XAI models provides the 
+explanation of the factors affecting the prediction 
+results which are interpreted for improving the process 
+chain. Predicting the near future bottleneck guides the 
+resource manager to take informed decisions and 
+helps in better planning of the peripheral systems. 
+The prediction results are further interpreted to estab­
+lish the reason for such prediction and the factors on 
+which the model made the predictions.g
+Input:       
+DT processed parameters
+Process/actions:  
+Develop TFT model; Predict future 
+bottleneck process; Explain critical 
+factors in prediction results.
+Output:      
+Display results on dashboard
+3.3. Anomaly detection
+The robustness in synchronizing the data with the simu­
+lation model decides the effectiveness of the DT. Thus, 
+continuous data must be ensured from the source to the 
+model. The validated DT provides the real time status of 
+the physical model and process chain parameter insights 
+from the field data. Early detection of errors and the 
+deviation trends from the required performance criteria 
+save production time and resources. Delay in receipt or 
+non-receipt of data due to a broken channel will be 
+notified as an anomaly and an alert information will be 
+generated (Figure 8). The anomaly in the system may be 
+due to data errors, measurement uncertainties, modeling 
+errors or result interpretation errors. The validation 
+process of DT helps to negate the modeling and result 
+interpretation errors. The system should validate the 
+receipt of data from field devices on a real time basis to 
+confirm the synchronization of the digital model.
+The monitoring of the working parameters and the 
+insights gained from the data help in maintaining the 
+system to function at the desired level. The fault in the 
+physical process chain components may produce pro­
+cess parameter results which are not in the acceptable 
+range. Deviation of results from the desired values will 
+be flagged as an anomaly and notified to the user. 
+Identifying and notifying the anomaly condition is 
+important but is not sufficient as the effects due to 
+the anomaly also should be analyzed. The bottleneck 
+of the process chain may start shifting due to the 
+anomalous value. This becomes critical in systems 
+where the anomalous value is generated over 
+a period and not as an instantaneous spike.
+Input:       
+Data received?
+Process/actions:  
+Check for data anomaly and pro­
+cess anomaly; Identify shifting 
+bottleneck.
+Output:      
+Reconfigure DT; mitigating action 
+feedback to process chain
+3.4. Bottleneck analysis
+The bottleneck is the process/station which slows down 
+the entire process chain. The throughput bottleneck is 
+a critical factor for the smooth functioning of the pro­
+cess chain. Effective and time bound detection and 
+management of bottleneck helps in improving the over­
+all throughput of the process line. The bottleneck ana­
+lysis methodology (Figure 9) is designed to cater the 
+requirements of three types of bottleneck scenarios –
+(1) Bottleneck detection in the existing line – Though 
+the process chain shows normal working, the 
+efficiency may decrease over a period of time. 
+Is data receipt
+confirmed?
+Are parameters within
+acceptable range?
+Data anomaly detected
+Process anomaly detected
+N
+N
+Y
+Anomaly Detection
+Reconfigure Digital
+twin
+Identify shifting bottleneck?
+Y – Shifting bottleneck identification
+(Active period method)
+N – Mitigating action to physical process
+chain
+Y
+Figure 8. Existing process chain anomaly detection.
+JOURNAL OF INDUSTRIAL AND PRODUCTION ENGINEERING
+73
+
+=====PAGE 11=====
+This can be due to several reasons like the impro­
+per power supply (pneumatic, hydraulic), fault in 
+actuators, decrease in sensitivity of the integrated 
+sensors which increases the sensing time. The 
+detection of bottlenecks helps in developing bet­
+ter designs and efficiency improvements. 
+Bottleneck detection through the DT requires 
+a method that is fast and responsive. Also, due 
+to the limited time availability the amount of data 
+that can be processed will also be less. There are 
+multiple methods of bottleneck detection dis­
+cussed in literature, but the detection based on 
+blockage and starvation time of process stations 
+is widely accepted and applied [20]. The blockage 
+and starvation time determination leads to bot­
+tleneck detection by the “turning point method” 
+[31]. The turning point method is suggested for 
+applications having minimal shop floor data. Data 
+acquisition system on the plant floor integrated 
+with the turning point method for bottleneck 
+detection, the real time system performance can 
+be monitored, and the bottleneck location can be 
+identified easily [56]. The turning point is defined 
+where the trend of the blockage time and starva­
+tion time values overturns. The corresponding 
+process/station is considered as the bottleneck 
+station. The turning point station must have less 
+blockage time plus starvation time compared to 
+its neighboring stations.
+(2) Estimate shifting bottleneck due to anomaly – 
+Anomalies in process chains can be due to accu­
+mulated error or due to a momentary fault. 
+Analyzing the effect of anomaly on shifting bot­
+tleneck is important to provide a guiding rule for 
+future scenarios. The anomaly in the process 
+chain can be due to the anomalous data from 
+the physical device or due to the anomalous 
+working of devices which are not detected as 
+fault. The bottlenecks, due to the dynamic nature 
+of the manufacturing process chain or due to an 
+anomaly may shift location. The shifting bottle­
+neck must be identified and studied to under­
+stand the nature of anomaly. Certain process 
+time anomalies are single time instantaneous 
+spikes and may not repeat for the upcoming 
+cycles. But in some cases, the anomaly condition 
+is due to the continuous deviation from the 
+desired value, spread over several cycles. The 
+“active period method” is ideal for simulation- 
+based methodologies that typically generate sub­
+stantial amounts of data or are applied to histor­
+ical data. This method has various advantages like 
+ease of implementation, and not needing infor­
+mation about the system’s structure or proces­
+sing order. The results of the bottleneck detection 
+also have a high level of confidence [57].
+(3) Predict near future bottleneck – predict future 
+bottleneck and interpret the critical parameters 
+affecting the result which guide for better deci­
+sion making. The XAI model is developed, 
+trained, and optimized to predict the future 
+bottleneck in the process chain.
+Input:       
+Anomaly detected?
+Process/actions:  
+1) Anomaly detected – Identify 
+and report shifting bottleneck.
+2) Anomaly not detected – Identify 
+and report existing bottleneck
+Output:      
+Display bottleneck results on 
+dashboard
+3.5. Decision support system
+The full potential of the DTs can be realized through the 
+efficient visualization and interpretation of results. The 
+results from the bottleneck analysis – detection, estima­
+tion, and prediction with interpretation (explaining the 
+critical parameters) are visualized (Figure 10) intuitively. 
+Bottleneck Analysis
+Result Dashboard
+Identify & report
+bottleneckprocess
+(Turning point method)
+Identify & report
+shifting bottleneck
+(Active period method)
+Is bottleneck
+shifting?
+Identify shifting bottleneck?
+N – Mitigating action to
+physical process chain
+Predict future bottleneck
+process with explainable AI
+model
+Figure 9. Bottleneck process identification and estimate shifting bottleneck.
+74
+S. V. IYER ET AL.
+
+=====PAGE 12=====
+This enables the generation of valuable insights for an 
+effective decision support system. Additionally, any 
+anomaly alerts resulting from data errors or process 
+parameter deviations are communicated and notified 
+on the DT dashboard. Autonomous and semi- 
+autonomous mitigating actions are then provided to 
+address these issues within the physical process chain.
+Input:       
+Bottleneck management results
+Process/actions:  
+Mitigating action feedback to pro­
+cess chain.
+Output:      
+Decision to process chain
+4. Experimental validation
+The proposed CDT methodology is capable of (i) 
+detecting existing bottlenecks, (ii) estimating bottle­
+neck shifts due to anomalies, (iii) predicting near 
+future bottlenecks, and (iv) support operational and 
+strategic decision making as explained in section 3. 
+The proposed methodology is implemented and 
+validated in this section through the bottleneck 
+management of a miniaturized factory process 
+line – learning factory. The industry 4.0 compliant 
+learning factory comprises didactic modular produc­
+tion systems (MPS) that depict the factory environ­
+ment. The case learning factory consists of seven 
+major stations with multiple sub-processes in each 
+station. Figure 11 shows the physical modules of 
+the case process chain and Table 2 provides 
+a comprehensive list of stations along with their 
+respective processes, as well as the sensors and 
+actuators incorporated within each station.
+The process starts with the distribution of the part 
+which goes through the measurement process, inspec­
+tion process, assembly process, and storage & retrieval 
+process. The modularity of the experimental line per­
+mits reconfiguration and evaluation of the methodol­
+ogy under different scenarios.
+4.1. Data acquisition and IoT platform 
+configuration
+The process line is controlled by programmable logic 
+controllers from multiple manufacturers (Siemens and 
+FESTO). This adds the complexity of configuring the IoT 
+platform as the communication protocol and the data 
+logger settings might vary for each model of the con­
+troller. In this study PTC KepServerEx is used as the IoT 
+platform configured with OPC-UA communication pro­
+tocol drivers. Each station in the line is assigned 
+a unique local static IP address to communicate with 
+the IoT platform. The benefit of using OPC-UA protocol 
+is that it supports a wide range of controllers as well as 
+the ease in creating data tags for each process line 
+parameter [58]. The factory level systems will have 
+Result Dashboard
+Mitigating action
+Decision support system
+Decision communicated
+back to process
+chain
+Figure 10. Result visualization and decision support system.
+Figure 11. Physical process chain for experimental study.
+JOURNAL OF INDUSTRIAL AND PRODUCTION ENGINEERING
+75
+
+=====PAGE 13=====
+a high number of process parameters for each station 
+and hence must be clearly tagged to reduce the latency 
+in data acquisition. The required process parameters 
+(component location tracking through sensor and pro­
+cess line decision on quality) are tagged and configured 
+in the IoT platform data logger with logging time of 
+500 ms. The rate of data logging was found satisfactory 
+through multiple trials for the selected process line 
+which may be altered depending upon the rate at 
+which the process parameter gets changed in the sys­
+tem. SQL database is configured for storage of the 
+process parameter values for further analysis.
+4.2. Cognitive digital twin
+In this experiment, the CDT is developed by combing 
+the DT of the process chain and the explainable AI 
+model. Only the memory component (encoding and 
+retrieval of information and knowledge) of the cogni­
+tion [59] is used in this study. In CDT, the AI model adds 
+the functionality of the DT by integrating its capability 
+to predict future bottlenecks by using its memory 
+component and attending to different parts of the 
+same input sequence when making predictions, learn 
+from the process parameters added to the database.
+4.2.1. Digital twin development
+The process line layout and configuration details are 
+obtained from the layout diagram, which is used to 
+develop the simulation model of the process line. 
+AnyLogic multimethod simulation modeling tool with 
+its material handling library is used to develop the 
+simulation model. The simulation model is tested for 
+modeling errors and logical errors by providing theo­
+retical inputs corresponding to the process para­
+meters. The tested simulation model is infused with 
+the data from the database after pre-processing and 
+formatting to the required structure. Ensuring synchro­
+nization between the digital twin and its physical 
+counterpart is crucial in order to obtain real-time 
+updates, allowing for the analysis of critical process 
+parameters as closely to real-time as feasible. The DT 
+logic, 3d visualization and live dashboard are shown in 
+Figure 12.
+The process logic (Figure 12(a)) simulates the activ­
+ities in the DT and captures the number of entries/ 
+activities passing through each block. The live update 
+keeps track of the number of components processed in 
+the current production cycle. The 3D visualization 
+(Figure 12(b)) helps in understanding the physical 
+dynamics and relationships among the stations as 
+well as the station and the component. The live dash­
+board (Figure 12(c)) displays the insights generated 
+from the field variables. The dashboard acts as 
+a single point representation tool for visualizing all 
+the process insights simultaneously. The lag time, pro­
+cess time, sensor decision variables, timescale based 
+component location are displayed. The DT must be 
+validated by comparing it with the physical line to 
+confirm the correctness in terms of data and logic.
+4.2.2. Digital twin validation
+The DT model is validated against its physical pro­
+cess chain by measuring the deviation in their syn­
+chronization rate (Station 1 - Figure 13). The 
+Table 2. Stations, its sub- processes with sensors and actuators in the physical process chain.
+Station
+Function
+Process
+Sensors
+Actuators
+Distribution
+Separates workpieces stored in the 
+magazine tube and a double-acting 
+cylinder pushes the workpieces out 
+one at a time.
+Stacking of components
+Proximity sensor 
+Light barrier
+Double acting 
+cylinder 
+DC rotary solenoid
+Eject workpiece and transfer to next station
+Measurement Takes workpieces from the ongoing 
+process to determine the height of 
+the workpieces.
+Transfer of component to measuring table 
+and back to conveyor
+Diffuse sensor 
+Retro reflector sensor 
+Light barrier 
+Through beam sensors
+Double cylinder with 
+gripper 
+DC rotary solenoid
+Measurement
+Rejection of component
+Storage
+Differentiate among workpieces based 
+on their colour and store up to 48 
+workpieces over 6 levels in 2 rows.
+Detect the colour of the component
+Reflection 
+Inductive proximity 
+switch for light 
+barrier
+Cartesian robotic arm
+Pick and place the component in the 
+appropriate stack
+Raise error if stack is full
+Retrieval
+Retrieves the workpieces from the 
+storage levels based on the selected 
+color
+Pick the component from the stack
+Cartesian robotic arm
+Raise error if stack is empty
+Assembly
+The double acting cylinder with 
+pneumatic vacuum cup picks up 
+a workpiece insert from the slide 
+and places it on the workpiece 
+housing.
+Stop the component in the assembly position Proximity sensor 
+pressure sensor 
+Diffuse sensor
+Mini slide 
+vacuum generator
+Pick and place the cap for the component
+Transfer the component
+Separation
+The station detects the height of 
+incoming workpieces and allocates 
+them.
+Identify the assembly correctness
+Analog diffuse light 
+scanner
+DC rotary solenoid
+Reject the component
+Sorting
+Sort workpieces onto three chutes. 
+Workpieces placed onto the 
+beginning of the conveyor belt are 
+detected by a fork light barrier.
+Identify the colour of the component 
+Transfer the component to the respective 
+colour track
+Retro-reflective sensor
+DC rotary solenoid 
+with gate
+76
+S. V. IYER ET AL.
+
+=====PAGE 14=====
+validation results of other stations are provided in 
+Appendix Figure A1. The error percentage is calcu­
+lated by comparing the difference in individual pro­
+cess time from the DT model and the actual process 
+time from the physical process chain. The time 
+deviation in the synchronization level for each sta­
+tion is calculated in percentage terms and is used 
+to validate the digital twin. Station 3 shows better 
+synchronization with its physical unit and has 
+a deviation of 0.5%. This is due to the limited 
+number of sub-processes in the station and all the 
+sensor/actuator variables are binary in nature which 
+aids in easy synchronization of the digital twin. 
+However, station 5 and station 6, due to their 
+higher number of sub processes produced an error 
+of 5.1% and 4.8%, respectively, which is due to their 
+higher number of sub processes and presence of 
+pneumatic powered actuators. The pneumatic 
+pressure deviation and the flow difference in the 
+pressurized air is not acquired and synchronized 
+with the digital twin. During the data acquisition 
+phase, it was observed that the time sequence for 
+the pneumatic actuators is not constant, and the 
+deviation is due to the power source pressure and 
+its flow characteristics. These factors affect the func­
+tioning directly and the total process time of the 
+station. However, since the arrival of workpiece to 
+each station is synchronized, the results are not in 
+direct conflict with the bottleneck calculations or 
+predictions. But during the estimation of shifting 
+bottleneck due to anomaly the results show devia­
+tion since the total process time of each station is 
+taken into consideration. Table 3 shows the valida­
+tion results of the DT model compared with the 
+physical process chain in terms of error percentage. 
+The error is calculated for each station and the 
+Figure 12. Digital twin – (a) logic (b) process 3D visualization (c) live dashboard.
+JOURNAL OF INDUSTRIAL AND PRODUCTION ENGINEERING
+77
+
+=====PAGE 15=====
+average error based on the values calculated over 
+a production cycle is found out to be 3.3%. Since 
+the DT synchronization deviation does not provide 
+any thresholds for acceptance, the acceptable per­
+centage error of the simulation model with its 
+experimental data is considered. The continuous 
+flow of data from the database keeps the DT 
+updated, but it is desired to validate the model at 
+fixed interval of time to avoid the model obsolete­
+ness and error cumulation.
+4.2.3. Explainable AI model – development, 
+optimization, and validation
+In this study three models − 1-Dimensional convolu­
+tional neural network (1D CNN), bidirectional long 
+short term memory (bi-LSTM), and TFT models are 
+developed and experimented with the same time ser­
+ies dataset for predicting the blockage and starvation 
+time for bottleneck station detection.
+●1D CNN – It is a convolutional neural network based 
+DL method using multi-layered artificial neural net­
+works to deliver high accuracy for applications such 
+as object detection, speech recognition, language 
+translation etc. The model is developed with three 
+convolutional layers followed by a Max pooling and 
+flattening layer. Rectified linear unit is used as the 
+activation function. “Adam” optimizer is used for 
+compilation and root mean square error (RMSE) is 
+calculated as the error metric [60] to compare the 
+results of the models.
+●Bi-LSTM – The LSTM is the preferred model for 
+time series analysis due to its inherent capability 
+to capture long-term dependencies [61]. In this 
+study a bi-directional LSTM model is developed 
+with “Adam” optimizer and RMSE error metric.
+●Temporal Fusion Transformer – It is a transformer 
+based model utilizing self-attention to capture tem­
+poral dynamics for time sequences. The TFT model 
+was originally designed for capturing long 
+sequences of data especially in applications invol­
+ving natural language processing [62]. But due to its 
+architectural capability to process sequences of 
+data, the model is widely researched for time series 
+datasets. Additionally, the TFT model offers an inte­
+grated interpretation mechanism that can calculate 
+the significance of features in making predictions. 
+The TFT model finds wide applications in manufac­
+turing domain like fault detection and classification 
+[63], tool wear state recognition [64], remaining 
+useful life prediction of Industrial IoT systems [65], 
+and also in other related domains such as for wind 
+speed prediction with multivariate time series [66], 
+and battery fault diagnosis and failure prognosis for 
+electric vehicles [67].
+The time series dataset consists of the process time 
+inferred from the DT along with the historical blockage 
+and starvation time of each station in the process 
+chain. The production cycle data (considering 200 
+components/cycle) is acquired for the process chain 
+4
+4.5
+5
+5.5
+6
+6.5
+7
+7.5
+8
+8.5
+1
+2
+3
+4
+5
+6
+7
+8
+9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26
+Time (s)
+Workpiece
+1
+DT
+Experiment
+Figure 13. Digital twin validation results.
+Table 3. Results of digital twin compared with physical line for 
+validation.
+Station
+Error in percentage
+S1
+3.7794
+S2
+2.1527
+S3
+0.5083
+S4
+2.5986
+S5
+5.1152
+S6
+4.861
+S7
+4.3271
+Average.
+3.3346
+78
+S. V. IYER ET AL.
+
+=====PAGE 16=====
+and the input features. The comparative results of the 
+three models for the process chain dataset are given in 
+Table 4. Due to its superior accuracy and the current 
+research interests, the TFT model has been chosen for 
+further optimization and prediction.
+The TFT model developed for comparative evalua­
+tion is further optimized to gain better results. The 
+optimal learning rate is determined for each station 
+and the best results are further used for the prediction. 
+Figure 14 shows the optimal learning rate for station 6 
+detected in the starvation time model. The optimal 
+learning rate for all the stations are provided in 
+Appendix (Figure B1).
+“Optuna” hyperparameter tuning framework [68] is 
+used in the study for finding the best parameter value 
+over a number of epochs. The hyperparameters shown 
+in Table 5 are optimized for each station in the model.
+The TFT model is trained and validated with the 
+train, test, and validation datasets. The model is opti­
+mized optimal learning rate and optimal hyperpara­
+meters, to predict the starvation and blockage time of 
+all the stations, individually.
+4.3. Bottleneck detection in the process chain
+In this study, “turning point method” is applied to 
+detect the existing bottleneck in the process chain.
+In this method, there might be multiple bottleneck 
+stations especially in the case of long and complex 
+systems. The blockage and starvation time of each 
+station is calculated and plotted as shown in Figure 15.
+The second station shows a higher starvation time 
+as compared to blockage time. This overturns the 
+trend of higher blockage time as compared to starva­
+tion time of station 1. Also, the total time (blockage +  
+starvation) is less as compared with its neighboring 
+stations satisfying the condition of turning point. 
+Therefore, the second station is identified as the bottle­
+neck station for the process line under study.
+Table 4. Prediction model comparative results.
+RMSE (%)
+Station
+CNN
+LSTM
+TFT
+Blockage
+S1
+3.204
+3.2219
+1.6806
+S3
+7.783
+7.7141
+3.5528
+S4
+0.4907
+0.475
+1.836
+Starvation
+S1
+1.0863
+1.1332
+1.1071
+S2
+0.1383
+0.1136
+0.5367
+S3
+3.5731
+3.6302
+4.8467
+S4
+5.2653
+5.2099
+4.3253
+S5
+4.8946
+4.7827
+4.2754
+S6
+0.4009
+0.3405
+2.8108
+S7
+12.2938
+11.4162
+8.727
+Figure 14. Optimal learning rate detection for each station (starvation time model).
+Table 5. Fine tuning of model hyperparameters (starvation time model).
+Model hyperparameters
+S1
+S2
+S3
+S4
+S5
+S6
+S7
+Gradient_clip_value
+0.50436
+0.36570
+0.02171
+0.02776
+0.61179
+0.02151
+0.49787
+Hidden_size
+53
+11
+10
+17
+18
+62
+78
+Dropout
+0.18135
+0.13417
+0.19754
+0.18027
+0.16253
+0.24692
+0.24928
+Hidden_continuous_size
+42
+9
+9
+9
+9
+12
+20
+Attention_head_size
+2
+1
+2
+3
+2
+2
+4
+Learning_rate
+0.00371
+0.00316
+0.00165
+0.00371
+0.00194
+0.00371
+0.00371
+JOURNAL OF INDUSTRIAL AND PRODUCTION ENGINEERING
+79
+
+=====PAGE 17=====
+To detect the bottleneck station of a process line over 
+a period requires enormous data to be generated and 
+analyzed. The turning point method utilizes the historical 
+data of the process line. But this can give acceptable 
+results only if historical data sample size is satisfactory. 
+The historical data for a new layout or process line is either 
+not available or is available in limited size. The bottlenecks 
+in the new layout can be estimated by two methods –
+(1) By utilizing minimal data from the physical pro­
+cess chain. This method is useful for companies 
+initiating their digitalization process and only 
+the process parameters that are acquired for 
+bottleneck prediction are acquired [33].
+(2) Extend the proposed CDT model to study the 
+feasibility of the new layout and understand the 
+bottleneck situation. Since the DT is validated with 
+the existing line and captures the working para­
+meters of the process line, the new layout can be 
+configured in the DT with the same working para­
+meters and tested for the bottleneck location. This 
+can be achieved by the following steps:
+1. Develop the DT model of the new layout 
+through virtual commissioning.
+2. Configure the existing working parameters 
+and simulate the new model.
+3. Generate the blockage and starvation time data 
+for the new layout and estimate the bottleneck 
+station through the turning point method.
+4.4. Estimation of the shifting bottleneck due to 
+anomaly
+In case of deviation in the process parameter value range, 
+the DT flags the condition as an anomaly and alerts the 
+user. Due to the dynamic nature of the system the anom­
+aly might occur instantaneously or develop over time. 
+Understanding the anomaly is important to develop resi­
+lience, a necessity for the future process chains.
+Figure 16 shows the anomaly flag raised (depicted 
+in red box) in the DT dashboard due to a deviation in 
+the process time in one of the stations. If the anomaly 
+in the value is due to deviation of process parameter(s) 
+0
+5
+10
+15
+20
+25
+1
+2
+3
+4
+5
+6
+7
+e
+m
+i
+T
+(s)
+Station
+Turning Point method – Bottleneck detection
+Blockage time
+Starvation time
+Figure 15. Bottleneck detection using the turning point method.
+Figure 16. Anomaly alert indication in digital twin dashboard (a) anomaly not detected (b) anomaly detected.
+80
+S. V. IYER ET AL.
+
+=====PAGE 18=====
+across several production cycles, it might cause the 
+bottleneck to shift location.
+To understand the nature and effect of anomaly on 
+bottlenecks, in this study the active period method is 
+applied as suggested by Roser and Nakano [18] for 
+simulation based methodologies.
+The active period of each station is plotted and the 
+station with the largest active time period without inter­
+ruption at a given time is considered to be the bottle­
+neck station. This method is useful in detecting the 
+shifting bottleneck at a particular given time. Figure 17 
+shows the result of the shifting bottleneck due to the 
+anomaly. The timestamp when the anomaly is flagged is 
+noted and 5% of cycles on both sides of the timestamp 
+(10 cycles before and 10 after the timestamp) is taken 
+into consideration. The values from both sides are con­
+sidered to understand the nature of the anomaly.
+If the deviation is one time instantaneous spike, the 
+active period of the station will be high only for a single 
+instance. But if the anomaly condition is developed due 
+to sustained deviation, the active period will show 
+a sustained increase across the previous cycles. The 
+results give insights into the anomaly nature and possi­
+bly lead to identifying the root cause of the deviation.
+4.5. Bottleneck prediction for near future with 
+interpretation of results
+The prediction length is taken as 25% of the produc­
+tion cycle length to determine the bottleneck station 
+of the existing line for the near future. The average 
+blockage and starvation time is calculated and plotted 
+(Figure 18) to identify the bottleneck station based on 
+the turning point method.
+Figure 17. Active period method – shifting bottleneck due to anomaly detected.
+Figure 18. Bottleneck prediction with TFT model.
+JOURNAL OF INDUSTRIAL AND PRODUCTION ENGINEERING
+81
+
+=====PAGE 19=====
+The prediction result shows that station 2 might be 
+the bottleneck station for the next quarter of the 
+production cycle. The methodology helps the produc­
+tion manager to effectively manage the bottleneck 
+station 
+and 
+minimize 
+the 
+throughput 
+loss. 
+Explaining the importance of each feature to the pre­
+diction results provides direct insights and points out 
+the critical parameters affecting the results. The vari­
+able selection network component of the TFT model 
+is used to estimate the feature importance to the 
+predicted value. Figure 19 shows the sample inter­
+pretation of results generated from the TFT model for 
+station 1. Figure 19(a–c) show the importance of 
+decoder, encoder, and static variable to the predicted 
+results in terms of percentage, respectively. 
+Figure 19(d) shows the attention scores which reveals 
+how impactful are those time steps when the model 
+outputs its prediction.
+Figure 19. Explainable AI – Interpretation of variables by TFT model (station 1).
+82
+S. V. IYER ET AL.
+
+=====PAGE 20=====
+The proposed XAI DT based methodology can be 
+effectively used to predict the bottleneck stations for 
+varying working parameters. For example, the bottle­
+neck station can be accurately predicted if the com­
+pany wants to increase the production rate from the 
+existing level.
+4.6. Decision support system
+The results from the bottleneck detection and predic­
+tion model are displayed using a visualization tool. The 
+feedback as mitigating actions from the bottleneck 
+analysis tool is given back to the physical line directly 
+or as a decision support system to the resource per­
+sonnel. The anomaly alert generated from the process 
+line is also displayed in the visualization dashboard 
+which provides real time control over the process 
+chain with minimal deviation.
+5. Conclusions
+Real time detection of bottlenecks in a process chain is 
+key to improving the system productivity and through­
+put. A cognitive digital twin has been presented to 
+detect existing bottlenecks, estimate shifting bottle­
+necks due to anomalies, and to predict and interpret 
+future bottlenecks. The proposed methodology is 
+demonstrated and validated through a didactic mod­
+ular production system process chain (learning fac­
+tory), mimicking the industrial environment.
+A fully functional CDT of the process chain under 
+experiment is developed using AnyLogic simulation 
+tool and validated with performance value comparison 
+method. The turning point method is used to detect 
+the process chain bottlenecks and Active period 
+method is used to detect the shifting bottleneck due 
+to anomaly. Three models for near future bottleneck 
+prediction – CNN based, LSTM based, and transformer 
+based TFT model – are developed and compared. It 
+was found that the transformer based TFT model pro­
+vides better prediction results based on RMSE metric 
+and has an integrated interpretation mechanism. 
+Transformer model can capture both short-term 
+changes and long-term trends. The model has obvious 
+advantages in overcoming the interdependence pro­
+blem of the influencing factors in long sequences [69]. 
+However, comparison of CNN, LSTM, and Transformer 
+models in predicting future bottlenecks needs to be 
+carried out experimentally and needs further research. 
+Optuna framework is used to optimize the hyperpara­
+meters of the model, after determining the optimal 
+learning rate. The variable selection module of the 
+TFT model is used to estimate the feature importance. 
+The optimized XAI model predicts the blockage and 
+starvation times of all the stations and assists in detect­
+ing the bottleneck station with the turning point 
+method. The importance of the encoder, decoder, 
+and attention index features are explained in the TFT 
+model interpretation results. DT provides better con­
+trol of the process chain and the TFT model predictions 
+with its explanation help in decision making. The pro­
+posed novel CDT methodology contributes to the 
+existing body of literature in managing process chain 
+bottlenecks (existing, shifting, and future) and support 
+strategic and operational decision making.
+Further application of the proposed CDT method is 
+elaborated for detecting the new/modified layout bot­
+tlenecks through virtual commissioning. The proposed 
+XAI model to predict the bottlenecks for varying pro­
+cess parameters can be extended to schedule the 
+maintenance plan, redundancy level estimation, and 
+higher production rate planning. The CDT bottleneck 
+analysis for a complex process chain with data col­
+lected from multiple sources and estimation of best 
+possible facility utilization rate without creating bottle­
+necks in a manufacturing plant can be considered for 
+future research.
+Disclosure statement
+No potential conflict of interest was reported by the author(s).
+Funding
+The authors did not receive support from any organization 
+for the submitted work.
+Notes on contributors
+Suveg V. Iyer is a PhD research scholar in Mechanical 
+Engineering at Birla Institute of Technology and Science, 
+Pilani (BITS Pilani), Pilani, Rajasthan, India. He holds an under­
+graduate degree in mechatronics engineering and a master’s 
+degree in industrial automation and robotics. His research 
+interest lies in the areas of digital twins, digitalization, 
+robotics, and Industrial Engineering.
+Kuldip Singh Sangwan is a Senior Professor of Mechanical 
+Engineering at Birla Institute of Technology and Science, 
+Pilani (BITS Pilani), Pilani, Rajasthan, India. He is the recipient 
+of the prestigious Shri B. K. Birla and Shrimati Sarala Birla 
+Chair Professorship. He has published four books, more than 
+25 book chapters and more than 190 papers in international 
+journals of repute. He had received projects worth more than 
+6 crore INR from international agencies, industry, and Indian 
+government agencies. He has an active collaboration with TU 
+Braunschweig, Germany for the last 13 years. Prof. Sangwan 
+is a fellow of the Institution of Engineers (India), member of 
+the International Association of Learning Factories, and 
+senior member of Indian Institute of Industrial Engineering. 
+He is in the ‘top 2% world scientists’ list curated by Stanford 
+University researchers.
+Dhiraj is a Principal Scientist at CSIR-Central Electronics 
+Engineering 
+Research 
+Institute 
+(CSIR-CEERI), 
+Pilani, 
+Rajasthan, India. He also holds an honorary position of 
+Associate Professor (Engineering Sciences) at the Academy 
+of Scientific and Innovative Research (AcSIR), India. He has his 
+Ph.D. in the domain of Evolutionary Algorithms and their 
+JOURNAL OF INDUSTRIAL AND PRODUCTION ENGINEERING
+83
+
+=====PAGE 21=====
+applications. He was a Visiting Researcher at the University of 
+Maribor, Slovenia, in 2015 and at Hiroshima University in 
+2017. He has executed multiple Research and Development 
+projects as Project Coordinator/Principal Investigator/Co- 
+Principal Investigator/Team Member - Funded by leading 
+industries like Samsung, Krystalvision, etc., and Government 
+Agencies like CSIR, DST, etc. He has published more than 60 
+research articles in journals, conferences, and book chapters.
+Data availability statement
+The datasets generated and analyzed during the current 
+study are available from the corresponding author on rea­
+sonable request.
+References
+[1] Battaïa O, Otto A, Sgarbossa F, et al. Future trends in 
+management and operation of assembly systems: 
+from customized assembly systems to cyber-physical 
+systems. Omega (U Kingd). 2018;78(February):1–4. doi:  
+10.1016/j.omega.2018.01.010  
+[2] Imseitif J, Tang H, Smith M. Throughput analysis of 
+manufacturing systems with buffers considering relia­
+bility and cycle time using DES and DOE. Procedia 
+Manuf. 2019;39(2019):814–823. doi: 10.1016/j.promfg. 
+2020.01.423  
+[3] Cohen Y, Faccio M, Pilati F, et al. Design and manage­
+ment of digital manufacturing and assembly systems 
+in the industry 4.0 era. Int J Adv Manuf Technol. 
+2019;105(9):3565–3577. doi: 10.1007/s00170-019- 
+04595-0  
+[4] Manickam S, Yarlagadda L, Gopalan SP, et al. 
+Unlocking 
+the 
+potential 
+of 
+digital 
+twins: 
+a comprehensive review of concepts, frameworks, 
+and industrial applications. IEEE Access. 2023;11 
+(November):135147–135158. doi: 10.1109/ACCESS. 
+2023.3338530  
+[5] Bao J, Guo D, Li J, et al. The modelling and operations 
+for the digital twin in the context of manufacturing. 
+Enterp Inf Syst. 2019;13(4):534–556. doi: 10.1080/ 
+17517575.2018.1526324  
+[6] Fuller A, Fan Z, Day C, et al. Digital twin: enabling 
+technologies, challenges and open research. IEEE 
+Access. 2020;8:108952–108971. doi: 10.1109/ACCESS. 
+2020.2998358  
+[7] Bambura R, Šolc M, Dado M, et al. Implementation of 
+digital twin for engine block manufacturing processes. 
+Appl Sci. 2020;10(18):6578. doi: 10.3390/APP10186578  
+[8] Arff B, Haasis J, Thomas J, et al. Analysis and visualiza­
+tion of production bottlenecks as part of a digital twin 
+in industrial IoT. Appl Sci. 2023;13(6):3525. doi: 10. 
+3390/app13063525  
+[9] El Ahmed A. The emergence of cognitive digital physi­
+cal twins as teh 21st century icons and beacons. 2016.
+[10] Huang Z, Shen Y, Li J, et al. A survey on AI-Driven 
+digital twins in industry 4.0: smart manufacturing and 
+advanced robotics. Sensors. 2021;21(19):6340. doi: 10. 
+3390/s21196340  
+[11] Jiang T, Zhou J, Zhao J, et al. A multi-dimensional 
+cognitive framework for cognitive manufacturing 
+based on OAR model. J Manuf Syst. 2022;65 
+(September):469–485. doi: 10.1016/j.jmsy.2022.09.019  
+[12] Lai X, Qiu T, Shui H, et al. Predicting future production 
+system bottlenecks with a graph neural network 
+approach. J Manuf Syst. 2023;67(September 2022): 
+201–212. doi: 10.1016/j.jmsy.2023.01.010  
+[13] Ma L, Qu T, Thürer M, et al. An integrated 
+spatial-temporal neural network for proactive 
+throughput bottleneck prediction in high-variety 
+shops with complex job routings. Int J Prod Res. 
+2023;61(13):4437–4449. doi: 10.1080/00207543.2022. 
+2148769  
+[14] Ahmed I, Jeon G, Piccialli F. From artificial intelligence 
+to explainable artificial intelligence in industry 4.0: 
+a survey on what, how, and where. IEEE Trans Ind Inf. 
+2022;18(8):5031–5042. doi: 10.1109/TII.2022.3146552  
+[15] Bhattacharya P, Obaidat MS, Sanghavi S, et al. Internet- 
+of-explainable-digital-twins: a case study of versatile 
+corn production ecosystem. In: Proc. 2022 IEEE Int Conf 
+Commun Comput Cybersecurity Informatics, CCCI 2022; 
+2022. p. 0–4. doi: 10.1109/CCCI55352.2022.9926502  
+[16] Lee Y, Roh Y. An expandable yield prediction frame­
+work using explainable artificial intelligence for semi­
+conductor manufacturing. Appl Sci. 2023;13(4):2660. 
+doi: 10.3390/app13042660  
+[17] Kuot C, Lim J, Meerkovt SM. Bottlenecks in serial pro­
+duction lines: a systems approach. In: Proceedings of 
+the 35th Conference on Decision and Control, Kobe, 
+Japan; 1996. p. 2751–2756. doi: 10.1109/CDC.1996. 
+573526  
+[18] Roser C, Nakano M. A quantitative comparison of bot­
+tleneck detection methods in manufacturing systems 
+with particular consideration for shifting bottlenecks. 
+Int 
+Conf 
+On 
+Adv 
+Production 
+Manag 
+Syst. 
+2015;460:273–281. doi: 10.1007/978-3-319-22759-7_32  
+[19] Roser C, Nakano M, Tanaka M. Shifting bottleneck 
+detection. 
+Winter 
+Simul 
+Conf 
+Proc. 
+2002;2 
+(January 2003):1079–1086. doi: 10.1109/wsc.2002. 
+1166360  
+[20] Li L. Bottleneck detection of complex manufacturing 
+systems using a data-driven method. Int J Prod Res. 
+2009;47(24):6929–6940. doi: 10.1080/00207540802 
+427894  
+[21] Li L, Chang Q, Xiao G, et al. Throughput bottleneck 
+prediction of manufacturing systems using time series 
+analysis. J Manuf Sci Eng. 2011;133(2):1–8. doi: 10. 
+1115/1.4003786  
+[22] Roser C, Lorentzen K, Deuse J. Reliable shop floor 
+bottleneck detection for flow lines through process 
+and inventory observations. Procedia CIRP. 2014;19 
+(C):63–68. doi: 10.1016/j.procir.2014.05.020  
+[23] Yu C, Matta A. A statistical framework of data-driven 
+bottleneck identification in manufacturing systems. 
+Int J Prod Res. 2016;54(21):6317–6332. doi: 10.1080/ 
+00207543.2015.1126681  
+[24] Subramaniyan M, Skoogh A, Salomonsson H, et al. 
+Data-driven algorithm for throughput bottleneck ana­
+lysis of production systems. Prod Manuf Res. 2018;6 
+(1):225–246. doi: 10.1080/21693277.2018.1496491  
+[25] Roh P, Kunz A, Netland T. Data-driven detection of 
+moving bottlenecks in multi-variant production lines. 
+IFAC-Papersonline. 2018;51(11):158–163. doi: 10.1016/ 
+j.ifacol.2018.08.251  
+[26] Subramaniyan M, Skoogh A, Salomonsson H, et al. A 
+data-driven algorithm to predict throughput bottle­
+necks in a production system based on active periods 
+of the machines. Comput Ind Eng. 2018;125 
+(April):533–544. doi: 10.1016/j.cie.2018.04.024  
+[27] Lai X, Shui H, Ni J. A two-layer long short-term 
+memory network for bottleneck prediction in 
+multi-job manufacturing systems. ASME 2018 13th 
+84
+S. V. IYER ET AL.
+
+=====PAGE 22=====
+Int Manuf Sci Eng Conf MSEC 2018. 2018;3:1–9. doi:  
+10.1115/MSEC2018-6678  
+[28] Fang W, Guo Y, Liao W, et al. A parallel gated recurrent 
+units (P-GRUs) network for the shifting lateness bottle­
+neck prediction in make-to-order production system. 
+Comput Ind Eng. 2020;140(December 2019):106246. 
+doi: 10.1016/j.cie.2019.106246  
+[29] Huang B, Wang W, Ren S, et al. A proactive task dis­
+patching method based on future bottleneck predic­
+tion for the smart factory. Int J Comput Integr Manuf. 
+2019;32(3):278–293. doi: 10.1080/0951192X.2019. 
+1571241  
+[30] Subramaniyan M, Skoogh A, Muhammad AS, et al. 
+A generic hierarchical clustering approach for detect­
+ing bottlenecks in manufacturing. J Manuf Syst. 
+2020;55(February):143–158. doi: 10.1016/j.jmsy.2020. 
+02.011  
+[31] Lai X, Shui H, Ding D, et al. Data-driven dynamic bottle­
+neck detection in complex manufacturing systems. 
+J Manuf Syst. 2021;60(April):662–675. doi: 10.1016/j. 
+jmsy.2021.07.016  
+[32] Kumbhar M, Ng AHC, Bandaru S. Bottleneck detection 
+through data integration, process mining and factory 
+physics-based analytics. Adv Transdiscipl Eng. 
+2022;21:737–748. doi: 10.3233/ATDE220192  
+[33] Brochado AF, Rocha EM, Almeida D, et al. A data-driven 
+model with minimal information for bottleneck detection 
+- application at Bosch thermotechnology. Int J Manag Sci 
+Eng Manag. 2022:1–6. doi: 10.1080/17509653.2022. 
+2116121  
+[34] Kumbhar M, Ng AHC, Bandaru S. A digital twin based 
+framework for detection, diagnosis, and improvement of 
+throughput bottlenecks. 
+J Manuf 
+Syst. 2023;66 
+(November 2022):92–106. doi: 10.1016/j.jmsy.2022.11.016  
+[35] Latsou C, Farsi M, Erkoyuncu JA. Digital twin-enabled 
+automated anomaly detection and bottleneck identi­
+fication in complex manufacturing systems using a 
+multi-agent approach. J Manuf Syst. 2023;67 
+(November 2022):242–264. doi: 10.1016/j.jmsy.2023. 
+02.008  
+[36] Latsou C, Farsi M, Erkoyuncu JA, et al. Digital twin 
+integration in multi-agent cyber physical manufactur­
+ing systems. IFAC-Papersonline. 2021;54(1):811–816. 
+doi: 10.1016/j.ifacol.2021.08.096  
+[37] Chiang SY, Kuo CT, Meerkov SM. DT-bottlenecks in 
+serial production lines: theory and application. IEEE 
+Trans Robot Autom. 2000;16(5):567–580. doi: 10. 
+1109/70.880806  
+[38] Gorman M, Ding X, Maguire L, et al. Anomaly detection 
+in batch manufacturing processes using localized 
+reconstruction 
+errors 
+from 
+1-D 
+convolutional 
+AutoEncoders. IEEE Trans Semicond Manuf. 2023;36 
+(1):147–150. doi: 10.1109/TSM.2022.3216032  
+[39] Goldman CV, Baltaxe M, Chakraborty D, et al. 
+Interpreting learning models in manufacturing pro­
+cesses: towards explainable AI methods to improve 
+trust in classifier predictions. J Ind Inf Integr. 2023;33 
+(February):100439. doi: 10.1016/j.jii.2023.100439  
+[40] Abburu S, Berre AJ, Jacoby M, et al. COGNITWIN - 
+Hybrid and cognitive digital twins for the process 
+industry. In: Proc - 2020 IEEE Int Conf Eng Technol 
+Innov ICE/ITMC 2020; 2020. doi: 10.1109/ICE/ITMC 
+49519.2020.9198403  
+[41] ElMaraghy H, ElMaraghy W. Adaptive cognitive manu­
+facturing system (ACMS)–a new paradigm. Int J Prod 
+Res. 2022;60(24):7436–7449. doi: 10.1080/00207543. 
+2022.2078248  
+[42] Mortlock T, Muthirayan D, Yu SY, et al. Graph learning 
+for cognitive digital twins in manufacturing systems. 
+IEEE Trans Emerg Top Comput. 2022;10(1):34–45. doi:  
+10.1109/TETC.2021.3132251  
+[43] Eirinakis P, Lounis S, Plitsos S, et al. Cognitive digital twins 
+for resilience in production: a conceptual framework. Inf. 
+2022;13(1):33. doi: 10.3390/info13010033  
+[44] Sofianidis G, Rožanec JM, Mladenićand D, et al. 
+A review of explainable artificial intelligence in 
+manufacturing. Trust Artif Intell Manuf A Rev Emerg 
+Wave Ethical Hum Centric AI Technol Smart Prod. 
+2021:93–113. doi: 10.1561/9781680838770.ch5  
+[45] Chen T, Wang YC. A two-stage explainable artificial 
+intelligence approach for classification-based job 
+cycle time prediction. Int J Adv Manuf Technol. 
+2022;123(5–6):2031–2042. doi: 10.1007/s00170-022- 
+10330-z  
+[46] Bobek S, Kuk M, Szelazek M, et al. Enhancing cluster 
+analysis with explainable AI and multidimensional cluster 
+prototypes. 
+IEEE 
+Access. 
+2022;10 
+(September):101556–101574. doi: 10.1109/ACCESS.2022. 
+3208957  
+[47] Theissler A, Spinnato F, Schlegel U, et al. Explainable AI 
+for time series classification: a review, taxonomy and 
+research 
+directions. 
+IEEE 
+Access. 
+2022;10 
+(September):100700–100724. doi: 10.1109/ACCESS. 
+2022.3207765  
+[48] Lim B, Arık S, Loeff N, et al. Temporal fusion transfor­
+mers for interpretable multi-horizon time series 
+forecasting. Int J Forecast. 2021;37(4):1748–1764. doi:  
+10.1016/j.ijforecast.2021.03.012  
+[49] Innuphat S, Toahchoodee M. The implementation of 
+discrete-event simulation and demand forecasting 
+using temporal fusion transformers to validate spare 
+parts inventory policy for the petrochemicals industry. 
+ECTI-CIT Trans. 2022;16(3):247–258. doi: 10.37936/ecti- 
+cit.2022163.246900  
+[50] Ferrari A, Carlin A, Rafele C, et al. A method for devel­
+oping and validating simulation models for auto­
+mated storage and retrieval system digital twins. 
+Int J Adv Manuf Technol. 2024;131(11):5369–5382. 
+doi: 10.1007/s00170-023-12660-y  
+[51] White AS, Sinclair R. Quantitative validation techni­
+ques a database. (I). Simple examples. Simul Model 
+Pract Theory. 2004;12(6):451–473. doi: 10.1016/j.sim 
+pat.2004.06.001  
+[52] Hora J, Campos P. A review of performance criteria to 
+validate simulation models. Expert Syst. 2015;32 
+(5):578–595. doi: 10.1111/exsy.12111  
+[53] International 
+Organization 
+for 
+Standardization. 
+Automation systems and for manufacturing —. 2021; 
+Part:4–I.
+[54] Shao G, Hightower J, Schindel W. Credibility con­
+sideration for digital twins in manufacturing. Manuf 
+Lett. 2023;35:24–28. doi: 10.1016/j.mfglet.2022.11. 
+009  
+[55] Hua EY, Lazarova-Molnar S, Francis DP. Validation of 
+digital twins: challenges and opportunities. Proc - 
+Winter Simul Conf. 2022;2022-Decem:2900–2911. doi:  
+10.1109/WSC57314.2022.10015420  
+[56] Li L, Chang Q, Ni J. Data driven bottleneck detection of 
+manufacturing systems. Int J Prod Res. 2009;47 
+(18):5019–5036. doi: 10.1080/00207540701881860  
+[57] Roser C, Nakano M, Tanaka M. A practical bottleneck 
+detection method. Winter Simul Conf Proc. 2001;2 
+(February 2001):949–953. doi: 10.1109/wsc.2001. 
+977398  
+JOURNAL OF INDUSTRIAL AND PRODUCTION ENGINEERING
+85
+
+=====PAGE 23=====
+[58] Trifonov 
+H, 
+Heffernan 
+D. 
+OPC 
+UA 
+TSN: 
+a 
+next-generation network for industry 4.0 and IIoT. 
+Int 
+J 
+Pervasive 
+Comput 
+Commun. 
+2023;19 
+(3):386–411. doi: 10.1108/IJPCC-07-2021-0160  
+[59] Al Faruque MA, Muthirayan D, Yu SY, et al. Cognitive 
+digital twin for manufacturing systems. Proc -Des 
+Autom Test Eur DATE. 2021;2021-Febru:440–445. doi:  
+10.23919/DATE51398.2021.9474166  
+[60] Nascimento EGS, de Melo TAC, Moreira DM. A 
+transformer-based deep neural network with wavelet 
+transform for forecasting wind speed and wind 
+energy. Energy. 2023;278(April):127678. doi: 10.1016/ 
+j.energy.2023.127678  
+[61] Zhang J, Zeng Y, Starly B. Recurrent neural net­
+works with long term temporal dependencies in 
+machine tool wear diagnosis and prognosis. SN 
+Appl Sci. 2021;3(4):1–13. doi: 10.1007/s42452-021- 
+04427-5  
+[62] Zhang G, Wei C, Jing C, et al. Short-term electrical load 
+forecasting based on time augmented transformer. 
+Int J Comput Intell Syst. 2022;15(1):1–11. doi: 10. 
+1007/s44196-022-00128-y  
+[63] Wu H, Triebe MJ, Sutherland JW. A transformer-based 
+approach for novel fault detection and fault classifica­
+tion/diagnosis in manufacturing: a rotary system 
+application. J Manuf Syst. 2023;67(March):439–452. 
+doi: 10.1016/j.jmsy.2023.02.018  
+[64] Xue Z, Chen N, Wu Y, et al. Hierarchical temporal 
+transformer network for tool wear state recognition. 
+Ad Eng Inf. 2023;58(October):102218. doi: 10.1016/j. 
+aei.2023.102218  
+[65] Li J, Wang K, Hou X, et al. A dual-scale 
+transformer-based remaining useful life prediction 
+model in industrial internet of things. IEEE Internet 
+Things J. 2024;(8):1. doi: 10.1109/JIOT.2024.3376706  
+[66] Wu B, Wang L, Zeng YR. Interpretable wind speed 
+prediction with multivariate time series and temporal 
+fusion transformers. Energy. 2022;252:123990. doi: 10. 
+1016/j.energy.2022.123990  
+[67] Zhao J, Feng X, Wang J, et al. Battery fault diagnosis and 
+failure 
+prognosis 
+for 
+electric 
+vehicles 
+using 
+spatio-temporal transformer networks. Appl Energy. 
+2023;352(September):121949. doi: 10.1016/j.apenergy. 
+2023.121949  
+[68] Akiba T, Sano S, Yanase T, et al. Optuna: a 
+next-generation 
+hyperparameter 
+optimization 
+framework. In: Proc ACM SIGKDD Int Conf Knowl 
+Discov Data Min; 2019. p. 2623–2631. doi: 10.1145/ 
+3292500.3330701  
+[69] Cui B, Liu M, Li S, et al. Deep learning methods for 
+atmospheric PM2.5 prediction: a comparative study 
+of transformer and CNN-LSTM-attention. Atmos 
+Pollut Res. 2023;14(9):101833. doi: 10.1016/j.apr. 
+2023.101833
+86
+S. V. IYER ET AL.
+
+=====PAGE 24=====
+Appendix
+Figure B1. Optimal learning rate detection for each station (Starvation time model).
+Figure A1. Digital twin validation results.
+JOURNAL OF INDUSTRIAL AND PRODUCTION ENGINEERING
+87

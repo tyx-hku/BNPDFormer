@@ -1,0 +1,1636 @@
+=====PAGE 1=====
+International Journal of Computer Integrated
+Manufacturing
+ISSN: 0951-192X (Print) 1362-3052 (Online) Journal homepage: www.tandfonline.com/journals/tcim20
+Knowledge fusion and spatio-temporal modeling
+for dynamic bottleneck prediction in sustainable
+production processes
+Tao Wu, Jie Li, Jinsong Bao & Zhengkai Jin
+To cite this article: Tao Wu, Jie Li, Jinsong Bao & Zhengkai Jin (07 Feb 2025): Knowledge
+fusion and spatio-temporal modeling for dynamic bottleneck prediction in sustainable
+production processes, International Journal of Computer Integrated Manufacturing, DOI:
+10.1080/0951192X.2025.2457114
+To link to this article:  https://doi.org/10.1080/0951192X.2025.2457114
+Published online: 07 Feb 2025.
+Submit your article to this journal 
+Article views: 124
+View related articles 
+View Crossmark data
+Citing articles: 1 View citing articles 
+Full Terms & Conditions of access and use can be found at
+https://www.tandfonline.com/action/journalInformation?journalCode=tcim20
+
+=====PAGE 2=====
+Knowledge fusion and spatio-temporal modeling for dynamic bottleneck 
+prediction in sustainable production processes
+Tao Wu, Jie Li, Jinsong Bao and Zhengkai Jin
+College of Mechanical Engineering, Donghua University, Shanghai, China
+ABSTRACT
+Sustainable production is for the manufacturing industry to improve production efficiency and 
+reduce energy consumption. Production system complexities, which cause bottlenecks, greatly 
+impact process efficiency. However, the challenge lies in effectively utilizing sustainable produc­
+tion process knowledge, which is often under-exploited, particularly when integrating this knowl­
+edge with knowledge graphs for production bottleneck prediction. To solve the problem, this 
+study presents a method for dynamic bottleneck prediction by integrating knowledge graphs and 
+spatio-temporal models, leveraging underused production process knowledge. Initially, develop­
+ing a sustainable production process knowledge graph effectively captures correlations between 
+workstation states and external factors at production bottlenecks. Subsequently, a knowledge 
+cross-fertilization module merges this correlation knowledge with spatio-temporal features, 
+enhancing bottleneck prediction accuracy and reliability. Therefore, it efficiently predicts each 
+workstation’s blockage and starvation, which has significance in identifying accurately future 
+bottleneck workstations. A case study demonstrates that this method significantly reduces root- 
+mean-square error by 7% to 42% in predicting overall system blockage and starvation metrics. 
+Moreover, the mean-absolute-error of this method is within 4.5% over various time scales of 
+30,60,90, and 120 minutes. Furthermore, these results confirm that the method introduced holds 
+considerable practical significance in precisely identifying future workstation bottlenecks, offering 
+novel tools and insights for enhancing production efficiency.
+ARTICLE HISTORY 
+Received 17 June 2024  
+Accepted 19 January 2025 
+KEYWORDS 
+Resource utilization 
+efficiency; energy 
+consumption; sustainable 
+production systems; 
+throughput bottleneck 
+prediction; spatio-temporal 
+models; sustainable process 
+knowledge graph
+1. Introduction
+Economic globalization, informatization, and the 
+high-tech revolution have catalyzed the transition 
+from an industrial to a knowledge economy, signifi­
+cantly impacting human society. The enhancement of 
+production system efficiency demand elasticity plays 
+an important role in the field of manufacturing 
+(Beauchemin 2023; Loghin et al. 2020). Currently, the 
+competitiveness of small and medium-sized enter­
+prises primarily hinges on production efficiency and 
+quality. Imbalances in resource allocation and the 
+presence of unstable factors at workstations, such as 
+material supply, personnel allocation, equipment fail­
+ure, and personnel fatigue, can lead to production 
+delays and bottlenecks (Huang et al. 2019).
+Sustainable production has become a crucial stra­
+tegic direction for enhancing resource efficiency and 
+reducing energy consumption (Tang 2019). Research 
+on bottleneck identification and prediction is 
+a significant component of sustainable production, 
+providing early warnings for potential and emerging 
+issues in the production process to support strategic 
+business decisions (Nandakumar, Saleeshya, and 
+Harikumar 2020). Within the domain of sustainable 
+production, thorough analysis of production bottle­
+necks is essential not only for streamlining production 
+processes but also for driving improvements in pro­
+duction efficiency and the efficient utilization of 
+energy, inherently showcasing the sustainable devel­
+opment potential of the production system (Shang, 
+Liu, and Gong 2024; Tu and Zhang 2022). Therefore, 
+analyzing these throughput bottlenecks is crucial for 
+improving overall efficiency. To significantly improve 
+the competitiveness of enterprises, great attention 
+must be directed toward refining the production pro­
+cess and ensuring its seamless and efficient operation 
+(L. Li et al. 2011; Xue et al. 2022).
+In this context, research on predicting production 
+process bottlenecks is a critical factor for future pro­
+cess improvement. For example, bottleneck predic­
+tion can provide decision-making reference to 
+managers (Rocha and Lopes 2022). They can 
+CONTACT Jinsong Bao 
+bao@dhu.edu.cn 
+College of Mechanical Engineering, Donghua University, Shanghai, China
+INTERNATIONAL JOURNAL OF COMPUTER INTEGRATED MANUFACTURING 
+https://doi.org/10.1080/0951192X.2025.2457114
+© 2025 Informa UK Limited, trading as Taylor & Francis Group 
+
+=====PAGE 3=====
+proactively address resource imbalances and proces­
+sing cycle disparities at workstations based on the 
+intricacies of work processes and the diverse skill 
+levels of employers. This approach can reduce the 
+pressure on certain workstations, thereby enhancing 
+the efficiency and quality of the production line 
+(Kumbhar, Ng, and Bandaru 2023; Latsou, Farsi, and 
+Ahmet Erkoyuncu 2023; Ren, Wan, and Deng 2022).
+However, the former research often neglects the 
+influence of external correlation knowledge and the 
+spatial structure of nearby stations, which are highly 
+interactive and crucial to production stability. These 
+interactions encompass factors such as the fatigue 
+state of personnel, the health state of equipment 
+the supply state of materials, and the size of buffer 
+zones. Therefore, how integrating efficiently time- 
+series characteristics, spatial characteristics, and exter­
+nal correlation knowledge is a challenge for improv­
+ing the accuracy of production process bottleneck 
+prediction.
+To address the challenges, this research develops 
+a process knowledge graph to establish a model inte­
+grating production process and resource knowledge. 
+In addition, the introduction of the knowledge cross 
+fusion-module (KCF-Module) allows the capture of 
+spatio-temporal characteristics and relevant knowl­
+edge 
+related 
+to 
+the 
+production 
+process. 
+Furthermore, this research proposes a dynamic bot­
+tleneck prediction method. The primary contributions 
+of this paper include:
+●A specialized sustainable production process 
+knowledge graph (PKG) is developed to account 
+for the relationship between the workstation’s 
+bottleneck state and the external factors affect­
+ing it. A knowledge graph representation learn­
+ing model is then applied to derive an 
+embedded representation of this correlation 
+knowledge.
+●On this basis, a dynamic sustainable production 
+process bottleneck prediction method is pro­
+posed. This method effectively captures spatial 
+and temporal dimension features of bottleneck 
+states at production workstations. And, this 
+paper designs a knowledge cross fusion-module 
+(KCF-Module) that combines external knowledge 
+and spatio-temporal features of bottlenecks.
+●The method’s effectiveness and spatial interpret­
+ability are validated using real-world data from 
+domestic textile enterprises. This validation 
+includes a comparative analysis of blockage and 
+starvation indicators across various workstations 
+over multiple time scales.
+The remainder of the paper is organized as follows: 
+Section 2 provides related research on production 
+process bottleneck prediction methods and spatio- 
+temporal features fusion. Section 3 outlines the con­
+structed process knowledge graph and the methodol­
+ogy behind the dynamic bottleneck prediction. 
+Section 4 presents a case study involving a domestic 
+textile and apparel enterprise. Section 5 demonstrates 
+the influence of external factors on workstation bot­
+tleneck prediction.
+2. Related works
+2.1. Production process bottleneck prediction
+To further improve processes and increase productiv­
+ity, some scholars have focused on identifying bottle­
+necks in the production process (Yan et al. 2023). For 
+instance (L. Li, Chang, and Ni 2009), proposed a short- 
+term and long-term known turning point method 
+(TPM) throughput bottleneck identification method 
+using blockage and starvation as indicators, which 
+solved the production constraint problem between 
+the production line targets and the buffer content 
+records (Nandakumar, Saleeshya, and Harikumar  
+2020). proposed a Lean Six Sigma approach known 
+as DMAIC (Define, Measure, Analyze, Improve, and 
+Control) to address efficiency stability problems, spe­
+cifically focusing on overall equipment efficiency and 
+productivity improvement in the manufacturing sec­
+tor. Tu and Zhang (Tu and Zhang 2022) proposed an 
+aggregation-based analysis algorithm to identify bot­
+tleneck states at production workstations and facili­
+tate 
+dynamic 
+resource 
+allocation 
+within 
+manufacturing processes. However, it has been 
+observed that bottleneck locations dynamically shift 
+due to a combination of factors in the production 
+process. Therefore, bottleneck prediction for produc­
+tion processes is an important consideration for the 
+future improvement of processes.
+Currently, bottleneck prediction research has 
+achieved more significant applications in manufactur­
+ing processes (L. Li et al. 2011). proposed an autore­
+gressive moving average model (ARMA) based on 
+2
+T. WU ET AL.
+
+=====PAGE 4=====
+time-series features to predict future bottlenecks at 
+workstations, employing blockage and starvation as 
+indicators (Subramaniyan et al. 2019). proposed an 
+autoregressive integrated moving average model 
+(ARIMA) based on time-series features for throughput 
+bottleneck prediction in production processes with 
+the active period as a prediction indicator. Xue (Xue 
+et al. 2022) proposed a prediction method based on 
+an autoregressive sliding average model, utilizing his­
+torical time-series data to address the challenges 
+posed by multivariate aspects and uncertainties in 
+production system bottleneck prediction.
+Nonetheless, the methods above have limitations, 
+such as applying to production processes with low 
+complexity and failing to offer a comprehensive 
+dynamic analysis of factors considered in production 
+processes, including layout, combination, and person­
+nel changes. Consequently, neural network methods 
+have gradually played a key role in the study of bottle­
+neck prediction (Lai, Shui, and Ni 2018). addressed the 
+dynamic bottleneck prediction problem related to 
+multiple jobs within a manufacturing system by 
+employing a two-layer Long Short-Term Memory 
+(LSTM) network based on high-dimensional historical 
+shop floor data, with blockage and starvation as pre­
+diction indicators. Chen (Chen et al. 2023) proposed 
+a hierarchical recurrent neural network (RNN) model 
+based on high-dimensional feature data to address 
+the complex time-varying interdependencies among 
+different factors in the production process.
+However, the majority of existing studies focus on 
+individual equipment states or specific processes in 
+manufacturing. These studies typically analyze the bot­
+tleneck indicators of individual objects in the production 
+process in terms of temporal characteristics. Such an 
+approach tends to neglect the interactions of global 
+workstations in the spatial dimension. As a result, pre­
+dicting bottlenecks for the whole production system 
+remains a challenge when approached solely from the 
+perspective of individual objects. To overcome this chal­
+lenge, researchers need to consider the knowledge of 
+production workstation correlation and combine the 
+spatial and temporal features of the production system 
+to predict bottlenecks from a global perspective.
+2.2. Spatial and temporal features fusion
+Graph structures possess a robust capacity to encapsu­
+late extensive information and are widely employed in 
+scenarios that encompass graph structures and node 
+attributes. In various domains, including traffic flow pre­
+diction and destination forecasting, graph neural net­
+works have evolved into a fundamental technical tool. 
+Unlike the aggregation approach, which assigns weights 
+equally for neighboring nodes, attention mechanisms 
+have become an important approach for sequence- 
+based tasks nowadays. The uniqueness of this type of 
+attention mechanism offers adaptive attention to fea­
+ture data, yielding more pertinent features that exert 
+a greater impact on the subsequent model’s perfor­
+mance. Among them (Kovi et al. 2017), proposed 
+a graph attention model (GAT), which enables the spe­
+cification of distinct weights for neighboring modes, 
+effectively addressing the challenge of modeling spatio- 
+temporal correlations (Lai et al. 2023). proposed 
+a Bottleneck spatio-temporal Attention Network 
+(BSTAN) that can address the complexity of spatio- 
+temporal modeling of manufacturing systems to achieve 
+the bottleneck prediction task.
+(Zhu et al. 2022) considered the spatial and tem­
+poral characteristics of traffic along with the com­
+bined impact of external factors and proposed 
+a knowledge representation-driven method based 
+on spatio-temporal graph attention method for pre­
+dicting speed and flow indexes at different traffic 
+network locations. Meanwhile (Qiao et al. 2023), pro­
+posed a spatio-temporal attention graph network 
+using fused geographic knowledge, which can realize 
+the aggregation of spatial neighborhood features to 
+solve the crop yield prediction challenge.
+However, 
+despite 
+significant 
+advancements 
+achieved by these methods in various domains, exist­
+ing approaches to production system bottleneck pre­
+diction confront specific challenges and limitations.
+In contrast, the current approach to production 
+system bottleneck prediction primarily relies on pro­
+duction data and places less emphasis on the knowl­
+edge of the production system. The bottleneck status 
+within a production system is also subject to mutual 
+constraints among workstation nodes, encompassing 
+factors such as the layout of the production line, the 
+workflow, and the size of buffers. Therefore, this 
+research utilizes spatio-temporal features and the cor­
+related features associated with external production 
+factors for dynamic production process bottleneck 
+prediction. This paper integrates both production 
+process data and the broader knowledge of the pro­
+duction system, considering the interaction among 
+INTERNATIONAL JOURNAL OF COMPUTER INTEGRATED MANUFACTURING
+3
+
+=====PAGE 5=====
+workstation nodes and external production factors. In 
+doing so, it introduces an innovative approach for 
+predicting bottlenecks within production systems.
+2.3. Research gap
+Based on the above literature, there are several key 
+research gaps in the field of production bottleneck 
+prediction and spatio-temporal feature fusion, which 
+pose significant obstacles to the improvement of pro­
+duction efficiency in the sustainable production 
+domain. These limitations mainly include:
+●Existing research often overlooks the spatial 
+interactions between overall workshop pro­
+cesses, focusing instead on the status of indivi­
+dual equipment or specific processes. The 
+limitation of this approach lies in its inability to 
+capture the global dynamic behavior of the pro­
+duction system.
+●Current reviews lack a comprehensive dynamic 
+analysis of various factors such as layout, combi­
+nation, and personnel changes during the pro­
+duction process. These factors significantly 
+influence the formation and evolution of produc­
+tion bottlenecks but have not been adequately 
+considered in existing research.
+●The present approaches fail to adequately merge 
+the knowledge of the production system with 
+spatio-temporal data, leading to inaccurate pre­
+dictions of production bottlenecks. This separa­
+tion impedes a deep understanding of the 
+overall performance of the production system.
+The above research gaps indicate an urgent need in 
+the current sustainable production field for a more 
+precise and effective mechanism for the integration of 
+production process data and knowledge for dynamic 
+workshop bottleneck prediction methods. This study 
+aims to overcome the limitations of existing methods 
+and contribute to the field of sustainable production 
+process optimization.
+3. Methodology
+3.1. Framework
+The comprehensive methodology outlined in this 
+paper is visually represented in Figure 1. It begins by 
+acknowledging the correlation between workstation 
+state information and external factors, leading to the 
+construction of a PKG graph, and subsequent knowl­
+edge representation learning. Each knowledge node 
+corresponds to an actual workstation, and the spatial 
+structure features of the physical production site are 
+extracted through the process nodes and edge rela­
+tionships within the PKG graph.
+The bottleneck prediction problem can be viewed 
+as the learning function y ¼ fðA; X; PKGÞ. According to 
+Figure 1. The overall framework.
+4
+T. WU ET AL.
+
+=====PAGE 6=====
+the production material flow network topology matrix 
+A, characteristic matrix X and PKG graph to predict the 
+future bottleneck indicators. To consider the spatio- 
+temporal relationship of the production process 
+workstation blockage and the starvation state, the 
+PKG ¼ S; E; S att
+f
+g is generated by modeling the 
+practical production layout. Where, E ¼
+si; aij; si
+
+	
+denotes the correlation relationship between the 
+sites 
+in 
+the 
+set 
+of 
+workstations, 
+and 
+A ¼
+ai1; ai2; . . . ; aij
+
+	
+2 RNN is the weighted adja­
+cency matrix of the production network. If the corre­
+sponding workstation i 2 S and workstation j 2 S are 
+connected, the weights of matrix element aij are set to 
+the buffer size. X 2 RP denotes the characteristics of 
+each workstation node in the production network, 
+and in this paper, blockage y1 2 y and starvation 
+y2 2 y characteristics of workstations are chosen as 
+indicators for prediction. The goal is to learn the 
+mapping function y ¼ fðA; X; PKGÞ of the above two 
+types of metrics by inputting the P-dimensional 
+features X 2 RNPT of N workstation nodes in 
+a fixed time range T. Based on the obtained bottle­
+neck state metrics of each workstation node, the bot­
+tleneck detection algorithm (e.g. turning point 
+method) is utilized to make a final prediction of the 
+future bottleneck state of the workstation.
+3.2. Sustainable production process knowledge 
+graph
+3.2.1. Sustainable production process knowledge 
+graph construction
+The bottleneck prediction of the sustainable produc­
+tion process is affected by a combination of temporal 
+characteristics (such as starvation time and blockage 
+time), spatial characteristics (including spatial layout 
+and buffer size), and external correlation factors 
+around the target station (such as equipment’s con­
+tinuous operation hours and operators continuous 
+working hours) (J. Li, Zhou, and Zhang 2022; J. Liu 
+Figure 2. The knowledge model of the physical production process.
+INTERNATIONAL JOURNAL OF COMPUTER INTEGRATED MANUFACTURING
+5
+
+=====PAGE 7=====
+et al. 2023; M. Liu et al. 2022). The target sustainable 
+production process knowledge graph (PKG) defined 
+in this paper can realize the integration of the above 
+heterogeneous data to achieve the capture of seman­
+tic information and the important topological infor­
+mation of the production network. Figure 2 illustrates 
+how a physical production layout is transformed into 
+a knowledge model using a directed graph approach, 
+effectively mapping the real production process.
+The PKG graph constructed mainly consists of 
+a triple form PKG ¼ S; E; S  att
+f
+g to represent the pro­
+duction process sites, the correlation relationship 
+among the sites, and the attribute characteristics of 
+the site bottleneck status. These components are 
+denoted by (Eq. 1) and (Eq. 2). Where S denotes the 
+set of production process stations, and N ¼ jSj
+denotes the total number of stations included in the 
+whole production process layout. 
+where E denotes the association relationship triples 
+between stations si and sj in the production system, 
+by which it is used to indicate the connectivity 
+between the production stations, as shown in 
+(Eq. 1). aij denotes the size of the edge weights 
+between stations si and sj, by which the value is 
+used to indicate the buffer size between stations dur­
+ing the production cycle. 
+where S  att denotes the attribute relationship triples 
+between the workstation si and the bottleneck attri­
+bute, attP denotes the P-th attribute feature, and 
+attP  si denotes the specific value of that type of attri­
+bute at the workstation si, as shown in (Eq. 2).
+3.2.1. PKG knowledge representation
+To predict the bottleneck status of each worksta­
+tion, the bottleneck features of each workstation 
+node need to be initially extracted (Luo et al.  
+2023). These workstation nodes in the knowledge 
+graph are closely associated with the ‘5M1E’ attri­
+butes within the production plant system (Dang 
+et al. 2023). The data within these attributes are 
+divided into numerical and discrete categories. 
+Numerical data contains blockage (T blk) and star­
+vation time (T sta) of workstations per unit of time, 
+downtime (T down), average processing time of 
+processes (T pro), continuous operation time of 
+equipment (T equ), continuous working time of per­
+sonnel (T per), and the frequency of task change­
+over (F pro). The above features are subjected to 
+pre-processing steps, including data normalization 
+and normalization. They are directly used as the 
+initial low-dimensional embedding vectors of the 
+workstation process nodes (Kumar et al. 2023). 
+Discrete data encompasses information such as 
+workstation number, equipment type, personnel 
+category, product variant name, personnel fatigue 
+status, equipment health status, product priority 
+change status, etc., which need to be encoded 
+first (Jin et al. 2023; Lin, Liu, and Sun 2016; Zhang 
+et al. 2019). These features at each moment are 
+spliced and embedded as the predicted initial low- 
+latitude embedding vector.
+Most of the aforementioned features have been 
+widely used in previous studies for dynamic predic­
+tion of future bottlenecks, and empirical evidence has 
+validated the significance of these selected metrics for 
+the outcomes. The total continuous operating time of 
+the production process is calculated as described 
+in (Eq. 3): 
+where ψ denotes the working time segments in the 
+production process cycle t. This metric can be used to 
+capture the total working time of the equipment 
+during the production cycle. By utilizing equation(3), 
+the continuous working time T equ of the equipment 
+at a single station within a single time segment ψ is 
+obtained, and this value can be used to capture the 
+health status of the equipment.
+In addition, the T pro of the processes upstream 
+and downstream of the workstation, along with the 
+influence of parallel workstations, is factored into the 
+evaluation of potential future blockages and starva­
+tions at the workstation. This evaluation is based on 
+the material flow cycle (T cyc) of each workstation, as 
+illustrated in (Eq. 4): 
+where T  pro represents the occurrence of starvation 
+and blockage at the next time of each station in a time 
+6
+T. WU ET AL.
+
+=====PAGE 8=====
+segment ψ. A positive value indicates a longer dura­
+tion of future starvation, while a negative value sug­
+gests a longer duration of future blockage. T  cyci  1
+tw 
+represents the material flow cycle T  cy of the 
+upstream workstation of the current production 
+workstation, and the downstream workstation is cal­
+culated in the same way.
+The imbalance of workload distribution is one of 
+the most important factors for the bottleneck state of 
+the sustainable production process. To consider the 
+dynamic processing characteristics of the production 
+sequence, the F_pro is used as a predictive feature. 
+The size of this indicator is proportional to the balance 
+of task allocation and is calculated as indicated 
+in (Eq. 5): 
+where V denotes the total number of production 
+sequence tasks in the current production sequence, 
+and the T  cyci
+v denotes the conversion frequency of 
+production sequence tasks under the current produc­
+tion schedule.
+To capture the effect of the bottleneck state of 
+a single workstation on other stations in the 
+dynamic sustainable production process, a buffer 
+zone is selected as the bottleneck work node fea­
+ture for the calculation of the sustainable produc­
+tion process edge importance weights between 
+process 
+nodes. 
+This 
+calculation 
+is 
+detailed 
+in (Eq. 6): 
+where Aij and Buij denote the importance of edge 
+connectivity and the size of the buffer supported 
+by the edge between the production process 
+workstations si and sj, respectively; BuMin and 
+BuMax denote the maximum and minimum values 
+in the set of buffer values for normalization.
+3.3. BPSTK model
+3.2.1. Knowledge Cross Fusion-Module
+To better align with the dynamic characteristics of the 
+production 
+process, 
+this 
+paper 
+introduces 
+a Knowledge Cross Fusion-module (KCF-Module). 
+This module is designed to embed and merge the 
+previously selected spatio-temporal features and rele­
+vant knowledge, creating input vectors for the spatio- 
+temporal models. Inspired by the MKR model (H. 
+Wang et al. 2019), knowledge embedding is relevant 
+to the bottleneck prediction task. As a result, the KCF- 
+Module designed in this paper enhances the embed­
+ding efficacy for the bottleneck prediction model, 
+offering an improved fusion of the temporal embed­
+ding vectors. The detailed framework of the KCF- 
+Module is extensively depicted in Figure 3.
+The KCF-Module contains a cross-compression 
+unit and a process knowledge embedding module 
+(KEG). The knowledge graph entities obtained from 
+the above operations are input in the form of 
+triples. The KEG module can be responsible for 
+facilitating feature interaction jX
+0
+t; e
+0
+tj ¼ CðXt; etÞ
+between the workstation bottleneck feature Xt 
+and the corresponding knowledge entity e 
+recorded at time t, as shown in (Eq. 7). The output 
+feature X
+0
+t represents the fused and updated fea­
+tures of the workstation bottleneck feature and the 
+relevance knowledge at time t. For the workstation 
+bottleneck timing feature Xt and one of its correla­
+tion entities e, the pairwise interactions of their 
+Figure 3. KCF-Module.
+INTERNATIONAL JOURNAL OF COMPUTER INTEGRATED MANUFACTURING
+7
+
+=====PAGE 9=====
+hidden features Xt 2 Rd and et 2 Rd are firstly con­
+structed in first layer. 
+where Cl 2 Rd is the cross-feature matrix of layer l 
+and d is the dimension of the hidden layer. This 
+design embodies the cross-over operation, as it 
+explicitly models every relevant feature interaction 
+XðiÞ
+t eðjÞ
+t ; ~"ði; jÞ 2 f1; . . . ; dg2, between a workstation 
+bottleneck timing feature Xt and its associated 
+entity e is explicitly modeled in the crossover fea­
+ture matrix. The output feature vectors are 
+obtained by projecting the crossover feature matrix 
+into the potential representation space of X
+0
+t and 
+entity e
+0
+t in the next layer. This projection is 
+expressed in (Eq. 8): 
+where w and b are the trainable weight and bias 
+vectors. The essence of the compression operation is 
+because the weight vectors Rd project the cross- 
+feature space matrix into the feature space. The KCF- 
+Module empowers the model to dynamically adapt the 
+knowledge transfer weights. This flexibility enables the 
+model to learn and capture the correlation between 
+knowledge embedding and bottleneck prediction 
+tasks throughout the sustainable production process.
+3.3.2. Spatio-temporal modelling method
+Considering the influence of a single workstation’s 
+bottleneck state on the interconnectedness and spa­
+tial dynamics among other workstations in the sus­
+tainable production process, the Graph Attention 
+model (GAT) is chosen (Kovi et al. 2017). This model 
+is well-suited for capturing the spatial topological 
+relationships within the sustainable production pro­
+cess and the embedded attributes of individual work­
+stations. For example, the existence of abnormalities 
+in the T pro of a process at a single workstation will 
+increase the probability of occurrence and duration of 
+bottleneck states at other neighboring workstations. 
+The graph attention strategy used in GAT enables 
+adaptive focus on critical embedded features, 
+facilitating the dynamic acquisition of significant 
+information from nodes at neighboring workstations 
+for the target production process node.
+The feature dimensions are fixed for the input time 
+series data and the sliding time window method is 
+used to obtain the sequence data with a fixed time 
+length.
+The updated bottleneck features X
+0
+t and adja­
+cency matrix A obtained based on the above KCF- 
+Module operations are used as inputs to the GAT 
+model. The information dissemination and aggrega­
+tion capabilities of the model are used to obtain the 
+bottleneck 
+characteristics 
+h 
+of 
+the 
+target 
+workstations.
+To capture the diverse potential interactions 
+between the target station and neighboring station, 
+a multi-attention mechanism is introduced in the pro­
+cess of information aggregation (D. Wang et al. 2022), 
+(Vaswani et al. 2017). Then, a global maximum pool­
+ing layer is used to select the most critical features in 
+each embedding dimension. This step leads to the 
+construction of the overall embedding representation 
+hl
+g;t of the entire production system graph, calculated 
+as shown in (Eq. 9): 
+In a dynamic sustainable production process, the bot­
+tleneck transformation at a workstation is influenced 
+by multiple factors, including the spatio-temporal 
+dynamic evolution of the production line, historical 
+station observations, and the cross-influence of future 
+production planning. These factors exhibit significant 
+time dependence and intrinsic interconnections in the 
+production process. To effectively capture and model 
+these complex features, a gated recurrent unit (GRU) is 
+employed in this study (Cho et al. 2014). The choice is 
+based on its superior ability to capture time series 
+characteristics that help to predict bottleneck situa­
+tions in the production process accurately. The gated 
+recurrent unit (GRU) is utilized to process and output 
+the state ht, which presents the spatial and temporal 
+characteristics of the production line data implied by 
+the current time step (Cho et al. 2014).
+3.3.3. 3) Blockage and Starvation Prediction
+Subsequently, a multilayer neuron perceptron 
+(MLP), i.e. a fully connected layer, is applied to 
+the output layer of the model to predict the 
+8
+T. WU ET AL.
+
+=====PAGE 10=====
+blockages y1 and starvation y2 times of the work­
+stations in the next moments L, represented as 
+(Eq. 10): 
+During training, the goal is to minimize the error 
+between the true and model predicted value on the 
+production line (Jian, Wang, and Barati Farimani  
+2022). Using yi
+L and byi
+L denote the true and predicted 
+times respectively. The loss function of the model is 
+shown in (Eq. 11): 
+where the first term is used to minimize the error 
+between the true time and the prediction. 
+The second term Lreg is the L2 regularization term to 
+avoid the overfitting problem and λ is the hyperpara­
+meter. The complete loss function designed in this 
+paper is expressed in (Eq. 12): 
+where the first loss LGAT  GRU is the loss of the spatio- 
+temporal attention model. The second loss LKG indi­
+cates the computation of the loss function in the KGE- 
+Module, which aims to reduce the false ternary score 
+by boosting the true ternary score while reducing the 
+false ternary score. In addition, to mitigate model 
+overfitting, the regularization term, where λ1 and λ2 
+are introduced as balancing parameters in the study 
+to ensure the generalization ability of the model.
+To 
+improve 
+the 
+computational 
+efficiency, 
+a negative sampling strategy is used in the study 
+to optimize the training process. Specifically, each 
+training cycle is divided into two phases, the 
+regression prediction task for blockage and starva­
+tion time states and the KGE task (Qiao et al. 2023; 
+Zhu et al. 2022). In each iteration, to emphasize 
+the improvement in regression prediction perfor­
+mance, the training for the KGE task is repeated 
+times 
+within 
+each 
+epoch 
+(where 
+t 
+is 
+a hyperparameter greater than 1) before resuming 
+the training for the KGE task.
+3.4. System bottleneck identification
+The accuracy of the future bottleneck prediction 
+results for the proposed model in this article primarily 
+relies on the forecasts of future blockage and starva­
+tion fy1; y2g. This is mainly because the turning point 
+method (TPM) (L. Li, Chang, and Ni 2009), chosen as 
+the bottleneck identification algorithm in the pro­
+posed model, achieves the recognition of future bot­
+tleneck workstations by taking input on future 
+blockage and starvation. The fundamental is that the 
+bottleneck station will alter the distribution of block­
+ing and starvation times among stations. This bottle­
+neck phenomenon precipitates an augmentation in 
+blocking 
+time 
+at 
+its 
+upstream 
+station 
+and 
+a corresponding escalation in starvation time at its 
+downstream station. This approach ensures that the 
+bottleneck detection process is grounded in the 
+dynamic behavior of the production system, leading 
+to accurate and reliable results.
+In the context of a serial production line compris­
+ing N stations, the identification of a bottleneck at 
+station j at time t þ L is mathematically modeled as 
+follows: A station is deemed a bottleneck when there 
+is a notable increase in blockage time for its upstream 
+stations and also an escalation in starvation time for 
+its downstream counterparts, as indicated by (Eq. 13). 
+Furthermore, the bottleneck station itself is subject to 
+a blend of blockage and starvation times, which 
+adheres to the stipulations outlined in (Eq. ?). 
+Where, TBtþL
+i 
+and TStþL
+i 
+represent the cumulative 
+blockage and starvation times for station i over the 
+future period t þ L, respectively. Utilizing TPM on the 
+predicted blockage and starvation times of the pro­
+posed model allows for the effective identification of 
+future bottleneck stations. This approach ensures that 
+the bottleneck detection process is grounded in the 
+dynamic behavior of the production system, leading 
+to accurate and reliable results.
+Due to the requirement of inputting blockage and 
+starvation times for bottleneck detection, the 
+INTERNATIONAL JOURNAL OF COMPUTER INTEGRATED MANUFACTURING
+9
+
+=====PAGE 11=====
+accuracy of TPM in identifying bottlenecks is depen­
+dent on the precision of these predictions. The more 
+accurate the prediction of blockage and starvation 
+times, fy1; y2g, the more accurately TPM can identify 
+the actual bottlenecks in the production system. 
+Consequently, researchers have been striving to 
+enhance the predictive accuracy of their models for 
+blockage and starvation as an evaluation of the per­
+formance of their bottleneck prediction algorithms.
+4. Experimental section
+The 
+production 
+line 
+for 
+suits, 
+serving 
+as 
+a representative example of textile and garment 
+manufacturing processes, exhibits the following 
+distinct characteristics, including workstation com­
+plexity, spatio-temporal correlation of processes, 
+and constant adjustments in production demands. 
+Consequently, flexible sustainable production pro­
+cesses are essential to address demand variability. 
+These attributes inherent to the textile and apparel 
+production process render the prediction of pro­
+duction bottlenecks a formidable undertaking. To 
+further validate the effectiveness of the sustainable 
+production process bottleneck prediction method 
+proposed in this paper, this study adopts the 
+actual production process data (including produc­
+tion line structure, buffer size, and production flow 
+situation) of a domestic textile manufacturing 
+enterprise as the research dataset. Within this data­
+set, the blockage time and starvation time of 
+different types of bottleneck workstations were 
+selected as the prediction indices for the through­
+put bottleneck. The performance of the prediction 
+method proposed in this paper is compared and 
+analyzed alongside other benchmark models. The 
+reason for selecting these indices is based on the 
+specific focus of our research, which is to predict 
+throughput bottlenecks in sustainable production 
+processes. Blockage and starvation are key factors 
+that directly contribute to reduced throughput and 
+operational inefficiencies.
+4.1. Production layout and data description
+This paper focuses on a multi-workstation manufac­
+turing system comprising 146 workstations. The 
+selected system covers a variety of workstation types 
+(including manual, hybrid, and fully automated opera­
+tions) and features different line structures, including 
+serial and parallel structures. As shown in Figure 4, it 
+illustrates a schematic diagram of part of the structure 
+of a simplified suit production line, containing work­
+stations A to G. This production line is dedicated to 
+the daily production of a wide range of major suit 
+products. To construct the graphical adjacency matrix 
+required for the analysis, the buffer capacity between 
+workstations was recorded and used as input to the 
+model.
+To support the study of dynamic sustainable pro­
+duction process bottleneck prediction, a base dataset 
+of operational data is collected, spanning 30 
+Figure 4. A simplified suit production line in the case study.
+10
+T. WU ET AL.
+
+=====PAGE 12=====
+consecutive days from the information system. As 
+detailed in Section 3.1, the problem is formulated as 
+a learning function y ¼ fðA; X; PKGÞ. The input data 
+include the production material flow network topol­
+ogy matrix A, characteristic matrix X and PKG graph. 
+The output indicators for prediction is Blockage y1 2 y 
+and starvation y2 2 y characteristics of workstations. 
+Based on the obtained bottleneck state metrics of 
+each workstation node, the bottleneck detection 
+algorithm (e.g. turning point method) is utilized to 
+make a final prediction of the future bottleneck state 
+of the workstation. The performance of the turning 
+point method depends on the accuracy of the block­
+age and starvation predictions. The core of the model 
+proposed in this paper is to improve the accuracy of 
+these two metrics.
+The raw input data have three formats. The first 
+type is recorded in a workstation-level time log format 
+as shown in Table 1, documenting changes in produc­
+tion status in the workstation, including blocking 
+time, starvation time, material flow cycles, and down­
+time. The records specify the time of occurrence and 
+the duration of these events. This dataset can be used 
+to derive valuable information, including average pro­
+cessing time, continuous equipment operation time, 
+personnel duration, and task changeover frequency.
+The second type of raw data is the source of 
+knowledge graph, including the above log records 
+and a large number of textile and garment process 
+documents and equipment operation and mainte­
+nance manuals. The dynamic and static data 
+required to build the knowledge graph, which 
+includes workstation number, equipment type, per­
+sonnel category, product variant name, operator 
+fatigue status, equipment health status, product 
+priority change status, and other data as well as 
+product combinations. For the third type, informa­
+tion about production task sequences and buffer 
+sizes is typically stored in the enterprise’s ERP or 
+MES and intelligent suspension control systems, 
+and this data can synchronously be associated with 
+the temporal dimension with data stored in the 
+knowledge graph.
+4.2. Data pre-processing and parameter selection
+4.2.1. Data pre-processing
+The initial data processing involved a thorough assess­
+ment of data quality and data interpolation. 
+Workstations with data quality meeting the required 
+standards, where missing data did not exceed 1.5 hours, 
+were earmarked for further analysis to support subse­
+quent feature extraction. In cases where data was miss­
+ing, a linear interpolation technique was employed to fill 
+in the gaps. Among the identified sites, a graph-theoretic 
+representation is applied to obtain information on their 
+spatial structure of production. The nodes in the graph 
+represent different workstations and each workstation 
+contains a set of bottleneck features, as shown in Table 2. 
+To normalize the selected features, a min-max normal­
+ization approach is implemented, as illustrated in (Eq. ?). 
+This helps to ensure that the scale differences between 
+features do not affect the results of subsequent analyses
+Table 1. Event logs sample for a shirt production workstation.
+Order ID
+Workstation ID
+Process Name
+Start Time
+End Time
+Operator
+Device Name
+1
+A
+Gather seam
+03/08:00:03
+03/08:00:29
+Zhang033
+Flatbed sewing machine
+B1
+Pull shoulder seam tape
+03/08:00:29
+03/08:00:58
+Wang021
+Fabric cutting machine
+. . .
+. . .
+. . .
+. . .
+E1
+Press gathers in seam
+03/08:01:56
+03/08:02:25
+Li042
+Ironing table
+E2
+Press leaf-shaped seam
+03/08:02:25
+03/08:02:54
+Zhao055
+Ironing table
+F1
+Apply pocket mouth lining
+03/08:02:54
+03/08:03:23
+Qian066
+Fabric cutting machine
+F2
+Press sleeve placket
+03/08:03:23
+03/08:03:52
+Sun077
+Ironing table
+F3
+Press door placket tape
+03/08:03:23
+03/08:04:21
+Zhou088
+Ironing table
+. . .
+. . .
+. . .
+. . .
+. . .
+. . .
+G
+Close sleeve opening
+03/09:09:34
+03/09:10:02
+Chen101
+Direct drive button sewing machine
+H1
+Unpick stitches
+03/09:10:07
+03/09:10:35
+Hu112
+Flatbed sewing machine
+H2
+Insert collar corner
+03/09:10:07
+03/09:11:11
+Xu124
+Shirt shaping machine
+J1
+Sleeve underlap stitches
+03/09:11:15
+03/09:11:43
+Dong135
+Fabric cutting machine
+K
+Front body shaping
+03/09:11:47
+03/09:12:13
+Tan031
+Shirt shaping machine
+. . .
+. . .
+. . .
+. . .
+. . .
+. . .
+. . .
+3464
+A
+Gather seam
+30/09:11:26
+30/09:11:55
+Zhang033
+Flatbed sewing machine
+. . .
+. . .
+. . .
+. . .
+. . .
+. . .
+J3
+Flat stitch inner pocket
+30/09:16:55
+30/09:17:00
+Yang146
+Direct drive button sewing machine
+INTERNATIONAL JOURNAL OF COMPUTER INTEGRATED MANUFACTURING
+11
+
+=====PAGE 13=====
+where xa;b
+t 
+represents the data in a-th row and b-th 
+column at time t. The time window T for prediction is 
+set to 30 min, 60 min, 90 min, 120 min, constructing 
+sequential inputs. The dataset is divided into 70% for 
+training, 10% for validation, and 20% for testing.
+4.2.2. Parameter selection
+The configuration of the critical experimental para­
+meters for the bottleneck prediction model is deli­
+neated in Table 3. The training parameters mainly 
+include the learning rate, and the number of hidden 
+units. In the prediction experiments, the learning rate 
+of the workstation bottleneck state prediction model 
+with spatio-temporal features was set to 0.001, with 
+a training batch size of 32.
+Model parameters included a graph embedding 
+dimensionality of 64 dimensions, a choice of one 
+GAT layer 16 hidden units in the Gated Recurrent 
+Unit (GRU), and a multi-head attention mechanism 
+consisting of three heads. The number of heads of 
+the multi-head attention mechanism was chosen as 
+3 heads, and the optimizer was chosen as the Adam 
+optimizer. The sampling length of each part of the 
+historical time series is 360 minutes, corresponding to 
+12 sampling points of bottleneck state data.
+And then, Figure 5 depicts the convergence curve 
+of the loss function for the bottleneck prediction 
+model, which is grounded in the methodology intro­
+duced in this study. The figure demonstrates that the 
+model attains convergence at around the 800  th 
+training epoch.
+5. Results and discussion
+The chosen TPM algorithm exhibits outstanding per­
+formance in identifying bottleneck workstations, 
+attributed to its high sensitivity to the input blockage 
+and starvation indicators. Therefore, the evaluation 
+approach of this research involves predicting future 
+blockage and starvation for all workstations and com­
+paring the accuracy of the prediction results, with 
+a focus on minimizing residuals.
+To demonstrate the effectiveness of the produc­
+tion bottleneck prediction task, a performance com­
+parison was conducted with various baseline 
+methods (ARIMA (Subramaniyan et al. 2019), Graph 
+Convolutional Network (GCN), GRU, GCN+GRU (Lai 
+et al. 2023), BSTAN (Lai et al. 2023)) using the bottle­
+neck prediction method based on spatio-temporal 
+modeling and knowledge graph model (BPSTK) of 
+this paper. The evaluation metrics were chosen as 
+Mean Absolute Error (MAE) and Root Mean Square 
+Error (RMSE). Based on practical engineering 
+Table 3. The key parameters for the bottleneck prediction 
+model.
+Parameter 
+Category
+Parameter Name
+Value
+Training 
+Parameters
+Learning Rate
+0.001
+Training Batch Size
+32
+Model 
+Parameters
+Graph Embedding 
+Dimensionality
+64
+GAT Layer Hidden Units
+16
+GRU Hidden Units
+64
+Multi-head Attention 
+Mechanism Heads
+3
+Optimizer
+Adam Optimizer
+Historical Data
+Sampling Length
+360 minutes
+Sampling Points
+12 (bottleneck state 
+data)
+Table 4. Comparison of the prediction performance of different methods at multiple time scales.
+Prediction Time/min
+Evaluation
+ARIMA/(s)
+GRU/(s)
+GCN/(s)
+GCN+GRU/(s)
+BSTAN/(s)
+BPSTK/(s)
+30
+RMSE
+4.0436
+2.5142
+2.648
+2.443
+2.4239
+2.3158
+MAE
+3.2043
+1.9737
+2.1581
+1.9125
+1.9248
+1.8352
+60
+RMSE
+4.0562
+2.5319
+2.7577
+2.4835
+2.4651
+2.3716
+MAE
+3.2302
+1.9965
+2.1792
+1.9311
+1.9218
+1.8736
+90
+RMSE
+4.0637
+2.5911
+2.7837
+2.4613
+2.4332
+2.4059
+MAE
+3.2769
+2.0161
+2.1978
+1.9348
+1.9187
+1.8963
+120
+RMSE
+4.0965
+2.6369
+2.8023
+2.5827
+2.521
+2.4998
+MAE
+3.2942
+2.0424
+2.2096
+1.9406
+1.9346
+1.9195
+Table 2. Selected feature for bottleneck prediction.
+Features
+Instruction
+Class
+Tsta
+Starvation time
+Numerical data
+Tblk
+Blockage time
+Numerical data
+Tpro
+Average processing time of processes
+Numerical data
+Tequ
+Continuous operation time of equipment
+Numerical data
+Tdown
+Downtime of equipment
+Numerical data
+Tper
+Continuous working time of personnel
+Numerical data
+Tcyc
+The material flow cycle
+Numerical data
+F_pro
+The frequency of task changeover
+Numerical data
+12
+T. WU ET AL.
+
+=====PAGE 14=====
+application experience, the BPSTK model in this paper 
+and the other baseline methods were tested on the 
+same production workstation bottleneck state data­
+set using multiple time scale prediction intervals of 
+30, 60, 90, and 120 minutes in the prediction task. The 
+metrics in Table 4 are obtained by averaging the data 
+from all the prediction stations.
+Among these models, the ARIMA benchmark 
+model stands out as one of the best traditional 
+benchmark models, primarily based on temporal 
+data. GRU is a deep learning model for bottleneck 
+prediction that only uses temporal data. GCN is 
+a deep learning model for bottleneck prediction 
+that exclusively relies on spatial data. The goal is 
+to assess the importance of the added attention 
+mechanism for bottleneck prediction in the field of 
+spatio-temporal modeling.
+The combined GCN and GRU algorithm without the 
+attention mechanism and the BSTAN (GAT and GRU) 
+algorithm with the added attention mechanism was 
+selected for comparative experiments. It can be 
+inferred from Table 4 that the BPSTK model exhibits 
+the lowest error results (RMSE, MAE). The BPSTK 
+model reduces the error by about 42% compared to 
+the traditional method ARIMA model. This improve­
+ment is attributed to the neural network model’s 
+capacity to better incorporate multi-feature history 
+information compared to traditional methods. The 
+performance of the BPSTK models in this research is 
+improved compared to the neural network-based 
+methods (GCN, GRU) and the error is reduced by 
+about 7% compared to GRU. The prediction effective­
+ness of GCN or GRU models is low because they only 
+consider a single bottleneck state feature. The error of 
+GRU is lower than GCN because bottleneck state pre­
+diction models with temporal features perform better 
+when modeling temporal features. The BPSTK model 
+effectively combines both temporal and spatial fea­
+tures to better capture the dynamic characteristics of 
+production bottlenecks.
+Compared with the combined algorithm of GCN 
+and GRU, this algorithm and the BSTAN algorithm 
+both use the attention mechanism, which allows 
+the model with the attention mechanism to better 
+capture the diverse potential interactions between 
+the target station and the neighboring stations 
+during the information aggregation process. In 
+addition, the BPSTK in this paper incorporates pro­
+duction process bottleneck-related knowledge 
+while capturing spatio-temporal features, making 
+it adaptable to more complex production pro­
+cesses in the task of bottleneck prediction of pro­
+duction processes. It has also been verified that the 
+inclusion of semantic information between produc­
+tion 
+process 
+sites 
+and 
+external 
+knowledge 
+enhances bottleneck prediction.
+The prediction performance of various types of 
+algorithms for bottleneck prediction tasks at different 
+time scales such as 30, 60, 90, and 120 minutes is 
+further compared. To be more specific, 20 time 
+Figure 5. Convergence profile of the loss function for the bottleneck prediction model.
+INTERNATIONAL JOURNAL OF COMPUTER INTEGRATED MANUFACTURING
+13
+
+=====PAGE 15=====
+stamps were chosen for the analysis of bottleneck 
+prediction results. In Figure 6, each timestamp is 
+represented in Figure 6(a-d) as 30, 60, 90, and 120  
+minutes, respectively. The time stamps in each sub­
+figure remain the same, and each stamp reflects 
+a different time. The results show that the perfor­
+mance of all models keeps declining with increasing 
+prediction range. It can be obtained that the BPSTK of 
+this research exhibits outstanding performance in 
+both short-term and long-term prediction processes. 
+As can be seen from the figure above, the model 
+proposed in this paper generally exhibits the best 
+prediction accuracy for blockage and starvation 
+times. Consequently, the application of the TPM can 
+better identify future bottlenecks.
+As an example of demonstrating that the proposed 
+model can capture the spatial correlation between 
+workstation nodes and can adaptively learn 
+Figure 6. Comparison of predicted blockage with actual blockage at station D.
+Figure 7. Visualizing the distribution of attention scores during the initial training phase of the model (left) and the training is 
+completed (right).
+14
+T. WU ET AL.
+
+=====PAGE 16=====
+information about the attention weights between the 
+center node and its neighboring nodes, the attention 
+scores of this workstation layout and flow are visua­
+lized to illustrate the spatial attention capability con­
+ferred by the model and the changes in the attention 
+weights of neighboring nodes to the central node, as 
+presented in Figure 7.
+As shown in the right subgraph of Figure 7, 
+node A station is darker than node B2 station, 
+while node A station is relatively lighter than 
+node C station. This information suggests that 
+node A station is assigned a higher weight during 
+the feature aggregation process, which in turn has 
+a greater impact on node B2 station. This observa­
+tion may be attributed to the workstation buffer 
+settings, in which the buffer between station A and 
+station B2 has a smaller capacity, leading to more 
+significant 
+blocking 
+and 
+starvation 
+effects. 
+Therefore, the model proposed in this research 
+not only achieves superior prediction performance 
+but also demonstrates advantages in terms of spa­
+tial interpretability.
+6. Conclusion
+To maximize sustainable production efficiency and mini­
+mize environmental impact, this paper proposes 
+a dynamic method for predicting manufacturing pro­
+cess throughput bottlenecks, integrating sustainable 
+production process knowledge and spatio-temporal 
+features.
+●This approach facilitates the forecasting of spa­
+tio-temporal dynamic throughput bottleneck 
+metrics from a comprehensive, systematic 
+viewpoint.
+●Unlike previous studies that predominantly 
+focused on spatio-temporal features, the pro­
+posed approach emphasizes the integration of 
+external factors impacting manufacturing.
+●The identification of future bottleneck workstations 
+relies on the overall distribution of blockage and 
+starvation.
+●An analysis using a textile production case study 
+shows that the proposed algorithm more effec­
+tively predicts future blockage and starvation at 
+each workstation compared to the benchmark 
+model.
+In the future, the focus of the research primarily 
+lies in exploring the impact of dynamic intelligent 
+modeling methods based on the production pro­
+cess knowledge graph on the performance of pro­
+duction bottleneck prediction, as well as whether 
+constructing a multi-agent system to enhance the 
+perception of workshop status and bottleneck pre­
+diction capabilities contributes to the improve­
+ment of the intelligent level of sustainable 
+production. In addition, to research on the aspect 
+of transferability, this model can accommodate 
+diverse sectors and manufacturing settings, and 
+when coupled with sophisticated data analytical 
+methods, it can improve the precision of bottle­
+neck forecasts.
+Disclosure statement
+No potential conflict of interest was reported by the 
+author(s).
+Funding
+This work was supported by the Municipal Natural Science 
+Foundation of Shanghai, China [Grant No. 21ZR1400800]. 
+Natural Science Foundation of Shanghai Municipality 
+[21ZR1400800].
+References
+Beauchemin, M. 2023. “Dynamic Allocation of Human Resources: 
+Case 
+Study 
+in 
+the 
+Metal 
+4.0 
+Manufacturing 
+Industry.”International.” Journal of Production Research 61 (20): 
+6891–6907. https://doi.org/10.1080/00207543.2022.2139002  .
+Chen, M., R. Furness, R. Gupta, S. Puchala, and W. (. Guo. 2023. 
+“Hierarchical RNN-Based Framework for Throughput 
+Prediction 
+in 
+Automotive 
+Production 
+Systems.”International.” Journal of Production Research 
+62 (5): 1699–1714. https://www.tandfonline.com/doi/full/ 
+10.1080/00207543.2023.2199438 .
+Cho, K., B. Van Merriënboer, C. Gulcehre, D. Bahdanau, 
+F. Bougares, H. Schwenk, and Y. Bengio. 2014. “Learning 
+Phrase Representations Using RNN Encoder-Decoder for 
+Statistical Machine Translation.” ArXiv Prepr. https://doi.org/ 
+10.3115/v1/D14-1179  .
+Dang, M.-Y., Q.-C. Wang, J. Qi, G. Liu, N. Li, and W.-Q. Chen. 
+2023. “Green Design Evaluation of Electrical and Electronic 
+Equipment Based on Knowledge Graph.”ACS.” Sustainable 
+Chemistry and Engineering 11 (51): 18011–18020. https://doi. 
+org/10.1021/acssuschemeng.3c05866  .
+Huang, B., W. Wang, S. Ren, R. Y. Zhong, and J. Jiang. 2019. 
+“A Proactive Task Dispatching Method Based on Future 
+INTERNATIONAL JOURNAL OF COMPUTER INTEGRATED MANUFACTURING
+15
+
+=====PAGE 17=====
+Bottleneck Prediction for the Smart Factory.”International.” 
+Journal of Computer Integrated Manufacturing 32 (3): 
+278–293. https://doi.org/10.1080/0951192X.2019.1571241  .
+Jian, Y., Y. Wang, and A. Barati Farimani. 2022. “Predicting CO 2 
+Absorption in Ionic Liquids with Molecular Descriptors and 
+Explainable Graph Neural Networks.”ACS.” Sustainable 
+Chemistry and Engineering 10 (50): 16681–16691. https:// 
+doi.org/10.1021/acssuschemeng.2c05985  .
+Jin, M., Y. Zheng, Y.-F. Li, S. Chen, B. Yang, and S. Pan. 2023. 
+“Multivariate Time Series Forecasting with Dynamic Graph 
+Neural ODEs.”IEEE.” Transactions on Knowledge and Data 
+Engineering 35 (9): 9168–9180. https://doi.org/10.1109/ 
+TKDE.2022.3221989  .
+Kumar, A., B. R. Bakshi, M. Ramteke, and H. Kodamana. 2023. 
+“Recycle-BERT: Extracting Knowledge About Plastic Waste 
+Recycling by Natural Language processing.”ACS Sustainable 
+Chemistry &.” Engineering 11 (32): 12123–12134. https://doi. 
+org/10.1021/acssuschemeng.3c03162  .
+Kumbhar, M., A. H. Ng, and S. Bandaru. 2023. “A Digital Twin 
+Based 
+Framework 
+for 
+Detection, 
+Diagnosis, 
+and 
+Improvement of Throughput Bottlenecks.”Journal of 
+Manufacturing Systems.” Journal of Manufacturing Systems 
+66:92–106. https://doi.org/10.1016/j.jmsy.2022.11.016  .
+Kovi, V., G. C. Petar, A. Casanova, A. Romero, P. Lio, and 
+Y. Bengio. 2017. ““Graph Attention Networks.” ArXiv Prepr.  
+https://doi.org/10.48550/arXiv.1710.10903  .
+Lai, X., T. Qiu, H. Shui, D. Ding, and J. Ni. 2023. “Predicting 
+Future Production System Bottlenecks with a Graph Neural 
+Network Approach.”Journal of Manufacturing Systems.” 
+67:201–212. https://doi.org/10.1016/j.jmsy.2023.01.010  .
+Lai, X., H. Shui, and J. Ni. 2018. “A Two-Layer Long Short-Term 
+Memory Network for Bottleneck Prediction in Multi-Job 
+Manufacturing Systems.” International Manufacturing 
+Science and Engineering Conference, V003T02A014, Vol. 
+51371. American Society of Mechanical Engineers. https:// 
+doi.org/10.1016/j.jmsy.2023.01.010  .
+Latsou, C., M. Farsi, and J. Ahmet Erkoyuncu. 2023. “Digital Twin- 
+Enabled Automated Anomaly Detection and Bottleneck 
+Identification in Complex Manufacturing Systems Using 
+a Multi-Agent Approach.”Journal of Manufacturing Systems.” 
+67:242–264. https://doi.org/10.1016/j.jmsy.2023.02.008  .
+Li, J., G. Zhou, and C. Zhang. 2022. “A Twin Data and 
+Knowledge-Driven Intelligent Process Planning Framework 
+of Aviation Parts.”International.” Journal of Production 
+Research 60 (17): 5217–5234. https://doi.org/10.1080/ 
+00207543.2021.1951869  .
+Li, L., Q. Chang, and J. Ni. 2009. “Data Driven Bottleneck 
+Detection of Manufacturing Systems.”International.” Journal 
+of Production Research 47 (18): 5019–5036. https://doi.org/ 
+10.1080/00207540701881860  .
+Li, L., Q. Chang, G. Xiao, and S. Ambani. 2011. “Throughput 
+Bottleneck Prediction of Manufacturing Systems Using Time 
+Series Analysis.” 133 (2). https://doi.org/10.1115/1.4003786  .
+Lin, Y., Z. Liu, and M. Sun. 2016. “Knowledge Representation 
+Learning with Entities, Attributes and Relations.”ethnicity.” 
+1:41–52. https://doi.org/10.5555/3060832.3061022  .
+Liu, J., T. Li, S. Ji, P. Xie, S. Du, F. Teng, and J. Zhang. 2023. 
+“Urban Flow Pattern Mining Based on Multi-Source 
+Heterogeneous Data Fusion and Knowledge Graph 
+Embedding.”IEEE.” Transactions on Knowledge and Data 
+Engineering 35 (2): 2133–2146. https://doi.org/10.1109/ 
+TKDE.2021.3098612  .
+Liu, M., X. Li, J. Li, Y. Liu, B. Zhou, and J. Bao. 2022. “A Knowledge 
+Graph-Based Data Representation Approach for IioT-Enabled 
+Cognitive Manufacturing.”Advanced Engineering Informatics.” 
+51:101515. https://doi.org/10.1016/j.aei.2021.101515  .
+Loghin, D., S. Cai, G. Chen, T. Tuan Anh Dinh, F. Fan, Q. Lin, and 
+J. Ng, et al. 2020. “The Disruptions of 5G on Data-Driven 
+Technologies and Applications.”IEEE.” Transactions on 
+Knowledge and Data Engineering 32 (6): 1179–1198. https:// 
+doi.org/10.1109/TKDE.2020.2967670  .
+Luo, L., Y. Fang, M. Lu, X. Cao, X. Zhang, and W. Zhang. 2023. 
+“GSim: A Graph Neural Network Based Relevance Measure 
+for Heterogeneous Graphs.”IEEE.” Transactions on Knowledge 
+and Data Engineering 35 (12): 12693–12707. https://doi.org/ 
+10.1109/TKDE.2023.3271425  .
+Nandakumar, N., P. G. Saleeshya, and P. Harikumar. 2020. 
+““Bottleneck Identification and Process Improvement by 
+Lean Six Sigma DMAIC Methodology.”materials Today.” 
+Proceedings, 1217–1224 24. https://doi.org/10.1016/j.matpr. 
+2020.04.436  .
+Qiao, M., X. He, X. Cheng, P. Li, Q. Zhao, C. Zhao, and Z. Tian. 
+2023. “KSTAGE: A Knowledge-Guided Spatial-Temporal 
+Attention Graph Learning Network for Crop Yield 
+Prediction.”Information Sciences.” 619:19–37. https://doi. 
+org/10.1016/j.ins.2022.10.112  .
+Ren, Z., J. Wan, and P. Deng. 2022. “Machine-Learning-Driven 
+Digital Twin for Lifecycle Management of Complex 
+Equipment.”IEEE Transactions on Emerging Topics in 
+Computing.” 10 (1): 9–22. https://doi.org/10.1109/TETC. 
+2022.3143346  .
+Rocha, and Lopes. 2022. “Bottleneck Prediction and Data- 
+Driven 
+Discrete-Event 
+Simulation 
+for 
+a 
+Balanced 
+Manufacturing Line.”Procedia Computer Science.” Procedia 
+Computer Science 200:1145–1154. https://doi.org/10.1016/j. 
+procs.2022.01.314  .
+Shang, X., Z. Liu, and C. Gong. 2024. “Optimization of Product 
+Design Process in Cloud Manufacturing System Based on 
+Swarm Intelligence.”International.” Journal of Computer 
+Integrated Manufacturing (0): 1–19. Accessed 2024-06-16.  
+https://doi.org/10.1080/0951192X.2024.2314780  .
+Subramaniyan, M., A. Skoogh, A. Sheikh Muhammad, and 
+Bokrant. 2019. “A Prognostic Algorithm to Prescribe 
+Improvement 
+Measures 
+on 
+Throughput 
+Bottlenecks.”Journal 
+of 
+Manufacturing 
+Systems.” 
+53:271–281. https://doi.org/10.1016/j.jmsy.2019.07.004  .
+Tang, H. 2019. “A New Method of Bottleneck Analysis for 
+Manufacturing Systems.”Manufacturing Letters.” 19:21–24.  
+https://doi.org/10.1016/j.mfglet.2019.01.003  .
+Tu, J., and L. Zhang. 2022. “Performance Analysis and 
+Optimisation of Bernoulli Serial Production Lines with 
+Dynamic 
+Real-Time 
+Bottleneck 
+Identification 
+andMitigation.” International Journal of Production Research 
+16
+T. WU ET AL.
+
+=====PAGE 18=====
+60 (13): 3989–4005. https://www.tandfonline.com/doi/full/ 
+10.1080/00207543.2021.2019343 .
+Vaswani, A., N., Shazeer N. Parmar, J. Uszkoreit, L. Jones, A. N. 
+Gomez, L. Kaiser, and I. Polosukhin. 2017. “Attention is All 
+You Need.” Advances in Neural Information Processing 
+Systems, 30. https://doi.org/10.48550/arXiv.1706.03762  .
+Wang, D., S. Xiang, Y. Zhou, J. Mu, H. Zhou, and R. Irampaye. 
+2022. “Multiple-Attention Mechanism Network for Semantic 
+Segmentation.”Sensors.” 22 (12): 4477. https://doi.org/10. 
+3390/s22124477  .
+Wang, H., F. Zhang, M. Zhao, W. Li, X. Xie, and M. Guo. 2019. 
+“Multi-Task Feature Learning for Knowledge Graph Enhanced 
+Recommendation.” The World Wide Web Conference, 
+2000–2010. https://doi.org/10.48550/arXiv.1901.08907  .
+Xue, Z., T. Li, S.-T. Peng, C.-Y. Zhang, and H.-C. Zhang. 2022. 
+“A Data-Driven Method to Predict Future Bottlenecks in 
+a 
+Remanufacturing 
+System 
+with 
+Multi-Variant 
+Uncertainties.”Journal of Central South University.” 29 (1): 
+129–145. https://doi.org/10.1007/s11771-022-4906-z  .
+Yan, D., J. Yang, D. Zhang, J. Leng, and Q. Liu. 2023. “Digital 
+Twin-Driven 
+Parameter 
+Change 
+Propagation 
+Path 
+Optimization 
+for 
+Production 
+Line 
+Variant 
+Design.”International.” Journal of Computer Integrated 
+Manufacturing (0): 1–17. Accessed 2024-06-16. https://doi. 
+org/10.1080/0951192X.2023.2294460  .
+Zhang, S., Y. Tay, L. Yao, and Q. Liu. 2019. “Quaternion 
+Knowledge Graph Embeddings.”Advances 
+in 
+Neural 
+Information Processing Systems, 32. https://doi.org/10. 
+48550/arXiv.1904.10281  .
+Zhu, J., X. Han, H. Deng, C. Tao, L. Zhao, P. Wang, T. Lin, and 
+H. Li. 2022. “KST-GCN: A Knowledge-Driven Spatial-Temporal 
+Graph Convolutional Network for Traffic Forecasting.”IEEE.” 
+Transactions on Intelligent Transportation Systems 23 (9): 
+15055–15065. https://doi.org/10.1109/TITS.2021.3136287.
+INTERNATIONAL JOURNAL OF COMPUTER INTEGRATED MANUFACTURING
+17

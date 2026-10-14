@@ -1,0 +1,1878 @@
+=====PAGE 1=====
+ 
+Contents lists available at ScienceDirect
+Applied Soft Computing
+journal homepage: www.elsevier.com/locate/asoc
+ 
+Enhancing neural network explainability via event causal graphs for 
+bottleneck prediction in production systems
+Weihong Cen a iD, Lie Yang b iD, Chupeng Su a, Gang Chen a,∗iD, Longhan Xie a,∗iD
+a Shien-Ming Wu School of Intelligent Engineering, South China University of Technology, Guangzhou, 511464, Guangdong, China
+b School of Mechanical and Aerospace Engineering, Nanyang Technological University, 637460, Singapore
+H I G H L I G H T S
+• An event causal graph neural network is proposed based on event-feature causal analysis to represent system states.
+• Transformer-based multi-head attention and graph attention mechanisms are integrated to capture short- and long-term event dependencies.
+• Model interpretability and predictive performance are significantly enhanced through the proposed approach.
+A R T I C L E  I N F O
+Keywords:
+Bottleneck prediction
+Production system
+Bottleneck spatio-temporal neural network 
+with event causal graph
+Graph neural network
+Transformer
+A B S T R A C T
+Bottleneck prediction is essential for improving throughput in production systems and is a key research focus. 
+However, the dynamic nature of bottleneck locations, driven by complex and evolving production environments, 
+presents significant challenges in this field. Existing methods often struggle to capture the intricate relationships 
+among influencing factors, leading to limited interpretability and predictive accuracy. To address these issues, 
+we propose an Event causal graph-based spatial-temporal neural network (ECGBSTNN) for bottleneck prediction. 
+This approach represents machine operations and buffer states as event nodes, integrating expert knowledge 
+to construct causal links, forming a dynamic, event-level causal graph. In addition, a weight matrix quantifies 
+uncertain causal relationships, facilitating adaptive and interpretable causal weighting for bottleneck predic­
+tion. By integrating a Graph Neural Network (GNN) with a Transformer-based architecture, ECGBSTNN captures 
+both causal and temporal dependencies among events to predict future blockage and starvation times which are 
+leveraged to identify potential bottlenecks. Experiments on a production system demonstrate that ECGBSTNN 
+outperforms state-of-the-art methods, for blockage prediction, while providing enhanced interpretability and 
+practical applicability. 
+1 . Introduction
+In the face of intensifying market competition, enhancing throughput 
+is critical for manufacturing industries to bolster operational efficiency 
+and competitiveness [1,2]. However, throughput improvement is hin­
+dered by bottlenecks that constrain production efficiency [3]. In discrete 
+manufacturing systems, a bottleneck is defined as the station that limits 
+overall throughput. According to the theory of constraints, mitigating 
+bottlenecks can significantly enhance system performance and increase 
+throughput [4]. Consequently, researchers have focused on both his­
+torical and real-time bottleneck detection to optimize manufacturing 
+operations [5–7]. Although detection identifies current issues, it cannot 
+forecast future conditions, making bottleneck prediction increasingly 
+essential. The approach of prediction has gained prominence, enabling 
+proactive operational adjustments and precise maintenance scheduling 
+to improve production efficiency [8,9].
+Bottleneck detection in manufacturing primarily relies on 
+simulation-based and statistical analysis methods. Simulation-based 
+approaches [10,11] model production processes to identify potential 
+bottlenecks by simulating operational dynamics. The complexity and 
+variability of real production environments often lead to significant 
+deviations from actual conditions, which limits the accuracy of these 
+methods in real production environments. In contrast, analytical 
+methods [12–14] utilize real-time manufacturing data for statistical 
+analysis to detect bottlenecks and track their historical shifts. While 
+effective for identifying past and present bottlenecks, these methods 
+∗Corresponding authors.
+ 
+Email addresses: gangchen@scut.edu.cn (G. Chen), melhxie@scut.edu.cn (L. Xie).
+https://doi.org/10.1016/j.asoc.2026.115795
+Received 21 October 2025; Received in revised form 8 May 2026; Accepted 18 June 2026
+Applied Soft Computing Journal 202 (2026) 115795 
+Available online 20 June 2026 
+1568-4946/© 2026 Elsevier B.V. All rights are reserved, including those for text and data mining, AI training, and similar technologies. 
+
+=====PAGE 2=====
+W. Cen, L. Yang, C. Su et al.
+struggle to predict future bottlenecks in dynamic environments, hin­
+dering proactive scheduling and maintenance planning. Therefore, 
+developing predictive methods to forecast bottleneck machines and 
+enable proactive task adjustments is critical for enhancing production 
+throughput and operational efficiency.
+However, the dynamic complexity of manufacturing systems, driven 
+by factors such as machine downtime, production schedules, and op­
+erator skills, generates high-dimensional data, which poses significant 
+challenges for bottleneck prediction [15]. Research has progressed from 
+statistical models [16] to advanced machine learning techniques, such as 
+LSTM [17,18]. However, three critical research gaps remain. Processing 
+high-dimensional data with both accuracy and scalability remains un­
+derexplored, as current methods struggle to balance computational 
+efficiency with predictive precision in real-time applications. While 
+short-term temporal dynamics are effectively modeled, capturing long-
+term temporal dependencies, which are crucial for predicting delayed 
+bottleneck shifts [19], is inadequately addressed. This limitation re­
+stricts foresight in dynamic systems. Spatial-temporal neural networks 
+capture station-level correlations [15,20,21], but feature-level relation­
+ships, such as interactions between specific variables like downtime 
+and queue length across stations [22], are rarely studied. Feature-level 
+relationships refer to interactions between individual variables (e.g., 
+upstream downtime affecting downstream queue length), in contrast 
+to station-level correlations that focus on broader inter-station dynam­
+ics. Addressing these challenges, including scalable high-dimensional 
+data processing, robust long-term temporal modeling, and comprehen­
+sive feature-level relationship mapping, is essential for enhancing the 
+accuracy and applicability of bottleneck predictions in manufacturing 
+systems.
+To address these gaps, developing a comprehensive understanding 
+of manufacturing processes is essential, systematically modeling causal, 
+temporal, and dependency relationships among features to capture 
+time-evolving dynamics [23]. In this context, events serve as effective 
+abstractions for system changes, enabling interpretable feature-level in­
+teractions and temporally informed bottleneck prediction. Events, such 
+as machine failures or schedule adjustments, depend on variables like 
+downtime duration or working time, making them a robust choice for 
+modeling feature-level relationships and their temporal dependencies in 
+dynamic manufacturing systems.
+Events abstract feature interactions and temporal dynamics in man­
+ufacturing systems. Analyzing their behavior reveals causal and se­
+quential relationships, supporting accurate bottleneck prediction and 
+system optimization. In manufacturing systems, events such as process 
+initiation, completion, material flow, and machine state changes are 
+recorded in log data, providing fine-grained insights into system dy­
+namics and facilitating bottleneck prediction [24]. These events exhibit 
+inherent causal and temporal sequential properties, reflecting the log­
+ical structure and time-evolving dynamics of production systems. For 
+instance, a delay in material delivery from an upstream station can trig­
+ger starvation at a downstream station, illustrating causal dependencies 
+that influence bottleneck formation. In complex discrete manufactur­
+ing systems, capturing these spatial and contextual relationships among 
+events is critical for improving the accuracy and robustness of bot­
+tleneck predictions. However, the high dynamism and uncertainty of 
+events, driven by factors such as variable production schedules, machine 
+downtime, and operator performance [15], pose significant challenges 
+for predictive models. Moreover, sequential causal chains formed by 
+event interactions often exhibit delayed effects, where historical events 
+continuously shape subsequent system states, complicating long-term 
+dependency modeling. Consequently, advanced methods that integrate 
+spatial-temporal causal relationship modeling, such as graph neural net­
+works (GNNs) for spatial interactions [20] and modified Transformers 
+for temporal dynamics [25], are essential to accurately predict and man­
+age the evolving dynamics of production systems, enabling proactive 
+maintenance and operational optimization.
+Motivated by the above identified challenges and analysis, we pro­
+pose a Spatial-Temporal Neural Network with Event Causal Graphs 
+(ECGBSTNN) for bottleneck prediction in complex systems. To effec­
+tively capture causal and temporal dependencies among event features, 
+we integrate Graph Neural Networks (GNNs) to model causal rela­
+tionships and Transformer-based methods to capture temporal trends. 
+Events are represented as nodes in a dynamic, weighted, directed graph, 
+with edges constructed based on dynamic causal interactions. These 
+interactions account for uncertainties in event responses, and follow­
+ing [26], a causal weight matrix is utilized to encode dependencies 
+and their associated uncertainties. The event graph is processed using 
+an attention-based GNN, which is combined with a Transformer-based 
+temporal model to jointly capture dynamic causal relationships and 
+long-term temporal patterns. This approach enables accurate predic­
+tion of station blockage and starvation, which are critical indicators 
+for bottleneck identification, as established in [16]. Finally, we employ 
+the turning point method [27], a robust data-driven technique, to iden­
+tify future bottlenecks based on the predicted blockage and starvation 
+patterns.
+In summary, the main contributions of our work are as follows:
+1. To the best of our knowledge, the ECGBSTNN framework is 
+the first to leverage causal event relationships and their tempo­
+ral dynamics for interpretable bottleneck prediction in complex 
+manufacturing systems.
+2. Events are used to represent feature-level interactions and are 
+modeled as graph nodes, with edges capturing their causal and 
+sequential dependencies. This reveals system dynamics and im­
+proves interpretability and prediction accuracy.
+3. The proposed method uses Graph Neural Networks to model dy­
+namic causal event relationships and a Transformer with a causal 
+mask to capture long-term temporal dynamics in a production 
+system.
+The paper is structured as follows: Section 2 reviews bottleneck pre­
+diction and graph neural network advancements. Section 3 describes the 
+proposed spatio-temporal neural network. Section 4 presents a produc­
+tion line case study and benchmark comparisons. Section 5 concludes 
+the paper.
+2 . Related work
+The section provides a structured overview of the research back­
+ground and recent developments. Section 2.1 reviews the evolution from 
+bottleneck detection to prediction, highlighting the limitations of exist­
+ing temporal and spatiotemporal methods, and motivating event-level 
+causal modeling with GNNs and Transformers to learn event causality 
+and long-term dependencies. Section 2.2 focuses on event-driven ap­
+proaches, discussing causal graph learning and long-term dependency 
+modeling, and emphasizing the effectiveness of adaptive adjacency 
+matrices and attention mechanisms.
+2.1 . Bottleneck detection and prediction
+In manufacturing systems, bottlenecks refer to machines that limit 
+overall throughput [28]. Bottlenecks are affected by multiple factors, 
+and various methods have been applied to mitigate them and en­
+hance throughput. Analytical approaches [13,29] rely on theoretical 
+equations, while simulation-based methods [10,11] use discrete event 
+simulations to identify bottlenecks. However, both face challenges in 
+dynamic environments due to their limitations in adapting to chang­
+ing conditions. Data-driven approaches [12,14] are better suited for 
+dynamic production environments, leveraging real-time historical pro­
+duction data to analyze bottlenecks. Over the past decade, data-driven 
+methods have demonstrated significant efficacy in both academic and 
+industrial settings by leveraging real-time production data to detect 
+Applied Soft Computing 202 (2026) 115795 
+2 
+
+=====PAGE 3=====
+W. Cen, L. Yang, C. Su et al.
+and mitigate bottlenecks, outperforming conventional analytical and 
+simulation-based approaches. However, these methods are largely retro­
+spective, providing limited predictive capability for system states, thus 
+constraining operators’ ability to plan and optimize throughput. As a 
+result, research has increasingly shifted toward developing bottleneck 
+prediction techniques.
+Many efforts aim to provide predictive insights for proactive sys­
+tem optimization. Most existing approaches directly input raw data into 
+predictive models, which autonomously learn data relationships and 
+input–output mappings. Traditional methods model these relationships 
+by extracting rules from the data. The ARMA-based methods [30,31] 
+leverage linear combinations to model time series, suitable for simple, 
+stationary data. In contrast, ANFIS [17] utilizes fuzzy rules and neu­
+ral networks to capture nonlinear input–output mappings, effectively 
+handling complex production data. However, these methods face chal­
+lenges with nonlinear dynamics and demand intensive computational 
+resources for high-dimensional features. To address the limitations of 
+traditional methods, researchers have increasingly employed machine 
+learning techniques to model data relationships and capture temporal 
+dependencies in time series, based on their robust feature extraction 
+and generalization abilities. Lai et al. [32] employ a Long Short-Term 
+Memory (LSTM) network to process high-dimensional data for predict­
+ing future bottlenecks, integrating historical data with future production 
+planning inputs. Fang et al. [19] proposed a parallel gated recurrent 
+units (P-GRUs) network to extract the temporal correlations from main 
+inputs and auxiliary inputs for bottleneck prediction. Liu et al. [18] 
+verified the roles of different features in the prediction using a Long 
+Short-Term Memory network with a dual attention mechanism (LSTM-
+DAM). Although the above have employed machine learning to predict 
+time-evolving production bottlenecks by capturing temporal correla­
+tions in high-dimensional historical data, they often overlook the feature 
+relationships associated with production line layout and material flow.
+Researchers have found that production data not only exhibit dy­
+namic temporal dependencies but also, with deeper investigation, re­
+veal inherent spatial features determined by manufacturing processes. 
+Consequently, related research methods have gradually evolved from 
+temporal prediction approaches to spatial-temporal models that inte­
+grate both temporal dependencies and spatial relationships. They predict 
+the bottleneck indicators in the future period and leverage them to 
+identify the future bottlenecks in a manufacturing system. Ma et al. 
+[22] highlighted that production data exhibit temporal and spatial rela­
+tionships across stations, with shifting bottlenecks influenced by these 
+temporal-spatial features. Consequently, they proposed the TUSB-LSTM 
+(integrated LSTM with Bi-LSTM) method to capture temporal relation­
+ships within individual station features and spatial correlations among 
+stations. However, the spatial correlations captured by these models may 
+lack accuracy. Lai et al. [15] mapped an assembly line layout into a 
+graph based on the material flow and proposed a BSTAN (integrating the 
+graph attention neural network, GAT and gated recurrent unit, GRU) to 
+extract the spatial dependencies among stations using GAT and capture 
+the time-evolving dynamics of features. Besides, Yin et al. [20] noted 
+that a change in one task can trigger changes in others and proposed 
+a spatio-temporal graph convolutional network (BTGCN) to model the 
+cascading effects and temporal dependencies in the data. Moreover, Wu 
+et al. [21] argued that the primary challenge in bottleneck prediction 
+stems from effectively utilizing knowledge of sustainable production 
+processes. They proposed the BPSTK method, which constructs a knowl­
+edge graph of production processes and resources, integrating GAT with 
+GRU to predict bottlenecks. Moreover, our last work divided the features 
+into temporal and spatial features and employed a parallel model (Dual-
+BDSTN [33]) to learn the temporal and spatial relationships. Although 
+graph-based methods can extract spatial correlations by mapping sites 
+or tasks to graph nodes, each node often encompasses multiple features, 
+which may limit their ability to accurately capture the spatial relation­
+ships among these features. Therefore, it is essential to treat features as 
+graph nodes and model their transitive relationships to capture feature 
+interactions effectively.
+Above all, existing bottleneck prediction methods have evolved from 
+purely temporal models to spatio-temporal frameworks that incorporate 
+structural information. However, most approaches focus on station-
+level representations, where multiple features are aggregated within 
+each node, limiting their ability to capture fine-grained feature interac­
+tions. In addition, these methods often lack explicit modeling of causal 
+relationships and struggle to capture long-term temporal dependen­
+cies simultaneously. These limitations motivate the need for a more 
+fine-grained, event-driven, and causality-aware modeling framework.
+While modeling feature dependencies is essential, understanding the 
+event-level interactions that drive these dynamics is equally critical 
+for accurate bottleneck prediction. Previous research on the interactive 
+dynamics between production events remains limited. The production 
+rhythm of the system is captured through recorded events in log data, 
+which provide finer granularity to accurately reflect the system’s op­
+erational status [34]. In discrete manufacturing systems, events are 
+independent and have sequential relations (causality effects) [23]. To 
+accurately capture these effects, methodologies must integrate causal 
+information inherent to the production system. The causal relation­
+ships among events are complex and non-trivial, influenced by diverse 
+tasks and external disruptions that affect product flow. Moreover, vari­
+ations in event response times induce temporal dependencies, reflecting 
+the sequential dynamics inherent in the system. On the other hand, 
+to effectively model long-term feature dependencies, the Transformer 
+model [25] employs multi-head attention mechanisms, achieving supe­
+rior performance in capturing temporal dynamics. Therefore, we can 
+develop mappings of events into causal graphs by integrating expert 
+system knowledge and employing graph neural networks to model dy­
+namic event relationships, while designing modified Transformers to 
+capture both long-term and short-term temporal dynamics for bottleneck 
+prediction.
+2.2 . Capturing causal and temporal events using spatio-temporal neural 
+networks
+Event-driven approaches enhance the responsiveness and adaptabil­
+ity of equipment monitoring in manufacturing systems. Processing tasks 
+are closely related to system states and can be captured through mon­
+itored events [35]. There exists a cause-effect associative evolutionary 
+mechanism among them [36]. Modeling causal relationships between 
+events as a knowledge graph aids in revealing underlying system mech­
+anisms and has demonstrated effectiveness in applications like fault 
+diagnosis, clinical medicine, and traffic networks. In manufacturing sys­
+tems, event occurrences exhibit causal relationships similar to those 
+observed in fault diagnosis and traffic networks. Therefore, events in 
+manufacturing processes can also be mapped to nodes and their interac­
+tions represented as edges in a graph structure. Many approaches employ 
+spatial-temporal neural networks to capture their patterns. They de­
+scribe event relationships through dynamic semantic information[34]. 
+While many leverage data-driven methods to assign the nodes and edges 
+with weights, such as equal weights, rule-based weights [15,37] and 
+learned weights [38,39].
+In spatial-temporal networks, traditional GNNs with fixed equal 
+edge weights inadequately capture dynamic event causality. Learnable 
+edge weights are thus introduced to adaptively model time-varying 
+causal dependencies, enhancing spatial-temporal representations. Graph 
+Attention Network (GAT) introduces an attention mechanism that dy­
+namically captures the importance of relationships between nodes. Such 
+bidirectional weighting struggles to reflect the one-way nature of causal 
+effects accurately. GCN weights are determined by calculating the spatial 
+similarity of input features to integrate the graph and capture real-time 
+changes in traffic states [39]. Causation entropy is applied to compute a 
+weighted matrix for the GCN, enabling effective fusion of graph features 
+Applied Soft Computing 202 (2026) 115795 
+3 
+
+=====PAGE 4=====
+W. Cen, L. Yang, C. Su et al.
+for prediction [40]. PSTCGCN [41] employs two learnable parameters 
+to derive a weighted matrix for causal relationship fusion. DB-STGCN 
+[42] integrates a dynamic Bayesian network with a spatio-temporal GNN 
+to capture dynamic event causality for prediction. Due to its ability to 
+model hyperparameter uncertainty, the approach can more accurately 
+capture the directionality and inherent uncertainty of causal weights 
+between events.
+For capturing long-term dependencies in dynamic event sequences, 
+traditional RNNs are limited by gradient explosion and vanishing, while 
+the attention mechanism effectively models temporal relations influ­
+enced by historical events. TEDDCF [39] integrates multi-head attention 
+and causal convolution to capture the long-term trends and short-term 
+event dynamics in traffic flow prediction. TADGCN [43] combines at­
+tention mechanisms and CNNs to capture temporal correlations from 
+various periodic traffic patterns. [44,45] employ the transformer to 
+model temporal point processes and learn time-evolving dynamics. 
+Therefore, the attention mechanism serves as an effective approach for 
+modeling long-term event feature sequences.
+Based on the above analysis, we construct a causal graph with dy­
+namically learnable edge weights and integrate attention mechanisms to 
+jointly model causal relationships and long-term temporal dependencies 
+between events, enabling causal event-driven bottleneck prediction.
+3 . Methodology
+In this section, we first provide the basic definitions, including event 
+features, dynamic causal graph, and information sequence. Then, we 
+introduce the approach for bottleneck identification and prediction, 
+followed by detailed explanations of the proposed model.
+3.1 . Definitions
+Event Features. The state of a station can be represented by four 
+types of events: operating, blocked, starved, and down [27]. The buffer 
+has three possibilities: full, partially full, and empty. Within a produc­
+tion period 𝑇, the time summation of each station can be expressed by 
+Eq. (1), while the time of each buffer can be described with Eq. (2). 
+Therefore, these events are selected as event features for models to 
+predict bottlenecks.
+𝑇= 𝑇𝐵𝑖+ 𝑇𝐷𝑖+ 𝑇𝑆𝑖+ 𝑇𝑊𝑖
+(1)
+where 𝑇𝐵𝑖, 𝑇𝐷𝑖, 𝑇𝑆𝑖, and 𝑇𝑊𝑖 denote the blockage time, downtime, 
+starvation time, and working time of each machine, respectively. 
+𝑇= 𝑇𝐹𝑖+ 𝑇𝑃𝐹𝑖+ 𝑇𝐸𝑖
+(2)
+where 𝑇𝐹𝑖, 𝑇𝑃𝐹𝑖 and 𝑇𝐸𝑖 are the full time, partially full time, and empty 
+time of each buffer, respectively.
+Directed causal graph. An event causal graph can be represented 
+as a directed graph G = (V, E, A), where V denotes the set of |V|= 𝑁
+nodes, and each node is an event. E is the set of directed edges connect­
+ing nodes of causal events in a production system. A ∈R𝑁×𝑁×𝑇𝑠 is the 
+directed adjacency matrix of graph G, representing node relationships in 
+historical time 𝑇𝑠 steps. It can be given or learned from data.
+Information sequence and prediction. To extract temporal fea­
+tures from information sequences, we adopt a sliding window to divide 
+them into fixed-length subsequences, enabling the modeling of dynamic 
+dependencies. Event time prediction employs the historical time 𝑇𝑠 step 
+event sequence 𝑋𝑖𝑛= [𝑋𝑡−𝑇𝑠+1, … , 𝑋𝑡−1, 𝑋𝑡] ∈R𝑁×𝑇𝑠 to predict the 
+future event time of 𝑇𝑓 steps 𝑌= [𝑌𝑡−𝑇𝑠+1, … , 𝑌𝑡−1, 𝑌𝑡] ∈R𝑁×𝑇𝑓. The 
+process can be expressed as:
+[𝑌𝑡−𝑇𝑠+1, … , 𝑌𝑡−1, 𝑌𝑡] = F𝛩[(𝑋𝑡−𝑇𝑠+1, … , 𝑋𝑡−1, 𝑋𝑡), A]
+(3)
+where F denotes a mapping function and 𝛩 represents the learnable 
+parameters.
+3.2 . Framework overview
+The overall architecture of the proposed methodology is illustrated 
+in Fig. 1. Firstly, a production line in the factory can be abstracted 
+into a layout based on the material flow during the manufacturing 
+process. Then, in production systems, stations typically exhibit four 
+event states: operating, blocked, starved, or down. Buffers can be in 
+one of three states: full, partially full, or empty. The changes and 
+interactions between these states drive the dynamic transfer of bot­
+tlenecks and reveal the significant causal relationships and temporal 
+dependencies between event states. Based on the causal relationships 
+among events, we construct a directed event causal graph, shown in 
+Fig. 2. Subsequently, the graph with a dynamic weight matrix is fed 
+into the Event Causal Graph Attention mechanism to obtain higher 
+Fig. 1. The architecture of the proposed methodology.
+Applied Soft Computing 202 (2026) 115795 
+4 
+
+=====PAGE 5=====
+W. Cen, L. Yang, C. Su et al.
+Fig. 2. Event causal graph mapping.
+Fig. 3. The framework of the proposed model.
+and spatial dimensional representations. The Spatial-Temporal Layer is 
+designed to jointly model spatial correlations and temporal dynamics in­
+herent in the event states of production systems, aiming to capture the 
+interactions among different events (spatial dependencies) and the evo­
+lution of their operational statuses over time (temporal dependencies). 
+Meanwhile, in the Spatial-Temporal Dependencies Interactive Fusion, 
+spatial and temporal dependencies are jointly integrated to capture com­
+plex spatial-temporal patterns, enhancing the model’s ability to predict 
+key bottleneck indicators more accurately. The details of the proposed 
+network are presented in Fig. 3. Finally, the predicted future blockage 
+and starvation times are leveraged to identify bottlenecks using TPM 
+(Fig. 4) in the production line.
+3.3 . Event causal graph establishment
+The bottleneck shifts of a production process are affected by the in­
+tegration of starvation and blockage time. Accurate prediction of future 
+bottlenecks requires forecasting the two states. Since they are affected 
+by both station and buffer events (event features as section 3.1), an event 
+causality graph is introduced to capture their causal relationships and 
+dynamic interactions.
+As shown in Eqs. (1) and (2), the events of a station are mutually 
+exclusive in a period. Similarly, the states of a buffer are also mutually 
+exclusive. Therefore, the interval events in a station or buffer have no 
+causality relationships. As mentioned by [16], if the parts are not de­
+livered to the downstream station or buffer in time, it may cause the 
+downstream station to be starved (or the buffer to be empty), or the up­
+stream station to be blocked (or the buffer to be full). This illustrates the 
+causal relationships between station events and buffer events. According 
+to expert knowledge, the down, operating, and starvation events of a 
+station may lead to starvation in the downstream station (or an empty 
+buffer). Similarly, the down, operating, and blocked events may cause 
+blockage in the upstream station (or a full buffer). Based on these causal 
+relationships, a event causality graph (ECA) is constructed, shown in 
+Fig. 2. The ECA can be denoted as G, as described in the Section 3.1. 
+Since events are random, 1 and 0 are introduced to measure the weight 
+Applied Soft Computing 202 (2026) 115795 
+5 
+
+=====PAGE 6=====
+W. Cen, L. Yang, C. Su et al.
+Fig. 4. Blockage and starvation times at time 𝑡+ 𝑇 in a production line.
+of the causal relationship between events to reflect the possibility of 
+events and their causal influence over a defined time period.
+Therefore, the adjacency matrix A of ECA can be defined as follows:
+𝐴𝑖𝑗,𝑡=
+{
+1,
+𝑖→𝑗,
+0,
+𝑖↛𝑗.
+(4)
+where 𝐴𝑖𝑗,𝑡 denotes the weight between event 𝑖 and 𝑗 at a defined time 
+period t. The 𝑖→𝑗 indicates a causal effect from 𝑖 to 𝑗, while 𝑖↛𝑗
+indicates its absence.
+The graph structure is constructed during preprocessing and remains 
+fixed during model training, while the weights are dynamically updated 
+through temporal learning modules. The process of graph construction 
+can be as follows: 
+Algorithm 1: The graph construction.
+1 Extract event intervals from PLC logs, including machine ID, 
+event type, start time, and end time.
+2 Aggregate each event duration within each time slot.
+3 Define candidate directed edges from production-flow logic and 
+temporal precedence.
+4 𝐴𝑖𝑗,𝑡= 1 only when event i is allowed by process logic to 
+influence event j, and the corresponding temporal relation 
+occurs within slot t or a predefined lag window.
+5 Use GAT attention to estimate the relative influence strength on 
+the fixed candidate graph, yielding 𝑊𝑖𝑗,𝑡= 𝐴𝑖𝑗,𝑡𝛼
+.
+𝑖𝑗,𝑡
+3.4 . Network model
+This section introduces the bottleneck architecture of the proposed 
+ECGBSTNN model, with the framework depicted in Fig. 3. In the in­
+put layer, the event features are first transformed into an event causal 
+graph with a dynamic weight matrix, as described in Section 3.3. High-
+dimensional spatial features are extracted as the dataset passes through 
+the Graph Attention Layer. Following positional embedding, long-term 
+dependencies are captured by multi-head attention while short-term de­
+pendencies are extracted using the graph attention mechanism in the 
+spatial-temporal module. Finally, bottleneck indicators are predicted 
+by integrating spatial and temporal dependencies under constrained 
+optimization.
+The Graph Attention Network (GAT) effectively extracts features 
+from graph-structured data by aggregating information from neighbor­
+ing nodes to generate updated node representations. In the context 
+of modeling random events, GAT’s attention scores quantify causal 
+relationships and spatial features in the event causal graph by assign­
+ing weights to edges based on their relevance. The GAT’s attention 
+mechanism is defined by the following formula:
+𝑒𝑙
+𝑖𝑗,𝑡= LeakyReLU(𝑎𝑇(𝑊𝑙
+𝑖,𝑡ℎ𝑙−1
+𝑖,𝑡||𝑊𝑙
+𝑗,𝑡ℎ𝑙−1
+𝑗,𝑡)), 𝑖, 𝑗∈{1, 2, 3, … , 𝑁}
+(5)
+where 𝑊𝑙
+𝑖,𝑡 is a weight matrix to transform the initial features ℎ𝑙
+𝑖,𝑡 of 
+each node into higher-level features. 𝑙 denotes the 𝑙th layer of GAT. The 
+vector 𝑎 is the attention scores computed by the attention mechanism 
+and ⋅𝑇 represent the transposition. The (⋅||⋅) is the concatenation oper­
+ation. LeakyReLU function is used as the nonlinearity.The value 𝑒𝑖𝑗,𝑡 is 
+computed for nodes 𝑗∈𝑁𝑖 in each period 𝑡, where 𝑁𝑖 represents the 
+neighborhood of node 𝑖 in the graph. To make coefficients comparable 
+across different nodes, the softmax function is leveraged to normalize 
+the selection of all nodes 𝑗 and can be expressed as follows:
+𝛼𝑙
+𝑖𝑗,𝑡= softmax(𝑒𝑙
+𝑖𝑗,𝑡) =
+exp(𝑒𝑙
+𝑖𝑗,𝑡)
+∑𝑈
+𝑢=1 exp(𝑒𝑙
+𝑖𝑢,𝑡)
+(6)
+where 𝑢 denotes the index of neighborhood of node 𝑖. The 𝛼𝑙
+𝑖𝑗,𝑡 represents 
+the normalized attention scores, which are used to computed combina­
+tion of the embedding features for each node 𝑖 to serve as the output of 
+the 𝑙th GAT layer:
+ℎ𝑙
+𝑖,𝑡=
+𝑈
+∑
+𝑢=1
+𝐴𝑖𝑢,𝑡𝛼𝑖𝑢,𝑡𝑊𝑢,𝑡ℎ𝑙−1
+𝑢,𝑡
+(7)
+where 𝐴𝑖𝑢,𝑡 is the dynamic constant of causal event relationships in 
+period 𝑡 computed according to Eq. (4).
+To make the network more robust and more flexible in capturing the 
+causal event relationships, the independent K multi-attention heads are 
+used to compute different attention scores. Finally, the average function 
+is leveraged to calculate the output embedding of the 𝑙th GAT layer with 
+different attention heads, as follows:̄
+ℎ𝑙
+𝑖,𝑡= 1
+K
+𝐾
+∑
+𝑘=1
+𝑁
+∑
+𝑗=1
+𝐴𝑖𝑗,𝑡𝛼𝑘
+𝑖𝑗,𝑡𝑊𝑘
+𝑗,𝑡ℎ𝑙−1
+𝑗,𝑡
+(8)
+Where ̄ℎ𝑙
+𝑖,𝑡 is the output of the GAT layer. The initial features of each node 
+are transformed into higher-level embedding features using the GAT lay­
+ers, enhancing expressiveness while increasing the network complexity 
+and memory requirements. To address this, a linear function is applied 
+to compress the embedding features of all nodes into lower-dimensional 
+embeddings. Therefore, the initial inputs pass through the GAT to obtain 
+the spatial dependencies, then a linear function transforms the output 
+of the GAT layer, as follows:
+𝑋𝑒= FC(GAT(𝑋𝑖𝑛, A)) = FC(̄ℎ𝑙
+𝑖,𝑡)
+(9)
+Where FC represents a linear function. 𝑋𝑖𝑛 is the initial input features 
+and A denotes the adjacent weight matrix computed using Eq. (4).
+Events exhibit temporal characteristics, as the evolution and state 
+transitions of preceding events often influence current occurrences. 
+Compared to recurrent neural networks (RNNs), Transformers enhance 
+temporal modeling by injecting positional information using sinusoidal 
+encoding, capturing global temporal dependencies through multi-head 
+attention, and enforcing temporal causality with a causal mask. These 
+components of sinusoidal position encoding, multi-head attention, and 
+causal masking enable more effective learning of temporal patterns in 
+event sequences and can be formulated as follows:
+PE(𝑝𝑜𝑠, 2𝑖) = sin(𝑝𝑜𝑠∕100002𝑖∕𝑋𝑒)
+(10)
+PE(𝑝𝑜𝑠, 2𝑖+ 1) = cos(𝑝𝑜𝑠∕100002𝑖∕𝑋𝑒)
+(11)
+𝑋𝑝𝑒= 𝑋𝑒+ PE(𝑋𝑒)
+(12)
+𝑋𝑡= Multihead(𝑋𝑝𝑒) = Concat(ℎ𝑒𝑎𝑑1, … , ℎ𝑒𝑎𝑑𝑛)𝑊𝑂
+(13)
+where ℎ𝑒𝑎𝑑𝑖= Attention(𝑄𝑖, 𝐾𝑖, 𝑉𝑖) = Softmax(
+𝑄𝑖𝐾𝑇
+𝑖
+√
+𝑑𝑘𝑖
+)𝑉𝑖. 𝑄𝑖, 𝐾𝑖 and 𝑉𝑖 are 
+the query, key and value of inputs and are projected by the learnable 
+matrices 𝑊𝑄
+𝑖, 𝑊𝐾
+𝑖and 𝑊𝑉
+𝑖. 𝑑𝑘 is the dimension of 𝐾𝑖.
+Applied Soft Computing 202 (2026) 115795 
+6 
+
+=====PAGE 7=====
+W. Cen, L. Yang, C. Su et al.
+Although the multi-head attention mechanism can effectively model 
+global temporal dependencies, it has limitations in its perception of 
+local patterns. Graph Attention Network (GAT) can accurately capture 
+local topological influences through neighborhood aggregation opera­
+tions. Therefore, this study introduces the GAT module specifically for 
+extracting spatial structural dependencies, shown as follows:
+𝑋𝑠= GAT(𝑋𝑝𝑒, A)
+(14)
+where 𝑋𝑝𝑒 represents the output of the position embedding operation 
+and A is the weight matrix.
+We design a feature concatenation, linear transformation, and resid­
+ual connection with a normalization module to effectively fuse and 
+represent global and local dependencies. The concatenation integrates 
+multi-scale contextual information from global and local dependencies, 
+the linear layer maps high-dimensional features to promote interac­
+tion, and the residual connection with normalization preserves orig­
+inal information and standardizes feature distribution, enhancing the 
+model’s representation capability. The formula can be expressed as
+follows:
+𝑋𝑑= LayerNorm(𝑋𝑝𝑒+ FC(𝑋𝑡||𝑋𝑠))
+(15)
+where 𝑋𝑡 and 𝑋𝑠 represent the outputs of the multi-attention and GAT, 
+respectively. (⋅||⋅) denotes the concatenation operation.
+To further enhance the deep dependency modeling between features, 
+a feedforward layer is introduced to mine the potential nonlinear cor­
+relation between events through multi-layer linear transformations and 
+nonlinear activation functions, improving the model’s ability to perceive 
+and predict future event states.
+𝑋𝑝,𝑜𝑢𝑡= FC(LayerNorm(𝑋𝑑+ FNN(𝑋𝑑)))
+(16)
+where FNN(𝑋𝑑) = max(0, 𝑋𝑑𝑊1 + 𝑏1)𝑊2 + 𝑏2. 𝑋𝑑 is the output of global 
+and local information concatenation. 𝑊1 and 𝑊2 represent the learnable 
+matrices. 𝑏1 and 𝑏2 are bias parameters. FC is a linear function.
+Finally, due to the constraint relationships among events as Eqs. (1) 
+and (2), we apply the Softmax function to normalize equipment and 
+buffer events, ensuring that their states satisfy mutual exclusivity con­
+straints.̂
+𝑋𝑡+1 = Softmax(𝑋𝑝,𝑜𝑢𝑡)
+(17)
+During the model training, the error between predicted values and 
+true values is computed by the Mean Squared Error (MSE) function 
+overall training samples. It measures the overall quality of the model’s 
+predictions, with lower MSE indicating better performance. The AdamW 
+optimizer with a learning rate 𝜆 is employed to update the model pa­
+rameters based on the computed gradients, facilitating the optimization 
+process. The MSE loss function is expressed as follows:
+𝐿𝑜𝑠𝑠= 1
+𝑛
+𝑛
+∑
+𝑡=1
+(𝑋𝑡+1 −̂𝑋𝑡+1)
+2
+(18)
+3.5 . Bottleneck identification and prediction
+Many data-driven methods have been employed for throughput bot­
+tleneck identification, including the arrow-based method [46], active 
+period method [47], maximum production load method [48], and turn­
+ing point method (TPM) [14,27]. Unlike approaches focused on system 
+optimality, TPM is a data-driven approach that captures system perfor­
+mance over both short and long-term horizons. Therefore, this paper 
+adopts TPM as the method for bottleneck identification. The method 
+leverages blockage and starvation time as indicators for bottleneck iden­
+tification. During time t+T, bottlenecks can be identified when blockage 
+Algorithm 2: Bottleneck prediction.
+Input:  Initial feature input 𝑋𝑖𝑛= [𝑋𝑡−𝑇𝑠+1, … , 𝑋𝑡−1, 𝑋
+𝑁
+𝑡] ∈R
+×𝑇𝑠
+and adjacent matrix A ∈R𝑁×𝑁×𝑇𝑠;
+Output: The bottleneck machines 𝑀;
+𝑏
+1 // Normalize the initial inputs 𝑋.
+𝑖𝑛
+2 𝑋
+←Norm
+𝑖𝑛
+(𝑋𝑖𝑛) ;
+3 // The initial features are first fed into the GAT module to 
+obtain the spatial embedding, and then enter the 
+multi-attention module of transformer and the GAT module to 
+capture the long-term and short-term dependencies in parallel, 
+which are concatenated for the following output operation.
+4 Function ECGBSTNN (𝐼, A):
+𝑖𝑛
+5
+𝑋←FC
+𝑒
+(GAT(𝑋𝑖𝑛, A)) = FC(ℎ̄𝑙)
+𝑖,𝑡
+6
+// From the Eqs. (10)–(13), the long-term dependencies of 
+features can be obtained.
+7
+𝑋
+←
+𝑝𝑒
+𝑋𝑒+ PE(𝑋𝑒);
+8
+𝑋←Multihead
+𝑡
+(𝑋𝑝𝑒);
+9
+// From the Eqs. (5)–(8) and Eq. (14) capture the short-term 
+dependencies.
+10
+𝑋←GAT
+𝑠
+(𝑋𝑝𝑒, A);
+11
+// The output operations are as Eqs. (15)–(17).
+12
+𝑋←LayerNorm
+𝑑
+(𝑋𝑝𝑒+ FC(𝑋||
+𝑡𝑋𝑠));
+13
+𝑋
+←FC
+𝑝,𝑜𝑢𝑡
+(LayerNorm(𝑋𝑑+ FNN(𝑋𝑑)));
+14
+𝑋̂
+←
+𝑡+1
+Softmax(𝑋𝑝,𝑜𝑢𝑡);
+15
+// The future starvation time (𝑇𝑆𝑓) and blockage time (𝑇𝐵𝑓)
+are extracted from 𝑋̂𝑡+1.
+16
+𝑇𝑆𝑓, 𝑇𝐵
+←̂
+𝑓
+𝑋𝑡+1;
+17
+return 𝑇𝑆𝑓, 𝑇𝐵.
+𝑓
+18 end
+19 // Output the bottleneck machine 𝑀 identified by TPM with 
+𝑏
+starvation and blockage time.
+20 𝑀←
+𝑏
+𝑇𝑃𝑀(𝑇𝑆𝑓, 𝑇𝐵𝑓).
+and starvation time meet the following conditions:
+𝑖𝑓𝑗≠1, 𝑗≠𝑁∶
+𝑇𝐵𝑖, 𝑡+𝑇−𝑇𝑆𝑖, 𝑡+𝑇> 0 ∶𝑖∈[1, … , 𝑗−1],
+𝑇𝐵𝑖, 𝑡+𝑇−𝑇𝑆𝑖, 𝑡+𝑇< 0 ∶𝑖∈[𝑗−1, … , 𝑁],
+𝑇𝐵𝑗, 𝑡+𝑇−𝑇𝑆𝑗, 𝑡+𝑇< 𝑇𝐵𝑗−1, 𝑡+𝑇−𝑇𝑆𝑗−1, 𝑡+𝑇,
+𝑇𝐵𝑗, 𝑡+𝑇−𝑇𝑆𝑗, 𝑡+𝑇< 𝑇𝐵𝑗+1, 𝑡+𝑇−𝑇𝑆𝑗+1, 𝑡+𝑇.
+(19)
+𝑖𝑓𝑗= 1 ∶
+𝑇𝐵1, 𝑡+𝑇−𝑇𝑆1, 𝑡+𝑇> 0,
+𝑇𝐵2, 𝑡+𝑇−𝑇𝑆2, 𝑡+𝑇< 0,
+𝑇𝐵1, 𝑡+𝑇−𝑇𝑆1, 𝑡+𝑇< 𝑇𝐵2, 𝑡+𝑇−𝑇𝑆2, 𝑡+𝑇.
+(20)
+𝑖𝑓𝑗= 𝑁∶
+𝑇𝐵𝑁−1, 𝑡+𝑇−𝑇𝑆𝑁−1, 𝑡+𝑇> 0,
+𝑇𝐵𝑁, 𝑡+𝑇−𝑇𝑆𝑁, 𝑡+𝑇< 0,
+𝑇𝐵𝑁, 𝑡+𝑇−𝑇𝑆𝑁, 𝑡+𝑇< 𝑇𝐵𝑁−1, 𝑡+𝑇−𝑇𝑆𝑁−1, 𝑡+𝑇.
+(21)
+where 𝑇𝐵 and 𝑇𝑆 denote the blockage and starvation times, respec­
+tively. 𝑁 is the total number of machines, 𝑗 is the bottleneck station and 
+𝑇 denotes a period.
+For example, based on the above Eqs. (19)–(21) and the results 
+shown in Fig. 4, it can be clearly observed that the bottleneck is at 
+station 𝑀4 in a production line. Bottleneck identification relies on key 
+indicators. Therefore, bottleneck prediction can be viewed as forecasting 
+the future distributions of blockage and starvation to identify potential 
+future bottleneck locations using the turning point method.
+Applied Soft Computing 202 (2026) 115795 
+7 
+
+=====PAGE 8=====
+W. Cen, L. Yang, C. Su et al.
+Table 1 
+The example of events recorded in the production line.
+Machine
+Start time
+End time
+Event
+M1
+15:13:32 05-
+12-2025
+15:14:18 05-
+12-2025
+oprating
+M1
+15:14:18 05-
+12-2025
+15:14:42 05-
+12-2025
+down
+…
+…
+…
+…
+B1
+15:13:32 05-
+12-2025
+15:14:58 05-
+12-2025
+Partially Full
+Fig. 5. The example of event time statistics.
+4 . Experiment
+4.1 . Experiment establishment
+The dataset is collected from a discrete production line, as shown in 
+Fig. 2(a), capturing station states and buffer conditions in the log data 
+(Table 1). These are transformed into corresponding features represent­
+ing operating, blocked, starved, and down states, as well as full, partially 
+full, and empty buffer times. As events in the production line occur se­
+quentially, their respective durations are calculated over a period, as 
+illustrated in Fig. 5. Moreover, the causal weights of sequential events 
+are computed using the Eq. (4) in different periods across various time 
+intervals to quantify their dynamic relationships. The sliding window 
+technique is utilized to divide the dataset, facilitating one-step-ahead 
+predictions based on historical data. Finally, based on the bottleneck 
+metrics of each station, the future starvation times and blockage times 
+are employed to identify the bottlenecks.
+Due to the differences in numerical scales of different features, the 
+model may assign higher weights to features with a larger value range 
+during training, leading to an unstable optimization process or slow con­
+vergence. Normalization can make each feature fall within the same 
+or similar scale range, which not only helps to improve the stability 
+and efficiency of model training, but also facilitates subsequent analysis 
+such as feature selection and importance evaluation. The minimum-
+maximum normalization function is used to normalize all features to 
+a value range of 0 to 1. The function can be expressed as follows: ̂
+𝑥𝑎, 𝑏
+𝑡
+=
+𝑥𝑎, 𝑏
+𝑡
+−𝑥𝑎
+𝑚𝑖𝑛
+𝑥𝑏
+𝑚𝑎𝑥−𝑥𝑏
+𝑚𝑖𝑛
+(22)
+where 𝑥𝑎, 𝑏
+𝑡
+ is the value of the 𝑎𝑡ℎ row and the 𝑏𝑡ℎ column of data at time 
+t, 𝑥𝑏
+𝑚𝑎𝑥 and 𝑥𝑏
+𝑚𝑖𝑛 represent the maximum and minimum values in the 𝑐𝑡ℎ
+column of data, respectively.
+The key hyperparameters applied for model training are summarized 
+in the Table 2. The model training parameters mainly include learning 
+rate, optimizer, layer, batch size and hidden size. The AdamW optimizer 
+is used for model training, and the initial learning rate is set to 0.0001, 
+so that the model parameters converge smoothly in the optimization 
+Table 2 
+Hyperparameters for experimental study.
+Hyperparameters
+Value/method
+Learning rate 𝜆
+0.0001
+Optimizer
+AdamW
+GAT layer
+1
+Temporal layer
+4
+Batchsize
+64
+GAT hidden size units
+64
+Temporal hidden size units
+256
+Heads of multi-head attention
+8
+Table 3 
+Definition of event nodes and corresponding IDs.
+Machine
+TW
+TB
+TS
+TD
+Buffer
+TPF
+TF
+TE
+M1
+e1
+e2
+e3
+e4
+B1
+e49
+e41
+e42
+M2
+e5
+e6
+e7
+e8
+B2
+e50
+e43
+e44
+M3
+e9
+e10
+e11
+e12
+B3
+e51
+e45
+e46
+M4
+e13
+e14
+e15
+e16
+B4
+e52
+e47
+e48
+M5
+e17
+e18
+e19
+e20
+–
+M6
+e21
+e22
+e23
+e24
+–
+M7
+e25
+e26
+e27
+e28
+–
+M8
+e29
+e30
+e31
+e32
+–
+M9
+e33
+e34
+e35
+e36
+–
+M10
+e37
+e38
+e39
+e40
+–
+Fig. 6. Trend of the loss function over training epochs.
+space and finally reach a stable state. The proposed model is config­
+ured with a single-layer GAT for spatial representation learning and 
+four temporal layers for sequence modeling. The training batch size is 
+64. The GAT layer comprises 64 hidden units, and each temporal layer 
+includes 256 hidden units. Furthermore, the multi-head attention mech­
+anism employs 8 parallel attention heads. Besides, the definitions of the 
+event nodes and their corresponding IDs are summarized in Table 3. The 
+dataset is split for training (75%), testing (15%) and validation (15%). 
+The experiments are conducted on a machine equipped with an Intel(R) 
+Core(TM) i7-9700 CPU and 16 GB of RAM.
+During the model training process, the evolution of the loss function 
+over epochs provides critical insight into the optimization dynamics and 
+convergence behavior of the proposed ECGBSTNN model. As illustrated 
+in Fig. 6, the training loss typically undergoes three distinct phases. 
+In the initial phase (approximately epochs 0 to 30), the loss decreases 
+rapidly, indicating that the model is quickly learning basic patterns and 
+adjusting weights effectively. This is followed by a gradual optimization 
+phase (around epochs 30 to 800), during which the rate of loss reduc­
+tion slows down, reflecting fine-tuning of parameters and deeper pattern 
+extraction. Finally, after epoch 800, the loss stabilizes and converges 
+to a relatively steady value, suggesting that the model has reached an 
+Applied Soft Computing 202 (2026) 115795 
+8 
+
+=====PAGE 9=====
+W. Cen, L. Yang, C. Su et al.
+optimal state with minimal further improvements. The three-stage trend 
+demonstrates the effectiveness of the optimization and the model’s stable 
+convergence.
+After model training, the blockage time and starvation time of each 
+station in the future period t+1 can be predicted. The model perfor­
+mance is evaluated by calculating mean absolute error (MAE) and root 
+mean squared error (RMSE) between the predicted values of blockage 
+time and starvation time and the true values. The calculations of MAE 
+and RMSE can be expressed as follows:
+𝑀𝐴𝐸= 1
+𝑛
+𝑛
+∑
+𝑡=1
+|𝑋𝑡+1 −̂ 𝑋𝑡+1|
+(23)
+𝑅𝑀𝑆𝐸=
+√
+√
+√
+√1
+𝑛
+𝑛
+∑
+𝑡=1
+(𝑋𝑡+1 −̂ 𝑋𝑡+1)
+2
+(24)
+where 𝑋𝑡+1, and ̂𝑋𝑡+1 denote the ground truth, and the predicted values 
+at time 𝑡+ 1, respectively. The variable 𝑛 represents the total number of 
+data samples.
+4.2 . Experiment results and discussions
+4.2.1 . Experiment results
+In the study, the TPM method is adopted to detect bottlenecks within 
+the production line. The blockage and starvation time, as its core in­
+dicators, are forecasted to support proactive identification of future 
+bottlenecks. To evaluate the prediction performance of the proposed 
+method, assessments are conducted on M1, M6, and the overall pro­
+duction line. Since M1 is located at the input end of the production 
+line, it is less likely to experience starvation but may frequently en­
+counter blockage due to disturbances in downstream processing. This 
+makes it a suitable candidate for observing blockage patterns and assess­
+ing the causal modeling capability. In contrast, M6 is situated between 
+M5 and M7 without an intermediate buffer, making it highly susceptible 
+to becoming a bottleneck. Therefore, M1 is selected as a representative 
+station for evaluating blockage prediction performance, while M6 serves 
+to assess the model’s ability to capture bottleneck tendencies. M1 rarely 
+experiences starvation as there are no upstream buffers or machines that 
+can cause supply interruptions. Since the ground truth for M1 starvation 
+is nearly zero, most models naturally yield a zero prediction error as 
+shown in the results of M1 in the Table 4.
+To evaluate the effectiveness of the proposed method (ECGBSTNN), 
+five existing methods, namely LSTM [32], Transformer [25], BSTAN 
+[15], BTGCN [20], and BPSTK [21], are employed as benchmarks for 
+predicting blockage and starvation time. The prediction performance 
+is assessed using two metrics (MAE and RMSE), evaluated on stations 
+M1, M6, and the overall production line. As listed in the Table 4, 
+Table 4 
+The performance comparison of different methods evaluated on M1, M6 and the 
+overall production line.
+Indicator
+Method
+M1
+M6
+Overall
+MAE
+RMSE
+MAE
+RMSE
+MAE
+RMSE
+Starvation
+LSTM [32]
+0.00
+0.00
+27.04
+44.64
+19.07
+36.12
+Transformer [25]
+0.02
+0.03
+23.04
+38.69
+15.68
+34.85
+BSTAN [15]
+2.96
+9.80
+24.73
+41.58
+18.15
+34.98
+BTGCN[20]
+1.76
+2.55
+24.28
+39.03
+17.62
+33.25
+BPSTK[21]
+0.00
+0.00
+20.88
+36.79
+17.04
+35.22
+ECGBSTNN
+0.00
+0.00
+10.58
+30.17
+9.38
+24.99
+Blockage
+LSTM [32]
+33.81
+53.10
+21.20
+31.30
+16.09
+30.57
+Transformer [25]
+29.69
+54.33
+15.65
+25.91
+11.83
+26.64
+BSTAN [15]
+27.17
+41.13
+26.95
+49.93
+13.58
+29.67
+BTGCN[20]
+28.31
+39.59
+27.71
+32.61
+14.64
+26.58
+BPSTK[21]
+26.42
+42.46
+24.13
+45.68
+12.45
+27.09
+ECGBSTNN
+17.05
+32.37
+13.50
+25.26
+9.10
+23.65
+the experimental results demonstrate that the proposed ECGBSTNN 
+model consistently outperforms the baseline methods in predicting both 
+blockage and starvation times, particularly in terms of MAE.
+As shown in Table 4, the LSTM underperforms compared to the GNN-
+GRU integrated approaches, including BSTAN, BTGCN, and BPSTK. 
+This indicates that GNNs can effectively capture spatial relationships 
+and leverage spatiotemporal dependencies to enhance prediction per­
+formance. Although both BSTAN and BPSTK are based on GAT-GRU 
+architectures, they differ in how they incorporate spatiotemporal de­
+pendencies. BPSTK leverages a knowledge graph to explicitly encode 
+domain relationships before inputting data into the model, enabling 
+structured semantic guidance. In contrast, BSTAN relies on the model 
+itself to implicitly learn such dependencies from raw inputs. The 
+BPSTK method performs better than the BSTAN method. This compar­
+ison highlights that incorporating prior relational information through 
+data preprocessing can enhance model performance. In addition, the 
+Transformer outperforms the LSTM, indicating that the multi-head at­
+tention mechanism effectively captures contextual dependencies and 
+long-term temporal relationships among workshop events, especially 
+those caused by data latency, thereby enhancing model performance. 
+The GAT-based BSTAN and BPSTK methods achieve lower MAE than the 
+GCN-based BTGCN method, indicating that the models yield relatively 
+small average prediction errors and stable performance. Based on GAT 
+learning spatial relations, data feature relationship preprocessing and 
+the multi-head attention mechanism to improve model capabilities, the 
+ECGBSTNN model is proposed. The model performs well in predicting 
+blockage and starvation times, especially achieving reductions of 2.73 
+and 2.93 in MAE and RMSE of the overall production line, respectively, 
+for blockage time across the entire production line compared to the best 
+baseline model (Table 4).
+For analytical purposes, the predicted blockage and starvation time 
+for M1 and M6 are plotted in Figs. 7 and 8, respectively. In a normal 
+case, M1 is located at the beginning of the production line and rarely 
+experiences starvation due to sufficient incoming material. However, it 
+may be blocked by downstream disturbances. As a result, the starvation 
+prediction curve mostly remains at zero, showing high prediction accu­
+racy. This indicates that the starvation time prediction of M1 is primarily 
+driven by its temporal dynamics, with minimal influence from other 
+station events, as reflected in the causal event graph modeling shown 
+in Fig. 2. The blockage time of M1 and M6, and the starvation time of 
+M6, are influenced by upstream and downstream events, reflecting clear 
+causal and spatial-temporal dependencies. The proposed method is ca­
+pable of effectively capturing these interdependent patterns with the 
+causal event graph modeling. As a result, it demonstrates superior per­
+formance in predicting the evolving states of blockage and starvation, as 
+shown in Figs. 7 and 8. However, at 50min, the predicted value is much 
+lower than the true value. It may be interrupted by the outside environ­
+mental factors, which were recorded in historical data. Therefore, it is 
+not well predicted.
+In the Table 5, the result of complexity analysis comparison shows 
+that Floating-point operations (FLOPs) and the number of parameters 
+(Params) are positively correlated with the dimensionality of hidden 
+layers. As the hidden dimension increases, the model complexity cor­
+respondingly grows. Therefore, simpler networks tend to have fewer 
+parameters and lower computational costs, whereas more complex ar­
+chitectures exhibit higher values. For example, an LSTM model has only 
+4.232M FLOPs and 132.648K parameters. In ECGBSTNN, the GAT hid­
+den layer configuration is [64, 16, 52, 64]. Compared with BSTAN and 
+BPSTK, which use [64, 16, 10, 64], ECGBSTNN results in higher FLOPs 
+but fewer parameters. This is because ECGBSTNN uses the number of 
+event features (52) as the node count, whereas BSTAN and BPSTK use 
+the number of machines (10) as the node count. Consequently, the in­
+crease in node count leads to higher computational costs. In ECGBSTNN, 
+high-dimensional machine-level features are decomposed into multi­
+ple low-dimensional event-level features, reducing the size of weight 
+Applied Soft Computing 202 (2026) 115795 
+9 
+
+=====PAGE 10=====
+W. Cen, L. Yang, C. Su et al.
+Table 5 
+The complexity analysis among different methods.
+Method [Batch size, Sequence length, Hidden size]
+Flops
+Parameters 
+(Params)
+Training time 
+for a batch (s)
+LSTM [64, 16, 64]
+4.232M
+132.648K
+0.238
+LSTM [64,16, 256]
+60.969M
+1.907M
+0.258
+Transformer [64,16, 64]
+33.833M
+1.065M
+0.252
+Transformer [64,16, 64]
+135.332M
+4.235M
+0.286
+BSTAN [64,16, (GAT: 10, 64) / (GRU:64)]
+97.632M
+344.104K
+0.247
+BSTAN [64,16, (GAT: 10, 64) / (GRU:256)]
+204.931M
+2.015M
+0.255
+BPSTK [64, 16, (GAT: 10, 64) / (GRU: 64)]
+99.271M
+345.744K
+0.251
+BPSTK [64, 16, (GAT: 10, 64) / (GRU:256)]
+206.569M
+2.017M
+0.260
+ECGBSTNN [64, 16, (GAT: 52, 64) / (Transformer:64)]
+3.075G
+3.011M
+0.595
+ECGBSTNN [64, 16, (GAT: 52, 64) / (Transformer:256)]
+6.793G
+6.637M
+0.671
+Fig. 7. The blockage and starvation time predictions at M1.
+Applied Soft Computing 202 (2026) 115795 
+10 
+
+=====PAGE 11=====
+W. Cen, L. Yang, C. Su et al.
+Fig. 8. The blockage and starvation time predictions at M6.
+matrices. Moreover, parameters in the GAT layers are shared across 
+nodes and do not scale with node count. Training time increases with 
+FLOPs but exhibits a clear sublinear trend, where a substantial increase 
+in FLOPs results in only a moderate increase in training time. In con­
+trast, the number of parameters shows little correlation with training 
+time. For example, Transformer [64,16,256] contains more parameters 
+than ECGBSTNN (Transformer 64) but achieves faster execution. This 
+indicates that training time is primarily influenced by computational 
+complexity and model architecture (e.g., parallelism and dense versus 
+sparse operations), rather than parameter count alone.
+To evaluate the contribution of each component to the overall per­
+formance of ECGBSTNN, some ablation experiments isolate specific 
+components of the model to assess their impact on performance, provid­
+ing insights into their roles in capturing causal and temporal dynamics. 
+The experiments are described as follows:
+1. GAT + Transformer: In this variant, input features are first 
+processed using a GAT to aggregate the influence of causal 
+events, followed by a Transformer that captures temporal dynam­
+ics through contextual dependency learning. Unlike ECGBSTNN, 
+which models short-term and long-term dependencies in a par­
+allel model as shown in Fig. 3, this lacks the graph attention 
+mechanism for short-term dependencies.
+2. ECGBSTNN(gcn): The GAT modules in the proposed method are 
+replaced with the GCN modules, which use fixed weights in each 
+period instead of dynamic attention scores, potentially limiting 
+complex causal relationship modeling. GAT prioritizes influ­
+ential events dynamically, whereas GCN aggregates neighbors 
+statically.
+3. SGBSTNN: The edges represent material flows between stations, 
+and the weights reflect process-related relationships, not event 
+Applied Soft Computing 202 (2026) 115795 
+11 
+
+=====PAGE 12=====
+W. Cen, L. Yang, C. Su et al.
+causality. The algorithmic framework remains unchanged (seen 
+in Fig. 3). The modeling has only shifted from event-causal graphs 
+to graphs representing station process associations with event fea­
+tures. The station graph, with features in each station, is fed into 
+the algorithm to predict starvation and blockage time, enabling 
+future bottleneck identification.
+As shown in the Table 6, the GAT + Transformer model out­
+performs the Transformer, indicating that GAT effectively captures 
+the relationships among events in the causal graph and improves 
+Table 6 
+The performance evaluation of ablation experiments 
+on the overall production line.
+Indicator
+Method
+MAE
+RMSE
+Starvation
+Transformer
+15.68
+34.85
+GAT + Transformer
+13.05
+26.77
+ECGBSTNN (gcn)
+13.07
+28.22
+SGBSTNN
+12.72
+27.54
+ECGBSTNN
+9.38
+24.99
+Blockage
+Transformer
+11.83
+26.64
+GAT + Transformer
+11.73
+26.12
+ECGBSTNN (gcn)
+11.31
+28.22
+SGBSTNN
+10.48
+23.51
+ECGBSTNN
+9.10
+23.65
+prediction performance. Compared to GAT + Transformer, the proposed 
+ECGBSTNN further integrates a parallel GAT module and multi-head 
+attention mechanism. While the GAT focuses on capturing short-term 
+dependencies, the attention mechanism captures long-term dependen­
+cies, and their fusion leads to a more comprehensive representation. 
+The architecture significantly improves model performance, especially 
+achieving a 2.63 reduction in MAE for blockage prediction compared to 
+the GAT + Transformer method. Compared to ECGBSTNN (GCN), the 
+proposed method also performs better, which indicates that the GAT can 
+learn the spatial dependencies better than the GCN through the suitable 
+and dynamic attention scores for the edge weights in the event causal 
+graph during different periods. Moreover, to evaluate the event-causal 
+graph modeling, the proposed model is compared to the SGBSTNN, and 
+it outperforms the latter, especially in starvation, with a 3.34 reduction 
+in MAE and a 2.55 reduction in RMSE.
+To demonstrate how the machine-level graph and the event causal 
+graph differently and adaptively adjust edge weights during the GAT 
+learning process, and to emphasize the enhanced interpretability of the 
+event causal graph, we plotted heatmaps of the attention scores gener­
+ated by the graph self-attention mechanism for both models, as shown in 
+Fig. 9. In Fig. 9(a) and (b), M1 to M10 represent the machines, and the 
+attention scores indicate the weights of connections between these ma­
+chines. By comparing Fig. 9(a) and (b), it is evident that while attention 
+scores fluctuate over different periods, a consistent correlation pattern 
+among stations is preserved throughout the learning process. This sug­
+gests the presence of stable inter-feature dependencies between stations. 
+Fig. 9. The attention scores of two models at different periods. (a) the first period of SGBSTNN; (b) the last period of SGBSTNN; (c) the first period of ECGBSTNN; 
+(d) the last period of ECGBSTNN.
+Applied Soft Computing 202 (2026) 115795 
+12 
+
+=====PAGE 13=====
+W. Cen, L. Yang, C. Su et al.
+Fig. 10. Robustness analysis evaluates the performance of bottleneck prediction across the production line for different time-slot sizes.
+To further highlight the dynamic adjustments within the event causality 
+modeling, we generated two additional heatmaps illustrating the causal 
+weights of events across different periods, as presented in Fig. 9(c) and 
+(d). Each period involves multiple event types occurring at various lo­
+cations: four event types at each station and three event types at each 
+buffer. These events influence each other through causal effects, with 
+their weights varying over time. Here, e1 to e52 denote unique events 
+at different stations and buffers. The heatmap on the left corresponds to 
+the initial period, while the one on the right represents the final period. 
+The changes in color patterns between these two heatmaps reveal the 
+evolving causal relationships during training. For instance, the relation­
+ship between e7 and e42 can be more clearly understood by combining 
+the information presented in Table 1, Figs. 1 and 2. Event e42 corre­
+sponds to the empty state of buffer B1. When B1 experiences an empty 
+state, material does not flow into the downstream, which causes ma­
+chine M2 to reach e7 (TS2). Similarly, event e7 may further propagate 
+downstream and cause starvation at machine M3, which is represented 
+by event e11 (TS3). This indicates that events follow a temporal causal 
+sequence and their influence on other events varies across different 
+time periods. Additionally, a blue highlight on an event within a spe­
+cific period indicates an attention score of 1, meaning that the event’s 
+state primarily depends on its own features and is not significantly af­
+fected by other events during that period. These visualizations vividly 
+capture the temporal evolution of event-level causal dependencies, pro­
+viding a solid basis for interpreting the underlying causal mechanisms. 
+The observed dynamic shifts in attention scores effectively reflect the 
+changing influence among events over time. Compared to the graph 
+based on stations, the event causal graph offers a more detailed and 
+granular representation of relationships, thus enhancing explainabil­
+ity. By capturing the fine-grained and dynamic interactions between 
+individual events, the event causal graph allows the model to better un­
+derstand complex temporal dependencies. As a result, the ECGBSTNN 
+framework, which is built on the event causal graph, demonstrates su­
+perior ability in capturing causal structures and delivers more accurate 
+predictions than the station-based SGBSTNN model, while the one on the 
+right represents the final period. The changes in color patterns between 
+these two heatmaps reveal the evolving causal relationships during
+training.
+To evaluate the robustness of the proposed method, we conducted 
+comparative experiments using datasets aggregated over different times­
+lot sizes including 2-minute, 5-minute, and 8-minute intervals. These 
+datasets were employed to predict blockage and starvation durations. 
+The results reveal a gradual decline in performance as the time interval 
+lengthens, which is likely due to the reduction in temporal resolution 
+that can obscure important data patterns. Despite this, the proposed 
+method consistently outperforms baseline approaches, achieving higher 
+accuracy and greater stability, as reflected by MAE and RMSE metrics 
+presented in Fig. 10. This outcome indicates that the method effec­
+tively captures the essential dynamics of the manufacturing process, 
+even when temporal granularity decreases. Furthermore, its adaptability 
+across different time scales highlights its practical value in real-world ap­
+plications, where data collection intervals may vary due to operational 
+constraints or system limitations. Importantly, the proposed approach 
+demonstrates lower sensitivity to increases in timeslot size, whereas 
+benchmark models exhibit more significant performance degradation, 
+further underscoring its robustness and reliability in diverse temporal 
+settings.
+Besides, to further show the generalizability of the proposed ap­
+proach, another scenario is leveraged to compare the ability of different 
+methods. In Fig. 3, Scenario 2 was used in previous research [33] to gen­
+erate the dataset. In the table, the results demonstrate that ECGBSTNN 
+consistently achieves the best performance across all scenarios and tasks. 
+Compared with the best baseline, it significantly reduces both MAE 
+and RMSE, particularly in Scenario 1. Moreover, although Scenario 2 
+introduces more complex conditions, ECGBSTNN still maintains clear 
+performance advantages, while other methods show noticeable degra­
+dation. This stability across different scenarios highlights the strong 
+generalization capability of the proposed model (Table 7).
+Applied Soft Computing 202 (2026) 115795 
+13 
+
+=====PAGE 14=====
+W. Cen, L. Yang, C. Su et al.
+Table 7 
+The performance of different models in two different scenarios.
+Scenario
+Indicator
+Overall
+Method
+LSTM
+Transformer
+BSTAN
+BTGCN
+BPSTK
+ECGBSTNN
+Scenario 1
+Starvation
+MAE
+19.07
+15.68
+18.15
+17.62
+17.04
+9.38
+RMSE
+36.12
+34.85
+34.98
+33.25
+35.22
+24.99
+Blockage
+MAE
+16.09
+11.83
+13.58
+14.64
+12.45
+9.10
+RMSE
+30.57
+26.64
+29.67
+26.58
+27.09
+23.65
+Scenario 2
+Starvation
+MAE
+30.25
+14.68
+16.69
+16.93
+13.81
+12.53
+RMSE
+29.54
+20.03
+21.63
+21.27
+17.32
+14.87
+Blockage
+MAE
+26.68
+20.56
+21.68
+22.08
+19.56
+17.43
+RMSE
+35.12
+24.35
+25.98
+25.51
+23.76
+21.79
+4.2.2 . Discussions
+The experimental results show that the proposed ECGBSTNN frame­
+work achieves better predictive performance than existing leading meth­
+ods, as reflected by lower MAE and RMSE values. This improvement 
+comes from preprocessing event feature relationships to make the model 
+more interpretable, using a directed and weighted causal graph to cap­
+ture dependencies between events, and combining multi-head attention 
+with Graph Attention Networks (GAT) to model both long-term and 
+short-term temporal patterns. Together, these elements allow the frame­
+work to represent the changing dynamics of manufacturing processes 
+with high accuracy.
+In real production settings, each operational unit (e.g., stations, 
+buffers, operators) can be represented as event states reflecting its work­
+ing condition. These events exhibit natural causal links that encode the 
+underlying process logic. By comparing the process graph constructed at 
+the station level with the event causal graph built at the feature level, it 
+is observed that in the station graph, edges between nodes influence 
+each other at every time step. This may result from certain features 
+of one station being related to features of other stations, though such 
+relationships are not explicitly apparent in the graph structure. In con­
+trast, the event causal graph, based on event features, captures direct 
+causal effects between events and reveals dynamic associations among 
+event features. These dynamic changes can be clearly seen through the 
+attention scores in the graph. By directly modeling these causal links, 
+ECGBSTNN enhances the interpretability of system behavior and pro­
+vides valuable insights for data-driven bottleneck prediction. Due to the 
+persistence of events, delayed effects occur, causing events to exhibit not 
+only short-term but also long-term temporal dependencies. Therefore, 
+we incorporate a Transformer module to capture long-term temporal 
+dependencies and compare it with traditional RNN models such as 
+LSTM, achieving superior results. Additionally, we design a parallel 
+long and short-term temporal dependency module, which further im­
+proves the model’s performance. This capability is particularly beneficial 
+for production planning and maintenance, where accurate forecasting 
+of bottlenecks and inefficiencies can lead to increased efficiency and 
+reduced downtime.
+Regarding the reproducibility of the proposed algorithm, the event 
+causal graph is first constructed based on the production line process 
+flow, as shown in Fig. 2. Then, using the event sequences from the 
+log data (Table 1) and applying Eq. (4), the graph edges are dynami­
+cally updated to capture evolving relationships. Event durations within 
+each cycle are also recorded, illustrated in Fig. 5, resulting in the final 
+feature-level event causal graph. With algorithm parameters set as in 
+Table 2, Algorithm 2 computes the future starvation and blockage dis­
+tributions, which are subsequently used by the TPM method to identify 
+potential bottlenecks. This stepwise procedure provides a clear pathway 
+to reproduce the algorithm. However, due to data confidentiality agree­
+ments with industry partners, direct access to the original datasets is 
+restricted, limiting the exact replication of the experimental results by 
+external researchers.
+While the current study applies this approach to a linear production 
+line, the underlying event causal graph framework is highly adaptable 
+and can be extended to more complex nonlinear discrete manufactur­
+ing systems, where processes may run in parallel, loop back, or branch 
+out. By enriching node and edge definitions, the framework can capture 
+intricate relationships and feedback loops, enabling effective modeling 
+of complex causal dynamics in real-world manufacturing environments. 
+However, as the complexity and scale of these systems increase, the 
+graph structures grow larger and more computationally demanding. 
+To address these scalability challenges, techniques such as graph parti­
+tioning, hierarchical graph construction, pruning, distillation and mini-
+batch sampling can be applied to reduce computational overhead while 
+preserving critical causal information. The incorporation of sparse atten­
+tion mechanisms further enhances efficiency by concentrating computa­
+tional resources on the most relevant node interactions. Additionally, 
+parallel and distributed computing frameworks can be leveraged to 
+accelerate training and inference. More efficient algorithms for atten­
+tion computation and dynamic edge updates can also be integrated to 
+optimize performance on large-scale graphs. Collectively, these advance­
+ments facilitate the practical application of the proposed method across 
+diverse industrial settings with complex topologies and extensive event 
+interactions, while maintaining computational efficiency and predictive 
+accuracy.
+Although modeling workshop production states and their dynamic 
+interrelations through event-based representations significantly im­
+proves the predictive accuracy of future system states, several limitations 
+affect the model’s extensibility and generalization. A primary limita­
+tion is the coarse granularity of event classification, which may fail 
+to capture subtle but important variations within production processes. 
+For example, downtime events are often treated as a single broad cat­
+egory, despite differing underlying causes that can result in varying 
+durations and impacts. This coarse attribution restricts the model’s abil­
+ity to differentiate among diverse factors within similar event types, 
+reducing the precision of causal inference and long-term predictions. 
+Another significant challenge stems from the sparsity of event occur­
+rences. Infrequent but critical events may not be adequately recog­
+nized or learned by the model due to limited data availability. This 
+scarcity constrains the model’s sensitivity to rare but impactful produc­
+tion states, affecting its robustness in real-world scenarios. Moreover, 
+the framework currently does not fully address the heterogeneity of 
+event types, such as variable product processing times, machine-specific 
+downtime reasons, or operator-related disruptions, all of which can 
+substantially influence system dynamics. Despite enhancements in tem­
+poral modeling through Transformer modules and parallel long-short 
+term dependency mechanisms, the fixed nature of these components 
+may limit adaptability in highly variable or evolving production en­
+vironments. Furthermore, while the model employs graph attention 
+networks (GAT) to learn causal weights adaptively, these weights can 
+alternatively be established via more precise, domain-informed model­
+ing approaches. Such strategies can accelerate convergence and improve 
+fitting efficiency, thus supporting scalability. To address these limita­
+tions and enhance extensibility, future work will emphasize refining 
+event categorization by incorporating more detailed and distinct event 
+types, including differentiated product processing phases and specific 
+Applied Soft Computing 202 (2026) 115795 
+14 
+
+=====PAGE 15=====
+W. Cen, L. Yang, C. Su et al.
+downtime classifications. This increased granularity is expected to better 
+capture event-specific temporal patterns and causal influences, thereby 
+improving generalization across varied manufacturing contexts and 
+enhancing resilience against data quality issues and event sparsity. 
+Additionally, exploring adaptive architectures capable of dynamically 
+adjusting temporal dependency modeling in response to operational 
+changes will further strengthen prediction accuracy and practical ap­
+plicability.The proposed framework can be naturally extended to in­
+corporate finer-grained event labels. Specifically, the causal weight 
+matrix A can evolve from a coarse-grained representation to a more 
+structured form through several methodological enhancements. First, 
+node refinement allows each downtime event to be decomposed into 
+subtype-specific nodes, such as failure-induced or maintenance-induced 
+categories, leading to a more expressive event graph. Second, type-aware 
+causal modeling ensures that entries in A are conditioned on both tem­
+poral co-occurrence and event types to capture heterogeneous causal 
+strengths. Additionally, regularization techniques like parameter shar­
+ing can be introduced to mitigate data sparsity for rare events, while 
+a dynamic updating mechanism allows A to adapt to changing produc­
+tion conditions as a time-varying matrix. Automated or semi-supervised 
+methods for event type adaptation and scalable graph construction will 
+also be investigated to facilitate deployment across diverse industrial
+scenarios.
+5 . Conclusion
+In this work, we propose the Spatial-Temporal Neural Network 
+with Event Causal Graphs (ECGBSTNN) for predicting bottlenecks in 
+complex manufacturing systems. Our method integrates Graph Neural 
+Networks to capture dynamic causal relationships between events with 
+Transformer-based techniques employing a causal mask to model long-
+term temporal dependencies. By representing events as nodes in a 
+dynamic, weighted, directed graph where edges denote uncertain causal 
+interactions, ECGBSTNN effectively leverages both causal and temporal 
+event information. Experimental results demonstrate that this approach 
+delivers accurate and interpretable bottleneck predictions, with causal 
+graphs clarifying inter-event dependencies to enhance both prediction 
+performance and explainability.
+From an academic perspective, this study advances spatial-temporal 
+modeling by embedding causal inference within neural network ar­
+chitectures and addressing the critical challenge of interpretability in 
+deep learning for complex systems. The integration of dynamic event 
+causal graphs with GNN and Transformer frameworks not only improves 
+prediction accuracy but also enhances model transparency, paving the 
+way for future research on explainable, causally grounded machine 
+learning models applicable across diverse dynamic processes. From an 
+industrial standpoint, ECGBSTNN addresses a fundamental challenge 
+in modern manufacturing by accurately predicting bottlenecks within 
+highly dynamic and interconnected production systems. By providing 
+interpretable insights into the causal mechanisms underlying system 
+inefficiencies, our approach empowers practitioners to optimize work­
+flows, reduce costly downtime, and allocate resources more effectively. 
+This contributes to smarter, data-driven manufacturing practices that 
+enhance productivity and competitiveness in rapidly evolving industrial 
+environments.
+Based on these advances, we further present a streamlined frame­
+work for industrial bottleneck prediction leveraging event evolution 
+analysis. This framework offers practical guidance for optimizing op­
+erations and maintenance, enabling operators to make informed, data-
+driven decisions by proactively identifying bottlenecks, improving 
+operational efficiency, minimizing downtime, and supporting robust 
+decision-making in complex production systems.
+CRediT authorship contribution statement
+Weihong Cen: Writing – review & editing, Writing – original draft, 
+Visualization, Validation, Software, Methodology, Investigation, Formal 
+analysis, Data curation, Conceptualization. Lie Yang: Writing – review & 
+editing, Methodology, Formal analysis. Chupeng Su: Writing – review & 
+editing, Software, Methodology. Gang Chen: Writing – review & editing, 
+Validation, Supervision, Resources, Funding acquisition, Formal anal­
+ysis, Conceptualization. Longhan Xie: Supervision, Resources, Project 
+administration, Funding acquisition.
+Declaration of competing interest
+The authors declare that they have no known competing financial 
+interests or personal relationships that could have appeared to influence 
+the work reported in this paper.
+Acknowledgments
+This work was supported in part by Guangdong S&T Program (Grant 
+No. 2026B0101110003), Natural Science Foundation of Guangdong 
+Province (Grant No. 2024A1515011190), Research Foundation 
+of Guangdong Province (Grant No. 2019A050505001), the Key 
+Laboratory of Guangdong Medical Products Administration (Grant 
+No. 2023ZDZ10), the National Key R&D Program of China (Grant 
+No. 2021YFB3301400), the National Science Foundation of China 
+(Grant No. 52305105), and the Basic and Applied Basic Research 
+Foundation of Guangdong Province (Grant No. 2023A1515010812 and 
+No. 2026A1515011789).
+Data availability
+The data that has been used is confidential.
+References
+[1] J. Ma, Y. Shang, Z. Liang, Digital transformation, artificial intelligence and enterprise 
+innovation performance, Finance Res. Lett. 78 (2025) 107190.
+[2] J. Xue, G. Li, D. Ivanov, Digital transformation in the blockchain era: balancing 
+efficiency and resilience in operations management, Int. J. Prod. Econ. (2025) 
+109525.
+[3] J. Zhang, J. Liu, C. Zhuang, H. Guo, H. Ma, A data-driven smart management 
+and control framework for a digital twin shop floor with multi-variety multi-batch 
+production, Int. J. Adv. Manuf. Technol. 131 (11) (2024) 5553–5569.
+[4] E. Mahmoodi, M. Fathi, A.HC. Ng, A. Dolgui, Predictive model-based multi-objective 
+optimization with life-long meta-learning for designing unreliable production sys­
+tems, Comput. Oper. Res. 178 (2025).
+[5] A. Skoogh, M. Thürer, M. Subramaniyan, A. Matta, C. Roser, Throughput bottleneck 
+detection in manufacturing: a systematic review of the literature on methods and 
+operationalization modes, Prod. Manuf. Res. 11 (1) (2023) 2283031.
+[6] M. Kumbhar, A.HC. Ng, S. Bandaru, A digital twin based framework for detection, 
+diagnosis, and improvement of throughput bottlenecks, J. Manuf. Syst. 66 (2023) 
+92–106.
+[7] J. Tang, Y. Liu, K.-Y. Lin, L. Li, Process bottlenecks identification and its root cause 
+analysis using fusion-based clustering and knowledge graph, Adv. Eng. Inform. 55 
+(2023) 101862.
+[8] E. Mahmoodi, M. Fathi, M. Ghobakhloo, The impact of Industry 4.0 on bottleneck 
+analysis in production and manufacturing: current trends and future perspectives, 
+Comput. Ind. Eng. 174 (2022) 108801.
+[9] L. Ragazzini, E. Negri, L. Fumagalli, M. Macchi, Digital twin-based bottleneck 
+prediction for improved production control, Comput. Ind. Eng. 192 (2024) 110231.
+[10] M. Frantzén, S. Bandaru, A.HC. Ng, Digital-twin-based decision support of dynamic 
+maintenance task prioritization using simulation-based optimization and genetic 
+programming, Decis. Anal. J. 3 (2022) 100039.
+[11] E. Mahmoodi, M. Fathi, M. Tavana, M. Ghobakhloo, A.HC. Ng, Data-driven 
+simulation-based decision support system for resource allocation in Industry 4.0 and 
+smart manufacturing, J. Manuf. Syst. 72 (2024) 287–307.
+[12] M. Subramaniyan, A. Skoogh, A.S. Muhammad, J. Bokrantz, B. Johansson, C. Roser, 
+A data-driven approach to diagnosing throughput bottlenecks from a maintenance 
+perspective, Comput. Ind. Eng. 150 (2020) 106851.
+[13] W. Urban, P. Rogowska, Methodology for bottleneck identification in a production 
+system when implementing TOC, Eng. Manag. Prod. Serv. 12 (2) (2020).
+[14] X. Lai, H. Shui, D. Ding, J. Ni, Data-driven dynamic bottleneck detection in complex 
+manufacturing systems, J. Manuf. Syst. 60 (2021) 662–675.
+[15] X. Lai, T. Qiu, H. Shui, D. Ding, J. Ni, Predicting future production system bottlenecks 
+with a graph neural network approach, J. Manuf. Syst. 67 (2023) 201–212.
+[16] L. Li, Q. Chang, G. Xiao, S. Ambani, Throughput bottleneck prediction of manufac­
+turing systems using time series analysis, J. Manuf. Sci. Eng. 133 (2) (Apr 2011) 
+021015.
+[17] C.A.O. Zhengcai, D. Jijie, L.I.U. Min, W.A.N.G. Yongji, Bottleneck prediction method 
+based on improved adaptive network-based fuzzy inference system (ANFIS) in semi­
+conductor manufacturing system, Chin. J. Chem. Eng. 20 (6) (2012) 1081–1088.
+Applied Soft Computing 202 (2026) 115795 
+15 
+
+=====PAGE 16=====
+W. Cen, L. Yang, C. Su et al.
+[18] D. Liu, Y. Guo, S. Huang, S. Wang, T. Wu, Dynamic production bottleneck prediction 
+using a data-driven method in discrete manufacturing system, Adv. Eng. Inform. 58 
+(2023) 102162.
+[19] W. Fang, Y. Guo, W. Liao, S. Huang, N. Yang, J. Liu, A parallel gated recurrent units 
+(P-GRUs) network for the shifting lateness bottleneck prediction in make-to-order 
+production system, Comput. Ind. Eng. 140 (2020) 106246.
+[20] J. Yin, R. Ma, S. Ge, Predicting task bottlenecks in digital manufacturing enterprises 
+based on spatio-temporal graph convolutional networks, Front. Eng. Manag. (2025) 
+1–18.
+[21] T. Wu, J. Li, J. Bao, Z. Jin, Knowledge fusion and spatio-temporal modeling for 
+dynamic bottleneck prediction in sustainable production processes, Int. J. Comput. 
+Integr. Manuf. (2025) 1–17.
+[22] L. Ma, T. Qu, M. Thürer, Z. Wang, M. Yuan, L. Liu, An integrated spatial-temporal 
+neural network for proactive throughput bottleneck prediction in high-variety shops 
+with complex job routings, Int. J. Prod. Res. 61 (13) (2023) 4437–4449.
+[23] K. Nadim, A. Ragab, M.-S. Ouali, Data-driven dynamic causality analysis of industrial 
+systems using interpretable machine learning and process mining, J. Intell. Manuf. 
+34 (1) (2023) 57–83.
+[24] Q. Li, P. Jiang, J. Wang, M. Yang, Y. Yang, A kind of intelligent dynamic industrial 
+event knowledge graph and its application in process stability evaluation, J. Intell. 
+Manuf. 36 (3) (2025) 1801–1818.
+[25] C. Wang, H. Wang, X. Zhang, Q. Liu, M. Liu, G. Xu, A transformer-based industrial 
+time series prediction model with multivariate dynamic embedding, IEEE Trans. Ind. 
+Inform. 21 (2) (2025) 1813–1822.
+[26] T. Deleu, M. Nishikawa-Toomey, J. Subramanian, N. Malkin, L. Charlin, Y. Bengio, 
+Joint Bayesian inference of graphical structure and parameters with a single 
+generative flow network, Adv. Neural Inf. Process. Syst. 36 (2023) 31204–31231.
+[27] L. Li, Q. Chang, J. Ni, Data driven bottleneck detection of manufacturing systems, 
+Int. J. Prod. Res. 47 (18) (2009) 5019–5036.
+[28] M. Subramaniyan, A. Skoogh, J. Bokrantz, M.A. Sheikh, M. Thürer, Q. Chang, 
+Artificial intelligence for throughput bottleneck analysis–state-of-the-art and future 
+directions, J. Manuf. Syst. 60 (2021) 734–751.
+[29] C. Yu, A. Matta, A statistical framework of data-driven bottleneck identification in 
+manufacturing systems, Int. J. Prod. Res. 54 (21) (2016) 6317–6332.
+[30] L. Li, Q. Chang, G. Xiao, S. Ambani, Throughput bottleneck prediction of manufac­
+turing systems using time series analysis, J. Manuf. Sci. Eng. 133 (2) (2011).
+[31] M. Subramaniyan, A. Skoogh, H. Salomonsson, P. Bangalore, J. Bokrantz, A data-
+driven algorithm to predict throughput bottlenecks in a production system based on 
+active periods of the machines, Comput. Ind. Eng. 125 (2018) 533–544.
+[32] X. Lai, H. Shui, J. Ni, A two-layer long short-term memory network for bottle­
+neck prediction in multi-job manufacturing systems, in: International Manufacturing 
+Science and Engineering Conference, 51371, 2018, page V003T02A014.
+[33] W. Cen, C. Su, K. Cen, L. Yang, G. Chen, L. Xie, A dual spatial temporal neural 
+network for bottleneck prediction in manufacturing systems, Eng. Appl. Artif. Intell. 
+159 (2025) 111586.
+[34] B. Zhou, X. Shen, Y. Lu, X. Li, B. Hua, T. Liu, J. Bao, Semantic-aware event link 
+reasoning over industrial knowledge graph embedding time series data, Int. J. Prod. 
+Res. 61 (12) (2023) 4117–4134.
+[35] Y. Wang, L. Zheng, Y. Wang, Event-driven tool condition monitoring methodology 
+considering tool life prediction based on industrial internet, J. Manuf. Syst. 58 (2021) 
+205–222.
+[36] B. Zhou, B. Hua, X. Gu, Y. Lu, T. Peng, Y. Zheng, X. Shen, J. Bao, An end-to-
+end tabular information-oriented causality event evolutionary knowledge graph for 
+manufacturing documents, Adv. Eng. Inform. 50 (2021) 101441.
+[37] H. Wang, Z. Wu, H. Jiang, Y. Huang, J. Wang, S. Kopru, T. Xie, Groot: an event-
+graph-based approach for root cause analysis in industrial settings, in: 2021 36th 
+IEEE/ACM International Conference on Automated Software Engineering (ASE), 
+IEEE, 2021, pp. 419–429.
+[38] Z. Yao, C. Pei, W. Chen, H. Wang, L. Su, H. Jiang, Z. Xie, X. Nie, D. Pei, Chain-
+of-event: interpretable root cause analysis for microservices through automatically 
+learning weighted event causal graph, in: Companion Proceedings of the 32nd ACM 
+International Conference on the Foundations of Software Engineering, 2024, pp. 
+50–61.
+[39] Y. Xu, L. Wei, L. Feng, A spatial-temporal trend-event decoupling dual-channel 
+framework for traffic flow prediction, Expert Syst. Appl. (2025) 128107.
+[40] X. Liu, Q. Shao, D. Chen, Long-term prediction on graph data with causal network 
+construction, IEEE Trans. Artif. Intell. 5 (7) (2024) 3445–3455.
+[41] S. Yang, Q. Wu, Z. Li, K. Wang, PSTCGCN: principal spatio-temporal causal graph 
+convolutional network for traffic flow prediction, Neural Comput. Appl. (2024) 
+1–14.
+[42] J. Li, X. Xu, X. Ding, J. Liu, B. Ran, Bayesian spatio-temporal graph convolutional 
+network for railway train delay prediction, IEEE Trans. Intell. Transp. Syst. 25 (7) 
+(2024) 8913–8208.
+[43] C. Wang, K. Zuo, S. Zhang, C. Liu, H. Peng, W. Li, Z. Shen, P. Hu, R. Wang, B. Jie, 
+TADGCN: a time-aware dynamic graph convolution network for long-term traffic 
+flow prediction, Expert Syst. Appl. 258 (2024) 125134.
+[44] Y. Xie, J. Wu, Y. Zhou, GTHP: a novel graph transformer hawkes process for 
+spatiotemporal event prediction, Knowl. Inf. Syst. 66 (7) (2024) 4043–4062.
+[45] Y. Xie, J. Wu, HGTHP: a novel hyperbolic geometric transformer hawkes process for 
+event prediction, Appl. Intell. 54 (1) (2024) 357–374.
+[46] S.-Y. Chiang, C.-T. Kuo, S.M. Meerkov, DT-bottlenecks in serial production lines: 
+theory and application, IEEE Trans. Robot. Autom. 16 (5) (2000) 567–580.
+[47] M. Subramaniyan, A. Skoogh, H. Salomonsson, P. Bangalore, M. Gopalakrishnan, 
+A. Sheikh Muhammad, Data-driven algorithm for throughput bottleneck analysis of 
+production systems, Prod. Manuf. Res. 6 (1) (2018) 225–246.
+[48] Z. Cao, J. Deng, M. Liu, Y. Wang, Bottleneck prediction method based on im­
+proved adaptive network-based fuzzy inference system (ANFIS) in semiconductor 
+manufacturing system, Chin. J. Chem. Eng. 20 (6) (2012) 1081–1088.
+Applied Soft Computing 202 (2026) 115795 
+16 

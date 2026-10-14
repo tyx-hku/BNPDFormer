@@ -1,0 +1,4049 @@
+
+
+===== PAGE 1 =====
+Safe reinforcement learning with online filtering for fatigue-predictive
+human-robot task planning and allocation in production
+Jintao Xuea, Xiao Lia,∗and Nianmin Zhanga
+aCI3 Lab, Department of Civil Engineering, The University of Hong Kong, Hong Kong SAR,
+A R T I C L E I N F O
+Keywords:
+Task planning and allocation
+Ergonomic
+Safe reinforcement learning
+Particle filter
+Intelligent Manufacturing
+A B S T R A C T
+Human-robot collaborative manufacturing, a core aspect of Industry 5.0, emphasizes ergonomics
+to enhance worker well-being. This paper addresses the dynamic human-robot task planning and
+allocation (HRTPA) problem, which involves determining when to perform tasks and who should
+execute them to maximize efficiency while ensuring workers’ physical fatigue remains within
+safe limits. The inclusion of fatigue constraints, combined with production dynamics, significantly
+increases the complexity of the HRTPA problem. Traditional fatigue-recovery models in HRTPA
+often rely on static, predefined hyperparameters. However, in practice, human fatigue sensitivity
+varies daily due to factors such as changed work conditions and insufficient sleep. To better capture
+this uncertainty, we treat fatigue-related parameters as inaccurate and estimate them online based
+on observed fatigue progression during production. To address these challenges, we propose PF-
+CD3Q, a safe reinforcement learning (safe RL) approach that integrates the particle filter with
+constrained dueling double deep Q-learning for real-time fatigue-predictive HRTPA. Specifically,
+we first develop PF-based estimators to track human fatigue and update fatigue model parameters in
+real-time. These estimators are then integrated into CD3Q by making task-level fatigue predictions
+during decision-making and excluding tasks that exceed fatigue limits, thereby constraining the action
+space and formulating the problem as a constrained Markov decision process (CMDP). Experimental
+results demonstrate that our PF-based estimators achieve high prediction accuracy and strong noise
+robustness, and that PF-CD3Q outperforms other algorithms across multiple performance metrics,
+significantly reducing the occurrence of overwork and adapting to unseen fatigue constraints after
+training. These findings validate the effectiveness of our approach under complex and dynamic
+production conditions, supporting both human well-being and the development of a more sustainable
+and efficient manufacturing paradigm.
+1. Introduction
+Industry 4.0 has enhanced production efficiency and
+quality by integrating advanced technologies, including arti-
+ficial intelligence (AI), robotics, and information technology
+[30]. Industry 5.0, however, represents a paradigm shift
+that goes beyond automation and digitization to emphasize
+human-centric values, including worker well-being, creativ-
+ity, and cognitive engagement. A key pillar of this vision is
+human-robot collaboration (HRC), where humans and intel-
+ligent robots work in synergy, leveraging their complemen-
+tary strengths. However, in real-world manufacturing envi-
+ronments, human workers often experience fatigue, which
+can adversely affect human performance [42]. Therefore,
+ergonomic considerations should be integrated into the HRC
+process to ensure sustainable production.
+Task planning and allocation (TPA) refers to the process
+of determining when to perform specific tasks and allocating
+them to suitable agents—whether humans, robots, or ma-
+chines—to fulfill specific manufacturing requirements [12,
+40, 82]. It plays a crucial role in enhancing the effectiveness
+∗Corresponding author: CI3 Lab, Department of Civil Engineering,
+Faculty of Engineering, HW6-07, Haking Wong Building, The University
+of Hong Kong, Pokfulam, Hong Kong, China.
+This is the accepted manuscript of an article accepted for publi-
+cation in Journal of Manufacturing Systems (Elsevier). The final pub-
+lished version is available at https://doi.org/10.1016/j.jmsy.2025.12.019.
+Code under development for open release: https://github.com/jintaoXue/
+Isaac-Production.
+ORCID(s): 0000-0001-9702-4153 (X. Li)
+of advanced manufacturing systems. Within the context of
+HRC, this challenge becomes more complex, evolving into
+the human-robot TPA (HRTPA) problem, where both human
+workers and robotic agents must be dynamically coordinated
+to achieve optimal system performance.
+This paper addresses the fatigue-constrained HRTPA
+problem in a dynamic, shared production environment where
+workers and robots collaborate on various tasks, including
+material transport, loading, welding, and machine operation.
+Key challenges include: (1) real-time HRTPA to adapt to
+dynamic production; (2) physical fatigue constraints for safe
+human workloads; (3) varying worker efficiency due to
+fatigue accumulation; and (4) inaccurate hyperparameters
+in human fatigue models, requiring real-time estimation
+during production. These factors underscore the demand for
+intelligent, adaptive, and fatigue-predictive HRTPA strate-
+gies. Prior research faces challenges in addressing complex
+and dynamic HRTPA problems [52]. Some studies rely
+on static modeling with fully pre-known fatigue–recovery
+parameters and use optimization-based algorithms, but these
+approaches struggle with real-time decision-making and are
+unable to tackle inaccuracies in fatigue models [8]. Other
+works employ reinforcement learning (RL), which is well-
+suited for sequential real-time decisions, yet they either over-
+look ergonomic constraints altogether [81] or incorporate
+them only through reward shaping, which still risks violating
+fatigue limits [46]. Although safe RL has shown potential for
+handling safety-critical decision-making under constraints
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 1 of 27
+arXiv:2604.12667v2  [cs.AI]  16 Apr 2026
+
+
+===== PAGE 2 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+[3], its application to real-time, fatigue-constrained HRTPA
+remains unexplored.
+To overcome these limitations, we present a real-time
+fatigue-predictive HRTPA algorithm, the particle filter with
+constrained dueling double deep Q-learning (PF-CD3Q),
+aimed at enhancing production efficiency while prioritiz-
+ing worker ergonomics. Unlike conventional RL methods
+that incorporate fatigue as soft constraints via weighted
+reward design, PF-CD3Q adopts a safe RL paradigm with
+an explicit, fatigue-constrained strategy. Specifically, while
+fatigue-recovery models [31, 8] are widely used in HRTPA,
+they typically assume static, pre-known hyperparameters, ig-
+noring the temporal variability of human physical capacity.
+In practice, human fatigue sensitivity is subject to daily vari-
+ability influenced by factors like sleep quality [15] and en-
+vironmental conditions [51]. To reflect this, we treat fatigue
+model hyperparameters as initially inaccurate and estimate
+them online using particle filters (PFs) during production.
+These PF-based estimators track real-time physical fatigue
+evolution and are used to define a safe task-level action set by
+masking actions likely to violate fatigue constraints. This re-
+stricts policy learning and action selection to ergonomically
+safe task decisions, forming a constrained Markov decision
+process (CMDP). To model the complex and heterogeneous
+information present in the production environment, our net-
+work adopts an attention-based Transformer architecture
+[68]. This design facilitates effective processing of diverse
+inputs, including fatigue-related data, to enable informed
+and adaptive decision-making. The action output of PF-
+CD3Q follows a two-step process: first, selecting the task
+to be executed, and second, allocating it to a human and/or
+robot. Both steps are guided by task-level fatigue predic-
+tions generated by PF-based estimators. In the first step,
+the safe RL strategy determines the real-time task selection
+based on fatigue-predictive task planning. In the second step,
+we adopt a path-planning-based, distance-greedy allocation
+strategy to allocate tasks to the nearest available human
+and/or robot. Real-world studies of multi-participant human-
+robot collaborative production lines are costly and complex.
+To overcome this, we developed a realistic production line in
+NVIDIA’s Isaac Sim physical simulator [44], modeled after
+a real-world factory, integrated with a well-defined human
+fatigue-recovery model for simulating fatigue dynamics.
+The contributions of this work include: (1) This
+study novelly implements a safe reinforcement learning
+method for the HRTPA problem, updating the real-time
+safe action space by online estimators that address
+dynamic,
+explicit
+fatigue-constrained
+decision-making
+challenges, and can adapt to unseen fatigue constraints
+after training. (2) We employ a particle filter-based
+estimation mechanism to reduce uncertainties stemming
+from inaccurate fatigue model hyperparameters, effectively
+addressing the challenge of daily variability in human
+fatigue sensitivity, and exhibit robustness to measurement
+noise. (3) We design an attention-based Transformer
+architecture to process heterogeneous data and incorporate
+fatigue-related information, enhancing our algorithm’s
+fatigue-predictive decision-making performance.
+The paper is organized as follows: Section 2 reviews
+related work on HRTPA, ergonomics, safe reinforcement
+learning, online parameter estimation, and research gaps.
+Section 3 formulates the fatigue-constrained HRTPA prob-
+lem. Section 4 presents our methodology, detailing the pro-
+posed PF-CD3Q algorithm and the attention-based Trans-
+former network. Section 5 demonstrates the experimental
+setup and comprehensive results, validating the effectiveness
+of our approach through comparative analysis with baseline
+methods. Section 6 discusses limitations and outlines future
+research directions.
+2. Literature review
+This section provides a comprehensive review of related
+work. First, we examine ergonomics in manufacturing and
+fatigue-recovery models. Next, we explore human-robot task
+planning and allocation (HRTPA) in manufacturing, sum-
+marizing representative algorithms. We then discuss safe
+reinforcement learning and neural network architectures.
+Finally, we briefly review filtering techniques for online
+parameter estimation.
+2.1. Ergonomics in manufacturing
+Industry 4.0, a global paradigm for over a decade, boosts
+profitability through technology but often neglects envi-
+ronmental and social factors, making it less human-centric
+[41]. While integrating human-robot collaboration and as-
+sistive technologies [76], Industry 5.0 prioritizes societal
+goals, fostering resilient prosperity by respecting planetary
+boundaries and centering worker well-being. It emphasizes
+ergonomics across manufacturing stages (e.g., design, pro-
+duction, inspection, logistics), addressing human factors like
+performance (e.g., fatigue, breaks, skills, learning), safety
+(e.g., injury risks), and perceptual and environmental influ-
+ences (e.g., noise exposure, visual considerations) [34, 60].
+Human factors are critical in HRTPA and real-time oper-
+ations. Among these, fatigue is a key factor affecting human
+well-being and can be primarily categorized into physical
+and psychological fatigue. Psychological fatigue, stemming
+from boredom or the cognitive demands of repetitive or com-
+plex tasks, may reduce production efficiency [19]. Physical
+fatigue has garnered more attention in the literature due to
+its direct impact on production efficiency, particularly in
+scenarios involving high physical workloads and cognitively
+simple tasks. Furthermore, several models have been pro-
+posed to quantify physical fatigue, assess their practical rel-
+evance, and address the complexity of integrating them into
+mathematical optimization frameworks [60]. For example,
+work time is divided into active and recovery periods, with
+physical fatigue increasing exponentially over time and re-
+covery diminishing similarly [37]. A fatigue-recovery model
+with exponential dynamics accounts for varying maximum
+endurance times across production batches due to fatigue
+accumulation. Additionally, learning-forgetting dynamics,
+which affect production efficiency based on task familiarity,
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 2 of 27
+
+
+===== PAGE 3 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+are considered [57, 31]. Fatigue coefficients also influence
+task completion times [18]. Analytical models have been
+proposed to optimize operator recovery time for better TPA
+[9], while fatigue-recovery models have been applied to
+HRTPA in collaborative assembly cells [8]. Asadayoobi et
+al. [6] tackle stochastic bi-objective TPA, incorporating the
+combined effects of learning-forgetting, fatigue-recovery,
+and stress-recovery processes. Similarly, Ferjani et al. [21]
+propose a simulation-optimization heuristic for online allo-
+cation of multi-skilled workers subject to fatigue in manufac-
+turing systems. Liu et al. [46] combine a fatigue and recovery
+model with deep reinforcement learning and a multi-agent
+system for dynamic scheduling in re-entrant hybrid flow
+shops.
+Based on the literature reviewed, this paper focuses on
+physical fatigue due to its extensive coverage and established
+mathematical models. A worker’s physical fatigue sensitiv-
+ity is influenced by stable static factors (e.g., skills, age,
+gender, task type) and daily psycho-physical conditions [15]
+or environmental factors such as temperature, humidity, and
+noise [51]. Most fatigue models in production HRTPA rely
+on fixed or predefined hyperparameters, overlooking daily
+fluctuations in these dynamic factors. To better capture real-
+time fatigue and productivity shifts, adaptive methods like
+online parameter estimation are essential. These techniques
+dynamically adjust model parameters based on observed
+worker performance, facilitating more responsive and real-
+istic scheduling decisions.
+2.2. Task planning and allocation in human-robot
+collaboration
+Task planning and allocation (TPA) aims to optimize
+existing resource arrangements to enhance manufacturing
+systems’ economic performance and social benefits [12].
+TPA typically involves three main stages: task description,
+modeling, and algorithm design. In the task description
+stage, tasks are defined based on production processes and
+available resources. Timo et al. [7] used standardized de-
+scriptions for mobile assistant robots, while Li et al. [43]
+proposed semantically enriched packages to enhance task
+understanding. In the modeling stage, formal approaches
+like mixed-integer programming (MIP) [20] are used for
+deterministic problems, whereas some works use Markov
+decision processes (MDP) to model sequential decision-
+making under uncertainty. The algorithm design stage in-
+cludes both traditional optimization methods, such as genetic
+algorithms for TPA in assembly [58] and hybrid strategies
+for multi-agent systems [22], and learning-based techniques,
+including reinforcement learning (RL), which enables real-
+time feedback and adaptive decisions [39].
+Human-robot collaboration (HRC) refers to humans and
+robots working together in a shared workspace toward com-
+mon goals [56]. With advancements in automation and in-
+formation technology, robots increasingly handle repetitive,
+high-precision, or physically demanding tasks, allowing hu-
+mans to focus on cognitive and flexible operations. This
+complementarity has made HRC a core research focus in
+intelligent manufacturing [17]. HRC applications span as-
+sembly, welding, assistive operations, logistics, and qual-
+ity inspection [35, 48, 59, 50], with TPA optimizing ef-
+ficient coordination between diverse robots and humans.
+HRC configurations include collaborative robots (cobots),
+robotic arms, mobile robots, exoskeletons, and specialized
+production robots [25, 38, 49].
+Research on HRC spans multiple domains, including
+ergonomic work cell layout design [13, 71], human behavior
+modeling, perception-based interaction [70, 29, 47, 83, 84,
+69, 84], and TPA. A key focus within this field is human-
+robot TPA (HRTPA), which aims to optimize collaboration
+by leveraging the complementary capabilities of humans and
+robots. Given that manufacturing tasks often involve sequen-
+tial subtasks, effective allocation must consider factors such
+as cost, makespan, and ergonomics. To address this, various
+approaches have been proposed: (1) Search-based meth-
+ods find the solution in a finite and predefined state space
+[6]. For instance, Merlo et al. [52] developed a framework
+incorporating ergonomic factors into dynamic TPA, while
+Zeng et al. [79] applied multi-heuristic local search and fast
+greedy refinement. However, these methods face scalability
+issues as the problem size grows. (2) Optimization-based
+approaches aim to formulate HRTPA problems mathemat-
+ically [82]. Yao et al. [78] proposed a genetic algorithm
+enhanced with reinforcement learning and a dynamic fatigue
+model, while Cai et al. [8] introduced a multi-objective MIP
+model considering both physical and psychosocial fatigue.
+These methods, though effective in structured settings, often
+struggle with real-time adaptability and the modeling of
+dynamic factors such as the spatial position of humans and
+robots in the workspace or fluctuating human fatigue and
+production efficiency. (3) RL offers a promising solution for
+sequential decision-making under uncertainty [77]. Zhang
+et al. [81] proposed an RL-based method for task sequence
+optimization in assembly, and Liu et al. [46] integrated RL
+for adaptive HRC. However, existing RL approaches often
+treat ergonomics as a soft constraint through the reward
+function, which may still result in fatigue violations and
+compromise worker safety.
+2.3. Safe reinforcement learning
+Reinforcement learning (RL) refers to the agent maxi-
+mizing long-term returns by interacting with an environment
+through state observations, actions, and reward signals [65].
+However, in safety-critical applications such as autonomous
+driving or industrial automation, ensuring the safety of ac-
+tions is paramount to prevent damage or catastrophic fail-
+ures. Safe RL extends vanilla RL by incorporating safety
+constraints during learning and/or deployment, often mod-
+eled as a constrained Markov decision process (CMDP) [4].
+CMDPs extend MDPs by incorporating constraints along-
+side rewards, enabling the optimal policy to maximize cumu-
+lative returns while ensuring expected costs remain within
+specified limits [5].
+Safe RL methods can be broadly categorized into
+constraint optimization-based and knowledge-utilization
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 3 of 27
+
+
+===== PAGE 4 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+approaches [26]. Optimization-based methods enforce safety
+by incorporating cost constraints into policy optimization
+[14, 2, 61, 64, 80, 45, 66]. Constrained policy optimization
+(CPO) [2] updates the policy within a trust-region constraint
+and performs a conjugate-gradient–based optimization
+step, thereby guaranteeing theoretically bounded policy
+improvement. However, this second-order mechanism is
+computationally expensive and highly sensitive to training
+noise in non-convex environments, leading to instability and
+eventual divergence during training. Lagrangian methods
+[61, 64] convert constrained problems into unconstrained
+ones using Lagrange multipliers, though they can be
+unstable. To improve this, Stooke et al. [64] introduced
+a PID Lagrangian approach, enhancing stability through
+control-theoretic
+adjustments.
+Penalty-based
+methods
+like IPO [45] add barrier functions to reduce violations.
+However, the above optimization-based methods may still
+violate constraints in the training and deployment stage,
+achieving approximate constraint satisfaction [26].
+Knowledge-utilization
+methods
+enhance
+safety
+by
+incorporating
+prior
+knowledge
+to
+guide
+exploration,
+avoiding risky actions more directly than constraint
+optimization-based
+approaches
+[24,
+54,
+33,
+75,
+3].
+Moldovan et al. [54] propose a safe exploration framework
+that optimizes within guaranteed safe policies, ensuring
+ergodicity with user-specified probability (𝛿-safe policies),
+ideal for non-ergodic physical systems. Alshiekh et al.
+[3] enforce safety specifications in reinforcement learning
+by synthesizing a “shield” that either filters or corrects
+the agent’s actions, ensuring safe policy learning while
+preserving convergence guarantees. Some are integrated
+with the Q-learning-based RL paradigm, selecting actions
+via the argmax of value functions without requiring an
+explicitly defined policy [32]. Kalweit et al. [33] propose
+deep constrained Q-learning, demonstrating that safety can
+be ensured in discrete policy extraction by restricting the
+action space during action-value maximization. Similarly,
+in offline RL, Xu et al. [75] propose constraints penalized
+q-learning, modifying the Bellman update to penalize
+unsafe state-action pairs, including those outside the
+data distribution. Knowledge-based methods in safe RL,
+well-suited for Q-learning frameworks, excel in the HRTPA
+problem in manufacturing, where discrete actions like
+allocating tasks to robots or humans are common [12].
+Overall, safe RL holds strong potential for enhancing
+worker safety, well-being, and operational efficiency in
+production environments.
+2.4. Filters for online parameter estimation
+Online state and parameter estimation is essential in
+fields such as signal processing, robotics, and control sys-
+tems, where systems evolve dynamically, and data arrive se-
+quentially [10, 27]. In such settings, some system parameters
+or states are either unknown or affected by measurement
+noise, requiring techniques to filter observations or estimate
+hidden variables.
+The Kalman filter (KF) provides optimal state estimation
+for linear systems with Gaussian noise, using system inputs
+and outputs to reduce noise effects recursively [74]. For
+nonlinear systems, the extended Kalman filter (EKF) applies
+linear approximations, while the unscented Kalman filter
+(UKF) uses unscented transformations for higher accuracy
+[11]. Particle filter (PF), based on Monte Carlo methods, ap-
+proximates posterior distributions using weighted particles,
+making them suitable for highly nonlinear, non-Gaussian
+tasks such as SLAM or fault diagnosis [27]. Despite their
+flexibility, PFs face challenges like particle degeneracy and
+high computational cost in high-dimensional spaces.
+In HRTPA for production, human fatigue-recovery mod-
+els are widely used. However, most approaches assume static
+or predefined hyperparameters, overlooking daily variability
+in human performance (see Section 2.1). To overcome this,
+this paper treats the model’s hyperparameters as initially
+inaccurate and employs real-time filtering to estimate them
+online, enabling more adaptive and responsive HRTPA in
+dynamic production environments.
+2.5. Research gaps
+In summary, the above literature review focuses on
+HRTPA in dynamic production environments, ergonomics,
+safe RL, and online parameter estimation. However, current
+research has the following limitations:
+(1) Current HRTPA research struggles to address in-
+accurate or unknown fatigue model parameters, typically
+assuming these coefficients are predefined and known a
+priori, while overlooking the inherent daily variability in hu-
+man fatigue sensitivity and individual differences in fatigue
+accumulation patterns.
+(2) Despite the progress of RL-based approaches for the
+HRTPA problem, they often neglect fatigue factors or face
+constraint violations when solving constrained problems,
+leading to excessive workload for humans in production.
+(3) While safe RL provides a principled framework for
+constraint-aware decision-making, prior works are rarely
+applied to HRTPA and seldom consider explicit ergonomic
+constraints or incorporate fatigue dynamics into the safety
+mechanism.
+3. Problem Formulation
+We present a description and formulation of the human-
+robot collaborative production problem. Figure 1 illustrates
+the process flow, state information, task dependency graph,
+and fatigue constraints, clarifying the formulation. We then
+detail task decomposition, entity states, the real-time fa-
+tigue model with its uncertain parameters for our HRTPA
+algorithm (see Assumption 3.1), dynamic task completion
+efficiency, and the objective function.
+3.1. Task decomposition
+Following prior work [12], we predefine production
+tasks and their manageable subtasks in alignment with the
+nature of the production line. The dependency graph and
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 4 of 27
+
+
+===== PAGE 5 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+1. task: the task being worked on
+2. subtask: the subtask being worked on
+3. progress: completion percentage          
+4. spatial: positional information
+State Explanation
+Entities state
+1. Machine/ material state: 
+{task, subtask, progress}
+3. Human state:
+{task, subtask, progress, spatial, fatigue}
+1
+3
+2
+4
+Task dependency graph
+Entities state
+Human/robot/machine/material
+Update
+Task 4
+Subtask 1
+Subtask 2
+n
+Task dependency graph 
+Sequentially subtasks
+1
+3
+2
+4
+State input:
+1. Entities state
+2. Task info
+3. Fatigue history
+task 1
+task 2
+Fatigue curve
+Constraint
+How to model 
+and predict?
+Past
+Future
+Fatigue-predictive
+HRTPA algorithm
+Update the env
+Output: task planning and allocation result
+Allocate the current task and responsible 
+entities without exceeding the fatigue threshold.
+Participant:
+Human
+Robot
+Machine
+2. Robot state: 
+{task, subtask, progress, spatial}
+5. fatigue: real-time fatigue 
+Environment
+Figure 1: Illustration of the real-time production process flow and state information.
+task decomposition are expressed as follows:
+= {ℎ, 𝑟, 𝑚} = {𝑡𝑎𝑠𝑘0, 𝑡𝑎𝑠𝑘1, ..., 𝑡𝑎𝑠𝑘𝑖, ...},
+= {ℎ, 𝑟, 𝑚} = {𝑠𝑢𝑏𝑡𝑎𝑠𝑘0, ..., 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖, ...},
+𝑡𝑎𝑠𝑘𝑖= {𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,0, 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,1, … , 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,𝑗, …},
+𝑡𝑎𝑠𝑘𝑖∈, 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,𝑗∈,
+(1)
+where defines tasks for humans, robots, and machines,
+with subsets ℎ, 𝑟, and 𝑚representing tasks for each
+entity, respectively. encompasses all subtasks, with ℎ,
+𝑟, and 𝑚. Each task 𝑡𝑎𝑠𝑘𝑖comprises a predefined, sequen-
+tial subtask sequence tailored to the production problem,
+providing detailed, step-by-step instructions for humans,
+robots, and machines.
+3.2. Entities state description
+Consider a production line involving groups of operator
+entities, including robots, humans, and machines, defined as
+follows:
+= {ℎ, 𝑟, 𝑚𝑎𝑐, 𝑚𝑎𝑡},
+(2)
+where denotes the set of all operator entities. The robot
+set is defined as 𝑟= {𝑒𝑟
+0, 𝑒𝑟
+1, ..., 𝑒𝑟
+𝑖, ...}, where 𝑒𝑟
+𝑖represents
+the 𝑖-th robot. Similarly, ℎdenotes the human set, 𝑚𝑎𝑐the
+machine set, and 𝑚𝑎𝑡the raw materials set. The entity states
+are defined as follows:
+𝐬ℎ
+𝑘,𝑡= {𝑡𝑎𝑠𝑘, 𝑠𝑢𝑏𝑡𝑎𝑠𝑘, 𝑝𝑟𝑜𝑔𝑟𝑒𝑠𝑠, 𝑠𝑝𝑎𝑡𝑖𝑎𝑙, 𝑓𝑎𝑡𝑖𝑔𝑢𝑒},
+𝐬𝑟
+𝑖,𝑡= {𝑡𝑎𝑠𝑘, 𝑠𝑢𝑏𝑡𝑎𝑠𝑘, 𝑝𝑟𝑜𝑔𝑟𝑒𝑠𝑠, 𝑠𝑝𝑎𝑡𝑖𝑎𝑙},
+𝐬𝑚𝑎𝑐
+𝑗,𝑡, 𝑜𝑟𝐬𝑚𝑎𝑡
+𝑚,𝑡= {𝑡𝑎𝑠𝑘, 𝑠𝑢𝑏𝑡𝑎𝑠𝑘, 𝑝𝑟𝑜𝑔𝑟𝑒𝑠𝑠},
+𝑤ℎ𝑒𝑟𝑒, 𝑠𝑝𝑎𝑡𝑖𝑎𝑙= {𝑥, 𝑦}, 𝑓𝑎𝑡𝑖𝑔𝑢𝑒= 𝐹𝑘,𝑡,
+𝑒ℎ
+𝑘, 𝑒𝑟
+𝑖, 𝑒𝑚𝑎𝑐
+𝑗
+, 𝑒𝑚𝑎𝑡
+𝑚
+∈, 𝑡𝑎𝑠𝑘∈, 𝑠𝑢𝑏𝑡𝑎𝑠𝑘∈,
+(3)
+where, at each time step 𝑡, 𝑡𝑎𝑠𝑘∈and 𝑠𝑢𝑏𝑡𝑎𝑠𝑘∈denote
+the current task and subtask allocated to the human, robot, or
+machine. The 𝑝𝑟𝑜𝑔𝑟𝑒𝑠𝑠variable reflects the task completion
+degree based on its nature, while 𝑠𝑝𝑎𝑡𝑖𝑎𝑙= {𝑥, 𝑦} provides
+real-time global position information for movable humans or
+robots. Notably, the human fatigue state, a critical factor, is
+also considered. Following prior work [46, 8], we employ a
+fatigue-recovery model to simulate human fatigue changes
+during production, with further details provided in the later
+section.
+3.3. Environment setup for human fatigue and
+task completion time
+To reflect the dynamic nature of the production pro-
+cess, during the problem formulation stage, we introduce
+the modeling of human physical fatigue and its effect on
+varying task processing efficiency. We then demonstrate how
+task completion time is calculated under real-time efficiency
+changes.
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 5 of 27
+
+
+===== PAGE 6 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+In the context of work, time is divided into working and
+resting periods. Fatigue accumulates exponentially during
+work, while the effectiveness of rest decreases exponentially
+over time, as noted in prior research [37]. To simulate
+worker fatigue accurately, we adopt the fatigue-recovery ex-
+ponential model from earlier studies [31]. The mathematical
+formulations are presented in Eq. 4.
+𝐹𝑘,𝑡=
+⎧
+⎪
+⎨
+⎪⎩
+𝐹𝑘,𝑡−1𝑒−𝜇𝑘,
+if resting,
+𝐹𝑘,𝑡−1 + (1 −𝐹𝑘,𝑡−1)(1 −𝑒−𝜆𝑘,𝑖𝑗),
+if doing 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,𝑗.
+𝑒ℎ
+𝑘∈ℎ, 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,𝑗∈𝑡𝑎𝑠𝑘𝑖,
+(4)
+where 𝐹𝑘,𝑡represents the real-time fatigue of the 𝑘-th hu-
+man at time 𝑡, 𝑒ℎ
+𝑘∈ℎ. The parameter 𝜇𝑘influences the
+recovery speed, while 𝜆𝑘,𝑖𝑗affects the fatigue accumulation
+rate, varying with each 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,𝑗∈𝑡𝑎𝑠𝑘𝑖. During the rest
+stage, the human is assumed to remain at their previous
+location without moving, waiting for the next task allocation.
+Once a new task is received, the human transitions to the
+working state. If no task is allocated, the human’s fatigue
+state is updated and naturally decreases according to the
+fatigue recovery model described above. Since production
+performance may vary daily for the same human, poten-
+tially impacting recovery (𝜇𝑘) or fatigue accumulation rates
+(𝜆𝑘,𝑖𝑗), we adopt the following assumption:
+Assumption 3.1. We assume that the hyperparameters of
+the human fatigue model are initially inaccurate for the
+HRTPA algorithm and require real-time estimation during
+the production process.
+The above assumption poses challenges for fatigue-
+predictive HRTPA, as the fatigue model parameters are
+initially partially unknown for the algorithm. We introduce
+uncertainty by initializing the parameters from the following
+Gaussian distribution noise:
+𝜆𝑖𝑛𝑖𝑡= 𝜆𝑡𝑟𝑢𝑒⋅(1 + 𝑟𝑎𝑛𝑑𝑜𝑚𝑛𝑒𝑠𝑠),
+𝜇𝑖𝑛𝑖𝑡= 𝜇𝑡𝑟𝑢𝑒⋅(1 + 𝑟𝑎𝑛𝑑𝑜𝑚𝑛𝑒𝑠𝑠),
+𝑟𝑎𝑛𝑑𝑜𝑚𝑛𝑒𝑠𝑠∼(0, 𝜎𝑖𝑛𝑖𝑡),
+(5)
+where 𝜆𝑖𝑛𝑖𝑡and 𝜇𝑖𝑛𝑖𝑡are the initial parameter values known
+to the algorithm, and 𝜎𝑖𝑛𝑖𝑡controls the degree of initial
+parameter uncertainty.
+In the simulation, human fatigue evolves according to
+Eq. 4 using the ground-truth parameters (𝜇, 𝜆). In contrast,
+the online algorithm has access only to fatigue measure-
+ments and lacks knowledge of the true model parameters ac-
+cording to Eq. 5, thereby requiring online parameter estima-
+tion to improve long-term, task-level fatigue prediction. We
+describe how our approach addresses this challenge in Sec.
+4. Meanwhile, worker production efficiency is influenced by
+fatigue, as noted in prior work [46, 31], as follows:
+𝜏𝑘,𝑖,𝑗,𝑡= 𝜏𝑖,𝑗(1 + 𝛿𝑒𝑓𝑓(𝑙𝑛(1 + 𝐹𝑘,𝑡))),
+𝑒𝑓𝑓𝑖𝑐𝑖𝑒𝑛𝑐𝑦𝑘,𝑖,𝑗,𝑡= 1∕𝜏𝑘,𝑖,𝑗,𝑡,
+𝑒ℎ
+𝑘∈ℎ, 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,𝑗∈𝑡𝑎𝑠𝑘𝑖,
+(6)
+in which 𝜏𝑖,𝑗represents the predefined static completion
+time of 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,𝑗, and 𝛿𝑒𝑓𝑓is a hyperparameter controlling
+the time change scale related to human fatigue. However,
+the computation of the completion time for the k-th human
+performing 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,𝑗, denoted 𝜏𝑘,𝑖,𝑗,𝑡assumes static fatigue
+during the execution of 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,𝑗, which conflicts with the
+real-time fatigue variation setting. Thus, we compute the
+real-time efficiency 𝑒𝑓𝑓𝑖𝑐𝑖𝑒𝑛𝑐𝑦𝑘,𝑖,𝑗,𝑡for 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,𝑗, reflect-
+ing the completion degree per time step. Human fatigue and
+production efficiency are updated in real-time, increasing
+the completion degree (0 for start, 1 for finished) by sum-
+ming 𝑒𝑓𝑓𝑖𝑐𝑖𝑒𝑛𝑐𝑦𝑘,𝑖,𝑗,𝑡multiplied by unit time until reaching
+finished. Through the above formulas and Assumption 3.1,
+we account for the impact of fatigue change on real-time
+production efficiency and the uncertainty in task completion
+time.
+Eq. 6 shows fatigue accumulation directly influences
+real-time production efficiency by inducing variability in
+human performance, which in turn affects subtask comple-
+tion times (𝑠𝑢𝑏𝑡𝑖𝑚𝑒𝑖,𝑗). To further account for stochastic
+fluctuations in subtask completion time during the produc-
+tion process, we introduce additional randomness terms into
+the 𝑠𝑢𝑏𝑡𝑖𝑚𝑒𝑖,𝑗. Specifically, the actual execution time of
+𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,𝑗is modeled as:
+𝑠𝑢𝑏𝑡𝑖𝑚𝑒𝑟𝑎𝑛𝑑𝑜𝑚,𝑖,𝑗=
+𝑠𝑢𝑏𝑡𝑖𝑚𝑒𝑖,𝑗⋅(1 + 𝑟𝑎𝑛𝑑𝑜𝑚𝑛𝑒𝑠𝑠) + 𝑡𝑡𝑟𝑎𝑣𝑒𝑙,𝑖,𝑗,
+𝑟𝑎𝑛𝑑𝑜𝑚𝑛𝑒𝑠𝑠∼(0, 𝜎𝑡𝑖𝑚𝑒),
+(7)
+where 𝑠𝑢𝑏𝑡𝑖𝑚𝑒𝑟𝑎𝑛𝑑𝑜𝑚,𝑖,𝑗captures processing-time variability
+(e.g., minor disturbances, traveling time), 𝜎𝑡𝑖𝑚𝑒is the hy-
+perparameter. 𝑡𝑡𝑟𝑎𝑣𝑒𝑙,𝑖,𝑗represents the travel time spent for
+the human and/or robot to reach and return for the subtask,
+which is challenging to predict deterministically.
+3.4. Real-time state and objective function
+The real-time state of the production process at time step
+𝑡is defined as:
+𝐬𝑡= {𝐬ℎ
+𝑡, 𝐬𝑟
+𝑡, 𝐬𝑚𝑎𝑐
+𝑡
+, 𝐬𝑚𝑎𝑡
+𝑡
+, , , 𝐺𝑟𝑖𝑑_𝑀𝑎𝑝},
+(8)
+where state 𝐬𝑡encompasses the states of available operator
+entities (humans, robots, machines, as defined in Sec. 3.2)
+and task-related information (Sec. 3.1). The 𝐺𝑟𝑖𝑑_𝑀𝑎𝑝is
+an occupancy grid map derived from the raw environment,
+classifying each grid cell as free space or occupied (indi-
+cating obstacles). We aim to design an HRTPA algorithm,
+taking state 𝐬𝑡as input and producing a result while adhering
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 6 of 27
+
+
+===== PAGE 7 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+PF-CD3Q: Fatigue-predictive HRTPA algorithm by safe RL and online filtering
+task 1
+task 2
+1. Fatigue curve Constraint
+3. Predict fatigue change with    
+respect to different task 
+Past
+Future
+Fatigue history
+Particle filter
+2. Online updating parameters (μ, λ) of fatigue-recovery model
+4. Get safe task action set 
+safe
+space
+action space
+5. CD3Q
+Fatigue-recovery model
+1
+3
+2
+4
+Task dependency graph 
+6. Neural network (θ) design
+Transformer-based architecture
+Task decision at time t
+=
+7. Path-planning and fatigue-aware based task allocation 
+Corresponding sequentially subtasks of
+Allocate task to the nearest available human and/or robot
+Task-level fatigue prediction of humans
+Final output: TPA 
+result
+Target area A
+B
+C
+Human-robot position in graph map
+Close and
+available 
+Far and 
+overwork
+{
+and/or 
+}
+Final
+Step 1: Particle filter-based task-level fatigue prediction
+Step 2: Safe RL for real-time task planning
+Step 3: Spatial and fatigue-predictive task allocation
+Figure 2: Illustration of our method PF-CD3Q: fatigue-predictive HRTPA algorithm with CD3Q and online filtering.
+to fatigue constraints:
+𝑎𝑡= HRTPA(𝑠𝑡),
+𝑤ℎ𝑒𝑟𝑒𝑎𝑡= {𝑡𝑎𝑠𝑘𝑖, 𝑒ℎ
+𝑚𝑎𝑛𝑑∕𝑜𝑟𝑒𝑟
+𝑛},
+𝑠.𝑡. ∀𝐹𝑘,𝑡, 𝐹𝑘,𝑡< 𝑑𝑘,
+𝑡𝑎𝑠𝑘𝑖∈, 𝑒ℎ
+𝑘, 𝑒ℎ
+𝑚∈ℎ, 𝑒𝑟
+𝑛∈𝑟,
+(9)
+where 𝑎𝑡specifies the current 𝑡𝑎𝑠𝑘𝑖, its sequential sub-
+tasks, and the allocated human and/or robot entities 𝑒ℎ
+𝑘, 𝑒𝑟
+𝑚.
+The action 𝑎𝑡should be selected to ensure that the fatigue
+threshold 𝑑𝑘for any human is not exceeded. Subsequently,
+𝑎𝑡guides each entity, particularly humans and robots, to
+perform suitable tasks and subtasks at each time step until
+completion, defined as:
+{
+𝑠𝑡+1 = 𝐸𝑛𝑣(𝑎𝑡), if not end,
+𝑚𝑎𝑘𝑒𝑠𝑝𝑎𝑛= 𝑡, if end.
+(10)
+The production environment 𝐸𝑛𝑣updates based on 𝑎𝑡,
+generating a sequence of allocations: 𝑎0, 𝑎1, … , 𝑎𝑡. The ob-
+jective is to minimize the total production time, denoted as
+𝑚𝑎𝑘𝑒𝑠𝑝𝑎𝑛, while respecting fatigue constraints.
+4. Research method
+To address challenges in Sec. 1 and the problem in Sec.
+3, this section presents PF-CD3Q, combining constrained
+dueling double deep Q-learning (CD3Q) with the particle
+filter (PF) for fatigue prediction, as depicted in Fig. 2. First,
+the filter tackles Assumption 3.1 by estimating task-level
+fatigue changes online. Second, using these predictions, it
+generates a safe task-level action set, which outputs task
+planning decision (𝑡𝑎𝑠𝑘𝑖∈) prioritizing the task to be
+done at time step 𝑡. After task output and fatigue prediction,
+the algorithm employs path-planning-based task allocation,
+allocating the nearest fatigue-acceptable available human
+and/or robot (𝑒ℎ
+𝑚and/or 𝑒𝑟
+𝑛, where 𝑒ℎ
+𝑚∈ℎ, 𝑒𝑟
+𝑛∈𝑟) to
+execute the task’s predefined sequential subtasks. In this sec-
+tion, we detail our PF-CD3Q algorithm, covering the particle
+filter, safe RL formulation, and a transformer architecture for
+handling heterogeneous state information.
+4.1. Particle filter-based task-level fatigue
+prediction
+Assumption 3.1 highlights the challenge of initially inac-
+curate hyperparameters in the human fatigue model, requir-
+ing real-time estimation during production. To address this,
+we develop particle filter-based online parameter estimators,
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 7 of 27
+
+
+===== PAGE 8 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+Algorithm 1: PF-CD3Q: fatigue-predictive HRTPA algorithm by safe RL and online filtering.
+input : – empty prioritized replay buffer; 𝜃– behavior network, 𝜃– target network;
+input : 𝑁𝑟– replay buffer maximum size; 𝑁𝑏– training batch size; 𝑁– target network replacement freq;
+input : 𝑁𝑡𝑟𝑎𝑖𝑛– start training step; 𝑁𝑝– buffer replay period;
+input : 𝐻– time horizon of one episode, 𝑀– episodes maximum size, 𝑡𝑡𝑜𝑡𝑎𝑙total steps = 0;
+for episode ∈{1, 2, … , 𝑀} do
+time step t = 0; while episode is not end do
+Task planning: observe 𝑠𝑡and choose action 𝑎𝑡∼𝜋𝜃, 𝑎𝑡= {𝑡𝑎𝑠𝑘𝑖};
+// State and task description in Sec. 3
+Task allocation: expand action 𝑎𝑡= {𝑡𝑎𝑠𝑘𝑖, 𝑒ℎ
+𝑘and/or 𝑒𝑟
+𝑛} in Sec. 4.2.4;
+Sample next state 𝑠𝑡+1 from environment given (𝑠𝑡, 𝑎𝑡) and receive reward 𝑟𝑡+1;
+Update parameters of the human fatigue model, generate the safe action set 𝐴𝑠𝑎𝑓𝑒and the safe human set 𝐸𝑠𝑎𝑓𝑒using
+Algorithm 3;
+Add transition tuple (𝑠𝑡, 𝑎𝑡, 𝑠𝑡+1, 𝑟𝑡+1) to ′, set 𝑡←𝑡+ 1 ;
+if 𝑡𝑡𝑜𝑡𝑎𝑙< 𝑁𝑡𝑟𝑎𝑖𝑛and (𝑡𝑡𝑜𝑡𝑎𝑙mod (𝑁𝑝−1)) ≢0 : continue;
+for 𝑖∈{0, 1, … , 𝑁𝑝−1} do
+Sample a minibatch of 𝑁𝑏tuples (𝑠𝑡, 𝑎𝑡, 𝑠𝑡+1, 𝑟𝑡+1) ∼,
+Update behavior work 𝜃by doing a gradient descent step with loss:
+𝑦𝑡= 𝑟𝑡+1 + 𝛾𝑞𝑐
+𝜃−(𝑠𝑡+1, arg max𝑎′∈𝐴𝑠𝑎𝑓𝑒(𝑠𝑡+1) 𝑞𝑐
+𝜃(𝑠𝑡+1, 𝑎′)),
+𝐿(𝜃) = 𝔼(𝑠𝑡,𝑎𝑡,𝑠𝑡+1,𝑟𝑡+1)∼
+[(𝛼(𝑦𝑡−𝑞𝑐
+𝜃(𝑠𝑡, 𝑎𝑡)))2]
+, ;
+// Loss function in Sec. 4.2.2
+Replace target network 𝜃←𝜃every 𝑁steps;
+detailed in Algorithm 3, it estimates and updates parameters
+𝜇𝑘,𝑡and 𝜆𝑘,𝑖,𝑗,𝑡in real-time for the fatigue and recovery
+model, where 𝜇𝑘,𝑡is the recovery coefficient for the 𝑘-th
+human (𝑒ℎ
+𝑘∈ℎ), and 𝜆𝑘,𝑖,𝑗,𝑡is the coefficient for the 𝑘-th
+human performing 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,𝑗∈𝑡𝑎𝑠𝑘𝑖. The process starts by
+initializing particles {𝜇𝑘,𝑛,𝑡}
+𝑁𝑝
+𝑛=1 or {𝜆𝑘,𝑖,𝑗,𝑛,𝑡}
+𝑁𝑝
+𝑛=1 and weights
+{𝑤𝑘,𝑛,𝑡= 1∕𝑁𝑝}
+𝑁𝑝
+𝑛=1 (for recovery) or {𝑤′
+𝑘,𝑛,𝑖,𝑗,𝑡= 1∕𝑁𝑝}
+𝑁𝑝
+𝑛=1
+(for 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,𝑗). Specifically, we first initialize the inaccurate
+parameters (𝜆initial,𝑘,𝑖,𝑗, 𝜇initial,𝑘) by injecting random noise
+into their ground-truth values following Eq. 5. Next, for each
+parameter, we generate an initial set of particles within a
+symmetric percentage range around its value. The upper and
+lower bounds for sampling are defined as:
+𝑢𝑝𝑝𝑒𝑟_𝑏𝑜𝑢𝑛𝑑= 𝑝𝑎𝑟𝑎𝑚⋅(1 + 𝜎𝑝𝑎𝑟𝑡𝑖𝑐𝑙𝑒),
+𝑙𝑜𝑤𝑒𝑟_𝑏𝑜𝑢𝑛𝑑= 𝑝𝑎𝑟𝑎𝑚⋅(1 + 𝜎𝑝𝑎𝑟𝑡𝑖𝑐𝑙𝑒),
+Initialize particles ∶{𝜇𝑘,𝑛,𝑡}
+𝑁𝑝
+𝑛=1, 𝑜𝑟{𝜆𝑘,𝑖,𝑗,𝑛,𝑡}
+𝑁𝑝
+𝑛=1
+∼(𝑙𝑜𝑤_𝑏𝑜𝑢𝑛𝑑, 𝑢𝑝𝑝𝑒𝑟_𝑏𝑜𝑢𝑛𝑑),
+𝑒ℎ
+𝑘∈ℎ, 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,𝑗∈𝑡𝑎𝑠𝑘𝑖, 𝑝𝑎𝑟𝑎𝑚∈{𝜇𝑘, 𝜆𝑘,𝑖,𝑗},
+(11)
+where each noise-initialized parameter corresponds either
+to 𝜇initial,𝑘for the k-th human or to 𝜆initial,𝑘,𝑖,𝑗for the k-
+th human performing 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,𝑗within 𝑡𝑎𝑠𝑘𝑖. The resulting
+𝑢𝑝𝑝𝑒𝑟_𝑏𝑜𝑢𝑛𝑑and 𝑙𝑜𝑤𝑒𝑟_𝑏𝑜𝑢𝑛𝑑define a symmetric interval
+centered on the parameter value, from which particles are
+uniformly sampled. Here, 𝑁𝑝denotes the number of parti-
+cles per parameter, and 𝜎𝑝𝑎𝑟𝑡𝑖𝑐𝑙𝑒is the global hyperparameter.
+As production progresses, we receive ground-truth fa-
+tigue values with added Gaussian measurement noise: 𝑧𝑘,𝑡∼
+(𝐹𝑘,𝑡, 𝜎2
+𝑚). The filters use fatigue measurements to up-
+date particle weights via a likelihood function, which are
+subsequently normalized and resampled when the effective
+sample size falls below a predefined threshold.
+Algorithm 2: Subtask completion time consider-
+ing fatigue for human 𝑒ℎ
+𝑘∈ℎ
+input : 𝜏𝑖,𝑗– static completion time of 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,𝑗;
+input : 𝑡– current time step t;
+input : 𝐹𝑘,𝑡– current fatigue for human 𝑒ℎ
+𝑘∈ℎ;
+input : 𝜇𝑘,𝑡, 𝜆𝑘,𝑖,𝑗,𝑡– estimated parameters for fatigue
+model;
+output: 𝑠𝑢𝑏𝑡𝑖𝑚𝑒𝑘,𝑖,𝑗,𝑡– subtask completion time;
+output: 𝐹𝑘,𝑡+𝑠𝑢𝑏𝑡𝑖𝑚𝑒𝑘,𝑖,𝑗,𝑡– subtask-level fatigue, excluding
+travel and stochastic fluctuations detailed in Eq.7;
+Initialize subprogress = 0;
+// subtask completion degree
+Initialize 𝑠𝑢𝑏𝑡𝑖𝑚𝑒𝑘,𝑖,𝑗,𝑡= 0 while subprogress < 1 do
+% 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,𝑗remains unfinished.
+Update fatigue 𝐹𝑘,𝑡using Eq. 4 and 𝜇𝑘,𝑡, 𝜆𝑘,𝑖,𝑗,𝑡;
+Update 𝑒𝑓𝑓𝑖𝑐𝑖𝑒𝑛𝑐𝑦𝑘,𝑖,𝑗,𝑡using Eq. 6;
+subprogress += 𝑒𝑓𝑓𝑖𝑐𝑖𝑒𝑛𝑐𝑦𝑘,𝑖,𝑗,𝑡*1;
+t += 1, 𝑠𝑢𝑏𝑡𝑖𝑚𝑒𝑘,𝑖,𝑗,𝑡+=1;
+Within the second step of Algorithm 3, the 𝑠𝑢𝑏𝑡𝑖𝑚𝑒𝑘,𝑖,𝑗,𝑡
+of each subtask is computed using Algorithm 2. This yields
+the prediction of the resulting fatigue increment, and the
+human fatigue state 𝐹𝑘,𝑡+𝑠𝑢𝑏𝑡𝑖𝑚𝑒𝑘,𝑖,𝑗,𝑡. The overall ideal com-
+pletion time of 𝑡𝑎𝑠𝑘𝑖, 𝜏𝑘,𝑖,𝑡, is then obtained as following:
+𝜏𝑘,𝑖,𝑡=
+∑
+{𝑠𝑢𝑏𝑡𝑖𝑚𝑒𝑘,𝑖,0,𝑡, … , 𝑠𝑢𝑏𝑡𝑖𝑚𝑒𝑘,𝑖,𝑗,𝑡, …}. (12)
+The above equation omits several dynamic effects that are
+difficult to model deterministically, such as travel time be-
+tween workstations and stochastic fluctuations in subtask
+execution, which were mentioned in Eq.7. Nevertheless, it
+enable predicts task-level completion time 𝜏𝑘,𝑖,𝑡for each
+𝑡𝑎𝑠𝑘𝑖∈ℎand corresponding fatigue changes 𝐹𝑘,𝑖,𝑡+𝜏𝑘,𝑖,𝑡.
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 8 of 27
+
+
+===== PAGE 9 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+Algorithm 3: Particle filter-based task-level fatigue prediction.
+input : Task information: 𝑡𝑎𝑠𝑘𝑖∈ℎ, 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,𝑗∈𝑡𝑎𝑠𝑘𝑖– See Sec. 3.1 for more task details
+input : 𝑁𝑝– number of particles; 𝜎𝑚– measurement noise
+output: 𝜇𝑘,𝑡, 𝜆𝑘,𝑖,𝑗,𝑡– estimated parameters for recovery and 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,𝑗, See Sec. 3.3 for fatigue model details
+output: 𝜏𝑘,𝑖,𝑡– completion time of 𝑡𝑎𝑠𝑘𝑖; 𝐹𝑘,𝑖,𝑡+𝜏𝑘,𝑖,𝑡– task-level fatigue prediction
+Initialize time t = 0;
+while process is not end do
+##### Step one: estimated parameters of fatigue model
+𝐹𝑘,𝑡– fatigue of the 𝑘-th human, where 𝑒ℎ
+𝑘∈ℎ, fatigue is updated according to Eq. 4 using the ground-truth values of the
+fatigue model parameters;
+Receive humans fatigue measurements 𝑧𝑘,𝑡∼(𝐹𝑘,𝑡, 𝜎2
+𝑚) for 𝐹𝑘,𝑡, and states information (e.g., resting or doing 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,𝑗);
+if the particles of corresponding parameters 𝜇𝑘,𝑡or 𝜆𝑘,𝑖,𝑗,𝑡is not initialized then:
+Initialize uncertain parameters (𝜆initial,𝑘,𝑖,𝑗, 𝜇initial,𝑘) by adding randomness to the ground-truth values according to Eq. 5;
+Initialize particles {𝜇𝑘,𝑛,𝑡}
+𝑁𝑝
+𝑛=1, 𝑜𝑟{𝜆𝑘,𝑖,𝑗,𝑛,𝑡}
+𝑁𝑝
+𝑛=1 are initialized by sampling from a normal distribution, as detailed in Eq. 11);
+Initialize weights {𝑤𝑘,𝑛,𝑡= 1∕𝑁𝑝}
+𝑁𝑝
+𝑛=1 (for recovery), or {𝑤′
+𝑘,𝑛,𝑖,𝑗,𝑡= 1∕𝑁𝑝}
+𝑁𝑝
+𝑛=1 (for doing 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,𝑗), set corresponding
+initial prediction 𝐹pred,k,t = 𝑧𝑘,𝑡;
+else:
+Compute predictions 𝐹pred,k,n,t for each particle (𝜇𝑘,𝑛,𝑡or 𝜆𝑘,𝑖,𝑗,𝑛,𝑡) by propagating the previous prediction 𝐹pred,𝑘,𝑡−1 through
+the fatigue dynamics (Eq.4) using the estimated parameters;
+Update weights using the likelihood function: 𝑤𝑛,𝑡= 𝑤𝑛,𝑡−1 ⋅exp
+(
+−
+(𝑧(𝑡)−𝐹pred,𝑘,𝑛,𝑡)2
+2𝜎2𝑚
+)
+, where 𝑤𝑛,𝑡can be recovery weights
+𝑤𝑘,𝑛,𝑡or subtask weights 𝑤′
+𝑘,𝑛,𝑖,𝑗,𝑡;
+Normalize weights: 𝑤𝑛,𝑡= 𝑤𝑛,𝑡∕∑𝑁𝑝
+𝑚=1 𝑤𝑚,𝑡
+Compute effective sample size: 𝑁eff = 1∕∑𝑁𝑝
+𝑛=1 𝑤2
+𝑛,𝑡
+if 𝑁eff = 1 < 𝑁𝑝∕2, then:
+Resample: systematically resample particles based on cumulative weights.
+Estimate fatigue parameters 𝜇𝑘,𝑡= ∑𝑁𝑝
+𝑛=1 𝑤𝑘,𝑛,𝑡⋅𝜇𝑘,𝑛,𝑡, 𝜆𝑘,𝑖,𝑗,𝑡= ∑𝑁𝑝
+𝑖=𝑛𝑤𝑘,𝑛,𝑖,𝑗,𝑡⋅𝜆𝑘,𝑖,𝑗,𝑛,𝑡
+Estimate and store fatigue prediction 𝐹pred,k,t using estimated parameters (𝜇𝑘,𝑡or 𝜆𝑘,𝑖,𝑗,𝑡), last prediction 𝐹pred,k,t-1, and fatigue
+model Eq. 4;
+##### Step two: estimated 𝜏𝑘,𝑖,𝑡– completion time of human 𝑒ℎ
+𝑘to perform 𝑡𝑎𝑠𝑘𝑖; 𝐹𝑘,𝑖,𝑡+𝜏𝑘,𝑖,𝑡– task-level fatigue prediction
+for each human 𝑒ℎ
+𝑘∈ℎdo
+##### Compute fatigue change for human 𝑒ℎ
+𝑘when doing 𝑡𝑎𝑠𝑘𝑖
+for each 𝑡𝑎𝑠𝑘𝑖∈ℎdo
+for each 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,𝑗∈𝑡𝑎𝑠𝑘𝑖= {𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,0, 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,1, … , 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,𝑗, …} do
+Given outputs in step one: parameters 𝜇𝑘,𝑡and 𝜆𝑘,𝑖,𝑗,𝑡for k-th human in doing 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,𝑗;
+Compute subtask completion time 𝑠𝑢𝑏𝑡𝑖𝑚𝑒𝑘,𝑖,𝑗,𝑡and subtask-level fatigue change 𝐹𝑘,𝑡+𝑠𝑢𝑏𝑡𝑖𝑚𝑒𝑘,𝑖,𝑗,𝑡using Algorithm
+2;
+Compute task completion time 𝜏𝑘,𝑖,𝑡and task-level fatigue change 𝐹𝑘,𝑖,𝑡+𝜏𝑘,𝑖,𝑡using Eq. 12 and Algorithm 2;
+Check fatigue violation given fatigue 𝐹𝑘,𝑖,𝑡+𝜏𝑘,𝑖,𝑡;
+Generate safe action set 𝐴𝑠𝑎𝑓𝑒and safe human set 𝐸𝑠𝑎𝑓𝑒;
+Furthermore, the task-level fatigue prediction enables the
+generation of a safe human set 𝐸𝑠𝑎𝑓𝑒and action set 𝐴𝑠𝑎𝑓𝑒
+that comply with fatigue constraints for PF-CD3Q decision-
+making. The safe human set is defined as:
+𝐸𝑠𝑎𝑓𝑒= {𝐸𝑠𝑎𝑓𝑒
+0
+, … , 𝐸𝑠𝑎𝑓𝑒
+𝑘
+, …},
+𝐸𝑠𝑎𝑓𝑒
+𝑘
+= {𝑡𝑎𝑠𝑘0, … , 𝑡𝑎𝑠𝑘𝑖, …},
+𝑒ℎ
+𝑘∈ℎ, 𝑡𝑎𝑠𝑘𝑖∈ℎ,
+(13)
+where 𝐸𝑠𝑎𝑓𝑒
+𝑘
+comprises tasks the 𝑘-th human can undertake
+without violating fatigue constraints. Additionally, we gen-
+erate a safe action set that includes task decisions feasible for
+at least one human entity:
+𝐴𝑠𝑎𝑓𝑒= {𝑡𝑎𝑠𝑘0, … , 𝑡𝑎𝑠𝑘𝑗, …}, 𝑡𝑎𝑠𝑘𝑗∈ℎ,
+(14)
+where 𝑡𝑎𝑠𝑘𝑗denotes a verified, available task performable
+without breaching fatigue limits.
+4.2. Particle filter with CD3Q for task planning
+and allocation
+As
+the
+PF-CD3Q
+outputs
+action
+𝑎𝑡
+=
+{𝑡𝑎𝑠𝑘𝑖, 𝑒ℎ
+𝑘and/or 𝑒𝑟
+𝑛} (see Sec. 3.4), it follows a two-step
+process: first prioritizing the task to be executed, then
+allocating it to a human and/or robot. Both steps rely
+on task-level fatigue predictions. Initially, the safe RL
+strategy determines the first step, outputting 𝑎𝑡= {𝑡𝑎𝑠𝑘𝑖}.
+Subsequently, spatial-aware and fatigue-predictive task
+allocation expands the action, allocating suitable human
+and/or robot entities {𝑒ℎ
+𝑘and/or 𝑒𝑟
+𝑛} to complete the task.
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 9 of 27
+
+
+===== PAGE 10 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+4.2.1. Constrained Markov decision process
+We model the HRTPA process in production using a
+Constrained Markov Decision Process (CMDP) [4], which
+extends MDP by integrating constraints with rewards to
+optimize cumulative returns while keeping expected costs
+within specified limits [5]. This is represented by the tuple
+𝐺= ⟨, , 𝑇, , 𝜌0, 𝛾, 𝐻, 0, … , 𝑘⟩, where is the state
+space, is the finite action space, is the reward function,
+𝑇is the state transition function, 𝜌0 is the initial state distri-
+bution, 𝛾∈(0, 1] is the discount factor, and 𝐻is the time
+horizon. The CMDP incorporates auxiliary cost functions
+0, … , 𝑘for 𝑒ℎ
+𝑘∈ℎ(where ℎis the human entity set,
+detailed in Sec. 3.2), where each 𝐶𝑘∶××→ℝmaps
+transition tuples to the fatigue-related cost guiding the agent
+to avoid violating fatigue constraints.
+At each time step 𝑡, the agent observes state 𝑠𝑡∈,
+receives reward 𝑟𝑡∈and costs 𝑐𝑘,𝑡∈𝑘, and selects
+action 𝑎𝑡∈. The environment transitions to 𝑠𝑡+1 via
+𝑇(𝑠𝑡, 𝑎𝑡, 𝑠𝑡+1) = 𝑃[𝑠𝑡+1|𝑠𝑡, 𝑎𝑡], where 𝑇∶××→[0, 1]
+defines the transition probability. The agent then receives
+𝑟𝑡+1 and 𝑐𝑘,𝑡+1 for the new state. The performance objective
+consists of the expected reward and cost returns:
+max
+𝜋𝜃𝐽(𝜋𝜃),
+s.t.
+∀𝐽𝐶𝑘(𝜋𝜃) ≤𝑑𝑘,
+𝐽(𝜋𝜃) = 𝔼𝜋
+[ 𝐻
+∑
+𝑛=0
+𝛾𝑛𝑟𝑡+𝑛+1
+]
+,
+𝐽𝐶𝑘(𝜋𝜃) = 𝔼𝜋
+[ 𝐻
+∑
+𝑛=0
+𝛾𝑛𝑐𝑘,𝑡+𝑛+1
+]
+,
+(15)
+where 𝑑0, … , 𝑑𝑘are the constraint limits, and 𝜃is the neural
+network of the policy.
+However, for the fatigue-constrained HRTPA problem in
+production, instead of designing cost functions and calculat-
+ing the expected cost return 𝐽𝐶𝑘(𝜋𝜃), we directly utilize 𝐹𝑘,𝑡
+for 𝑒ℎ
+𝑘∈ℎ, where 𝐹𝑘,𝑡is the fatigue of the 𝑘-th human at
+time step 𝑡(see Sec. 3.2). The performance objective in Eq.
+15 is thus transformed to:
+max
+𝜋𝜃𝐽(𝜋𝜃),
+s.t.
+∀𝑒ℎ
+𝑘∈ℎ, 𝐹𝑘,𝑡< 𝑑𝑘,
+(16)
+For Eq. 10, the emphasis on cumulative expected costs
+necessitates a carefully designed cost function to guide agent
+learning, with its effectiveness critically influencing fatigue
+constraint performance. Conversely, Eq. 16 employs fatigue
+directly as a constraint, aligning more effectively with the
+objective in Sec. 3.4 by ensuring human fatigue stays below
+threshold 𝑑𝑘at each time step.
+4.2.2. Objective function and loss
+As outlined in Eq. 16, the objective is to maximize
+the expected return while adhering to fatigue constraints.
+Following the Q-learning paradigm, which employs the off-
+policy Temporal Difference (TD) control [73], defined by:
+𝑞(𝑠𝑡, 𝑎𝑡) ←(1 −𝛼)𝑞(𝑠𝑡, 𝑎𝑡)
+(17)
++ 𝛼
+[
+𝑟𝑡+1 + 𝛾arg max
+𝑎′
+𝑞(𝑠𝑡+1, 𝑎′))
+]
+.
+(18)
+This represents the TD update rule for the Q-value 𝑞(𝑠𝑡, 𝑎𝑡)
+at time 𝑡, combing the previous Q-value (weighted by 1 −
+𝛼) with 𝛼times the TD target. The target includes the
+reward 𝑟𝑡+1 plus a discounted future value, based on the
+maximum Q-value arg max𝑎′ 𝑞(𝑠𝑡+1, 𝑎′) over actions 𝑎′ in
+state 𝑠𝑡+1, scaled by 𝛾. We then define the update rule for the
+constrained Q-value 𝑞𝑐
+𝜃(𝑠𝑡, 𝑎𝑡), parameterized by the neural
+network 𝜃:
+𝑞𝑐
+𝜃(𝑠𝑡, 𝑎𝑡) ←(1 −𝛼)𝑞𝑐
+𝜃(𝑠𝑡, 𝑎𝑡) + 𝛼𝑦𝑡,
+𝑦𝑡= 𝑟𝑡+1 + 𝛾𝑞𝑐
+𝜃−(𝑠𝑡+1,
+arg max
+𝑎′∈𝐴𝑠𝑎𝑓𝑒(𝑠𝑡+1)
+𝑞𝑐
+𝜃(𝑠𝑡+1, 𝑎′)), (19)
+where the TD target 𝑦𝑡incorporates the double Q-learning
+concept [67], reducing overestimation by decoupling action
+selection and evaluation in the max operation. It is computed
+as the reward 𝑟𝑡+1 plus a discounted Q-value from the
+target network 𝑞𝑐
+𝜃−, evaluated at the next state 𝑠𝑡+1 using
+the action 𝑎′ that maximizes 𝑞𝑐
+𝜃(𝑠𝑡+1, 𝑎′) within the safe
+action set 𝐴𝑠𝑎𝑓𝑒(𝑠𝑡+1) (See Algorithm 3 and Eq. 14 for
+details on the safe action set.). The target network, with
+parameters 𝜃−, replicates the online network, updating its
+parameters infrequently by copying from the online network
+to stabilize training and improve performance, and remains
+fixed otherwise. Thus, the objective of the optimal policy,
+based on the Q-learning paradigm, is:
+𝜋∗
+𝜃(𝑠) = arg max
+𝑎′∈𝐴𝑠𝑎𝑓𝑒(𝑠)
+𝑞𝑐∗
+𝜃(𝑠, 𝑎′).
+(20)
+To obtain the optimal policy, we present the loss function
+𝐿(𝜃) and its gradient for training the Q-network:
+𝐿(𝜃) = 𝔼(𝑠𝑡,𝑎𝑡,𝑠𝑡+1,𝑟𝑡+1)∼
+[(𝛼(𝑦𝑡−𝑞𝑐
+𝜃(𝑠𝑡, 𝑎𝑡)))2]
+,
+∇𝜃𝐿(𝜃) = 𝔼(𝑠𝑡,𝑎𝑡,𝑠𝑡+1,𝑟𝑡+1)∼
+[𝛼(𝑦𝑡−𝑞𝑐
+𝜃(𝑠𝑡, 𝑎𝑡))∇𝜃𝑞𝑐
+𝜃(𝑠𝑡, 𝑎𝑡)] .
+(21)
+The loss, formulated as a mean squared error (MSE), rep-
+resents the expected squared difference between the target
+𝑦𝑡and the predicted constrained Q-value 𝑞𝑐
+𝜃(𝑠𝑡, 𝑎𝑡), averaged
+over the prioritized experience replay buffer [62] and
+scaled by the learning rate 𝛼. This minimizes the discrepancy
+between the online and target networks by measuring the
+difference between the online network’s predicted Q-values
+and the target Q-values. The gradient ∇𝜃𝐿(𝜃), computed as
+the expected product of the TD error (𝑦𝑡−𝑞𝑐
+𝜃(𝑠𝑡, 𝑎𝑡)) and
+the Q-value gradient with respect to 𝜃, facilitates network
+optimization and updates the online network’s parameters.
+4.2.3. Reward function
+In Sec. 4.2.1, the objective transitions from Eq. 15 to
+Eq. 16. Following Eq. 16, we solve the constrained prob-
+lem using task-level fatigue–prediction–based hard-action
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 10 of 27
+
+
+===== PAGE 11 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+State input :
+1. Entities state
+2. Task info
+3. Fatigue history
+human state
+safe action set 𝑨𝒔𝒂𝒇𝒆
+fatigue model parameters
+robot state
+machine state
+material state
+Tokenize embedding
+Positional
+encoding
+Extra input:
+parameters (μ, λ) of
+fatigue-recovery model
+output
+Value stream
+Advantage stream
+Noisy net
+MHA
+Q
+K
+V
+N×
+Dueling
+Cross Attention
+Add & Norm
+FFN
+Add & Norm
+FFN
+MHA
+Add & Norm
+Add & Norm
+Self Attention
+Cross
+Attention
+State-action value
+Argmax
+action: task decision
+Aggregate
+𝒂𝒕
+𝒕𝒂𝒔𝒌i
+=
+Input
+Figure 3: Network architecture of our method PF-CD3Q.
+masking together with a single-objective reward function;
+no cumulative cost is optimized. We employ particle filters
+to predict task-level fatigue and define a safe action set 𝐴𝑠𝑎𝑓𝑒
+to ensure the agent selects fatigue-constrained actions at each
+time step. This simplifies reward/cost function design, focus-
+ing solely on the makespan performance. Thus, the reward
+principle aims to keep the makespan within the maximum
+time horizon 𝐻while minimizing it, and to maximize the
+completion degree toward 1. Accordingly, we propose the
+following reward function:
+𝑅= 𝑅𝑡𝑖𝑚𝑒+ 𝑅𝑔𝑜𝑎𝑙+ 𝑅𝑝𝑟𝑜𝑔𝑟𝑒𝑠𝑠,
+𝑅𝑡𝑖𝑚𝑒= −𝜂1,
+𝑅𝑔𝑜𝑎𝑙=
+{
+𝜂3,
+if new progress is made,
+0,
+otherwise,
+𝑅𝑝𝑟𝑜𝑔𝑟𝑒𝑠𝑠=
+⎧
+⎪
+⎨
+⎪⎩
+−𝜂2,
+if goal not done by end,
+𝜂2,
+if goal done within time horizon,
+0,
+otherwise,
+(22)
+where 𝜂1, 𝜂2, 𝜂3 are constant hyperparameters. The term 𝑟𝑡𝑖𝑚𝑒
+imposes a negative penalty as time elapses, encouraging a
+shorter makespan. A positive reward 𝑟𝑔𝑜𝑎𝑙is granted if the
+production goal is achieved within or before the time horizon
+𝐻, while a negative reward applies if it is not met by the end.
+The 𝑟𝑝𝑟𝑜𝑔𝑟𝑒𝑠𝑠term provides a positive reward for any progress
+toward the goal (e.g., product output), even if incomplete, to
+promote continuous advancement.
+4.2.4. Spatial and fatigue-predictive task allocation
+As illustrated in Fig. 2, the PF-CD3Q produces action
+𝑎𝑡= {𝑡𝑎𝑠𝑘𝑖, 𝑒ℎ
+𝑘and/or 𝑒𝑟
+𝑛} (see Sec. 3.4), following a two-
+step process. Starting with the task planning result 𝑎𝑡=
+{𝑡𝑎𝑠𝑘𝑖} from the safe RL-based policy 𝜋𝜃, we then select
+suitable human and/or robot candidates for 𝑡𝑎𝑠𝑘𝑖. In the
+open workspace production environment, where movable
+entities navigate for various tasks, we implement a distance-
+greedy path-planning strategy, such as Dijkstra’s algorithm
+[1] or Hybrid A* [55]. Leveraging task-level fatigue pre-
+dictions, we filter eligible humans and choose the near-
+est entities, resulting in the final allocation output 𝑎𝑡=
+{𝑡𝑎𝑠𝑘𝑖, 𝑒ℎ
+𝑘and/or 𝑒𝑟
+𝑛} to the environment.
+4.3. Attention-based neural network design
+The complete network architecture (𝜃) of PF-CD3Q,
+depicted in Fig. 3, comprises encoders for tokenized embed-
+dings, the attention-based architecture for handling hetero-
+geneous inputs, and the dueling network with Noisy Net for
+output projection.
+4.3.1. State input embeddings
+To process heterogeneous state information, we treat
+each data component as a distinct token, encoding categor-
+ical inputs via embeddings and continuous values through
+linear layers. The process starts with real-time state data,
+including states of humans, robots, machines, materials,
+and production progress, structured as per Eq. 8: 𝐬′
+𝑡
+=
+{𝐬ℎ
+𝑡, 𝐬𝑟
+𝑡, 𝐬𝑚𝑎𝑐
+𝑡
+, 𝐬𝑚𝑎𝑡
+𝑡
+, , } ⊂𝐬𝑡, where denotes the task
+set and the subtask set. We also encode fatigue model
+parameters (𝜆𝑘,𝑖,𝑗, 𝜇𝑘for 𝑒ℎ
+𝑘∈ℎ, with 𝜆𝑘,𝑖,𝑗corresponding
+to 𝑠𝑢𝑏𝑡𝑎𝑠𝑘𝑖,𝑗∈𝑡𝑎𝑠𝑘𝑖) for each human, capturing fatigue
+variations across subtasks. Each token is processed by mul-
+tiple encoders defined as:
+𝐸𝑚𝑏𝑒𝑑(𝑐𝑖) = 𝜌𝑖(𝑐𝑖), 𝑐𝑖∈𝐬𝑡, 𝜌𝑖⊂𝜌.
+(23)
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 11 of 27
+
+
+===== PAGE 12 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+Here, each token 𝑐𝑖∈𝐬𝑡is handled by a dedicated
+encoder 𝜌𝑖, part of the overall encoder network 𝜌.
+In practice, we utilize Multilayer Perceptrons (MLPs)
+or Embedding models as encoders due to their robust per-
+formance and low parameter complexity. Input features are
+mapped into a fixed-dimensional space, with positional en-
+coding applied to preserve sequence information and differ-
+entiate heterogeneous data, computed as:
+𝑃𝐸(𝑝𝑜𝑠, 2𝑖) = sin
+(
+𝑝𝑜𝑠
+100002𝑖∕𝑑model
+)
+,
+𝑃𝐸(𝑝𝑜𝑠, 2𝑖+ 1) = cos
+(
+𝑝𝑜𝑠
+100002𝑖∕𝑑model
+)
+,
+𝑐posed(𝑝𝑜𝑠, 𝑖) = 𝑐embedding(𝑝𝑜𝑠, 𝑖) + 𝑃𝐸(𝑝𝑜𝑠, 𝑖),
+(24)
+where 𝑝𝑜𝑠denotes the token’s position, 𝑖is the dimension
+index (with 2𝑖and 2𝑖+ 1 for even and odd indices), and
+𝑑model represents the model’s dimensionality (e.g., embed-
+ding size). The encoded input is then formed accordingly.
+4.3.2. Attention-based feature processing
+Multi-Head Attention (MHA) layers process these varied
+encoded features [68], optimized for handling diverse data.
+The MHA layers perform self-attention and cross-attention,
+defined as:
+Attention(𝑄, 𝐾, 𝑉) = softmax
+(
+𝑄𝐾𝑇
+√
+𝑑𝑘
+)
+𝑉,
+(25)
+where Attention calculates a weighted sum of values (𝑉)
+based on the dot product of queries (𝑄) and keys (𝐾),
+scaled by
+√
+𝑑𝑘for training stability, with 𝑑𝑘as the key
+vector dimension. We adopt the Transformer architecture,
+combining self-attention and cross-attention, reinforced by
+residual connections [28]. Self-attention uses all encoded
+features as queries, keys, and values, enabling the model
+to detect intra-sequence relationships via attention weights.
+After multiple layers, the self-attention output feeds into
+the keys and values of the cross-attention layer. In cross-
+attention, the safe action set 𝐴𝑠𝑎𝑓𝑒serves as the query,
+denoted as 𝑄𝑠𝑎𝑓𝑒= [𝑞𝑠𝑎𝑓𝑒] ∈ℝ1×𝑑𝑘, with keys (𝐾) and
+values (𝑉) from the self-attention output, yielding a fatigue-
+informed action output 𝜙.
+Referencing the dueling network [72], known to enhance
+Q-learning performance, the output 𝜙is split into a value
+stream and an advantage stream. This separation distin-
+guishes state values from action advantages, addressing non-
+identifiability issues, and improving optimal action selection
+during policy evaluation. To enhance exploration during
+training, we incorporate Noisy Nets [23] into both streams,
+adding controlled randomness that surpasses traditional 𝜖-
+greedy methods. Finally, the q-network 𝑞𝑐
+𝜃(𝑠), representing
+the action value for task decisions, generates the greedy
+action 𝑎𝑡= arg max𝑎′ 𝑞𝑐
+𝜃(𝑠, 𝑎′) (𝑡𝑎𝑠𝑘𝑖∈). Subsequently,
+after the neural network outputs the task decision, 𝑎𝑡is
+expanded, as detailed in Sec. 4.2.4, using spatial-aware and
+fatigue-predictive task allocation.
+5. Experiments
+In this section, we outline the problem scenario, eval-
+uation metrics, and baseline algorithms for comparison.
+The objectives are dual: (1) To determine if the proposed
+PF-CD3Q algorithm facilitates effective real-time HRTPA
+while maintaining human fatigue within safe limits, assessed
+by comparing it with vanilla reinforcement learning methods
+and representative safe RL baselines. (2) To evaluate the
+prediction accuracy of fatigue states and model parameters
+using the PF-based estimator, in comparison with alternative
+methods such as the Kalman filter (KF).
+5.1. Experiment environment setup
+Fig. 4 illustrates the detailed experimental setup for the
+HRTPA production problem, encompassing the simulation
+scenario, task and subtask definitions, and task dependency
+graph. The layout, 3D model, and task descriptions are
+derived from a real air conditioning duct production factory
+in modular construction.
+The scenario features multiple entities, including hu-
+mans, mobile robots, and stationary materials, machines,
+and tools. Specifically, producing a product involves four
+components: flange, straight duct, bending duct, and branch
+duct. To manufacture these, humans and robots must collab-
+orate, utilizing machines and tools to complete tasks such
+as material preparation (transport and loading), material
+processing, and finished product collection and storage. The
+human-robot tasks and corresponding subtasks involve some
+light tasks handled by humans alone, while heavy workloads,
+particularly those involving the conveyance of heavy mate-
+rials, require human-robot collaboration. Machine descrip-
+tions and capabilities are also presented.
+Given the production context, the problem entails co-
+ordinating human-robot resources to maximize efficiency
+while adhering to safe human fatigue limits. The key chal-
+lenge lies in determining when to perform which task and
+allocating the responsible agent (human and/or robot). Sub-
+task sequencing exhibits minimal variability, eliminating the
+need for subtask decisions; once a task and its allocated
+human and/or robot are determined, subtasks are executed
+sequentially.
+5.2. Fatigue-related settings
+Table
+1
+details
+the
+parameter
+configuration
+of
+the fatigue-recovery model (see Sec. 3.3 for further
+information). Drawing on prior research [46], which
+accounts for varied fatigue change rates—slow, moderate,
+and fast—we establish static parameter values for different
+subtasks, tailored to their specific fatigue dynamics. At
+the start of each episode, we introduce variability by
+dynamically adjusting these parameters, randomizing 𝜆
+across three human categories: weak, normal, and strong.
+Per our Assumption 3.1, which indicates that human fatigue
+sensitivity may fluctuate daily in real production, the
+algorithm initially lacks knowledge of the true 𝜇and 𝜆
+values, relying instead on noisy estimates that necessitate
+real-time refinement. Consequently, as shown in Eq. 5,
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 12 of 27
+
+
+===== PAGE 13 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+1. Human
+2. Mobile Robot
+7. Material cage
+8. Side storage
+9. Material loading rack
+10. Conveyor
+11. Laser rust removal machine
+12. Gantry and grabber
+13. Cutting machine and code console
+14. Laser welding station 1
+15. Laser welding station 2
+3. Flange 4. Straight duct
+5. Bend duct 6. Branch duct
+Part 1: Production environment illustration
+7
+9
+8
+10
+11
+3
+6
+5
+4
+12
+13
+14
+15
+Laser cutting straight duct by cutting machine
+Weld flange and straight duct by welding workstation 1
+Weld bend duct and straight duct by welding workstation 1
+Weld branch duct and straight duct by welding workstation 1
+Weld flange and straight duct by welding workstation 2
+Weld bend duct and straight duct by welding workstation 2
+Weld branch duct and straight duct by welding workstation 2
+3
+4
+5
+6
+7
+8
+9
+Put made product on box by gantry grabber
+10
+None
+Convey straight duct by conveyor track
+Laser rust removal by rust removal machine
+0
+1
+2
+Part 4: machine task info
+Part 2: Human-robot task and subtask information
+None
+Load flange to workstation 1:
+Human approaches workstation 1 →load flange to welding workstation 1 using loading rack
+Load bend duct to workstation 1:
+Human approaches workstation 1 →load bend duct to welding workstation 1 using loading rack
+Load flange to workstation 2:
+Human approaches workstation 2 →load flange to welding workstation 2 using loading rack
+Load bend duct to workstation 2:
+Human approaches workstation 2 →load bend duct to welding workstation 2 using loading rack
+Select and activate controlling code for workstations:
+Human approaches station controlling console →select and activate product processing code
+Collect made products:
+Robot takes cage first and then approaches workstation →collect made products
+Place made products to storage region:
+Robot takes the cage with collected products first and then approaches storage region; human approaches storage region
+→put products on storage region
+Convey flange to storage at side:
+Robot takes cage first and then approaches flanges; human approaches flanges → human put s flanges into cage
+→robot with cage and human approach storage at side →human takes and puts flanges on storage at side
+Convey bend duct to storage at side:
+Robot takes cage first and then approaches bend ducts; human approaches bend ducts → human put s bend ducts into
+cage → robot with cage and human approach storage at side → human takes and puts bend ducts on storage at side
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+0
+1
+2
+3
+6
+4
+5
+9
+8
+7
+10
+0
+5
+3
+4
+6
+8
+7
+9
+2
+1
+1
+Part 3: Task dependency graph
+: human
+: robot
+Figure 4: Experimental environment, entities, human-robot-machine task descriptions, and task dependency graph
+we initialize 𝜆and recovery 𝜇randomly within 1 ± 20%
+of their true values, with 𝜎𝑖𝑛𝑖𝑡
+=
+0.2. During fatigue
+changes, production efficiency adjusts according to Eq. 6,
+with a fixed 𝛿𝑒𝑓𝑓value of 0.3. Stochastic fluctuations in
+subtask completion time due to fatigue and other sources of
+uncertainty are modeled via Eq.7, with 𝜎𝑡𝑖𝑚𝑒= 0.1. Particle
+initialization is specified in Eq.11, with 𝜎𝑝𝑎𝑟𝑡𝑖𝑐𝑙𝑒= 0.3.
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 13 of 27
+
+
+===== PAGE 14 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+Table 1
+Static and dynamic values of human fatigue model parameters,
+as detailed in Sec. 3.3 and Sec. 4.1 for parameter definitions.
+1. (Static) 𝜆–Fatigue of subtask
+Value
+Put flange into cage
+0.12
+Put bend duct into cage
+0.18
+Put flange on side storage
+0.12
+Put bend duct on side storage
+0.18
+Loading flange on welding station 1
+0.36
+Loading flange on welding station 2
+0.36
+Loading bend duct on welding station 1
+0.45
+Loading bend duct on welding station 2
+0.45
+Activate station controlling code
+0.03
+Place made product on storage
+0.45
+2. (Static) 𝜇–recovery state
+Value
+Free
+0.015
+Waiting
+0.015
+Walking
+0.006
+3. 𝛿𝑒𝑓𝑓–production efficiency change
+Value=0.3
+4. (Episodic) 𝜆for random human types
+Human type: {weak, normal, strong} = {1.2, 1.0, 0.8}
+𝜆= 𝜆*(random human type)
+5. Inaccurate initial fatigue model for algorithm
+𝜎𝑖𝑛𝑖𝑡= 0.2, see Eq. 5 for details
+5. Fluctuated subtask completion time
+𝜎𝑡𝑖𝑚𝑒= 0.1, see Eq. 7 for details
+6. Uniformly initialize particles within the parameter bounds
+𝜎𝑝𝑎𝑟𝑡𝑖𝑐𝑙𝑒= 0.3, see Eq. 11 for details
+𝑁𝑝= 500, the number of particles is 500
+7. Fatigue measurement with Gaussian noise
+𝑧𝑘,𝑡∼(𝐹𝑘,𝑡, 𝜎2
+𝑚), 𝜎𝑚= 5 ⋅10−5, where 𝐹𝑘,𝑡denotes the true
+fatigue value of the k-th human at time step t
+During the simulation of the production, the human op-
+erator’s true fatigue is generated using the fatigue–recovery
+model described in Eq. 4 with ground-truth parameters. At
+each time step, the algorithm receives fatigue values with
+Gaussian measurement noise added: 𝑧𝑘,𝑡∼(𝐹𝑘,𝑡, 𝜎2
+𝑚),
+where 𝜎𝑚= 5 ⋅10−5.
+5.3. Training protocols and metrics
+The environment is established using NVIDIA’s Isaac
+Sim 3D simulator [44]. The algorithm is trained across
+numerous episodes, with random initialization at the start of
+each episode to capture production variability. This involves
+randomly allocating initial positions for human, robot, and
+cage entities, with the number of humans and robots varying
+randomly between 1 and 3. The training and testing phases
+utilize different random seeds to ensure variability and assess
+the algorithm’s adaptability. We employ the Adam optimizer
+[36] to train all RL-integrated algorithms, with experiments
+conducted on a system featuring an Intel(R) Xeon(R) Plat-
+inum 8370C CPU and an NVIDIA GeForce RTX 4090.
+For performance evaluation, we emphasize makespan,
+progress, and overwork as key metrics. Makespan quantifies
+the total time required to complete all tasks. Progress reflects
+the task completion level, ranging from 0 (no completion)
+to 1 (full completion of the manufacturing order) within the
+Table 2
+Comparison summary of RL or safe RL algorithms. Our
+proposed method is indicated by a “†".
+Reward
+penalty
+Cost
+function
+Safe
+action set
+DQN
+✓
+PPO
+✓
+D3QN
+✓
+PPO-Lag
+✓
+PF-DQN†
+✓
+PF-PPO†
+✓
+PF-CD3Q†
+✓
+PF-PPO-Lag†
+✓
+✓
+defined time horizon. To assess the algorithm’s effectiveness
+in managing human fatigue, we calculate the average number
+of fatigue limit violation instances per production episode,
+referred to as overwork. For boxplots that include t-test
+statistics, a larger t-value and a smaller p-value indicate a
+more significant difference between the compared results.
+5.4. Comparison explanation
+The comparison is categorized into two main aspects:
+(1) makespan performance and the capability of RL or safe
+RL algorithms to prevent overwork, with a summary of the
+algorithms in Table 2. The details are:
+DQN [53]: A classic off-policy algorithm for discrete
+action spaces, suited to HRTPA’s decision framework, with
+a fatigue-related reward penalty for overwork.
+PPO [63]: A popular on-policy algorithm, stable in con-
+tinuous spaces and adaptable to discrete ones, incorporating
+a fatigue-related reward penalty.
+D3QN [72]: An advanced Q-learning variant, enhanced
+by double Q-learning [67] and dueling networks, with a
+fatigue-related reward penalty.
+PPO-Lag [61]: a safe RL algorithm, enhanced PPO using
+an additional cost function with a Lagrangian method for
+improved constraint guarantees.
+PF-DQN, PF-PPO, PF-PPO-Lag, and PF-CD3Q: Exten-
+sions of DQN, PPO, PPO-Lag, and D3QN, respectively,
+integrating our particle filter-based fatigue prediction to
+create a safe action set, restricting exploration for fatigue
+compliance.
+(2) The accuracy of the filter mechanism in estimating
+fatigue model parameters. For this comparison, we evalu-
+ate three filtering approaches: the Kalman filter (KF), the
+extended Kalman filter (EKF) [74], and the particle filter
+(PF) [27]. The KF serves as an optimal estimator for linear
+systems, while the EKF extends this capability to nonlinear
+systems through local linearization. The PF uses a set of
+particles to approximate distributions, offering flexibility in
+modeling nonlinear and complex system dynamics.
+5.5. Performance in estimating fatigue model
+parameters
+Fig. 5 illustrates a case study on human episodic fatigue
+variation, fatigue model parameter estimation, and task-level
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 14 of 27
+
+
+===== PAGE 15 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+0
+200
+400
+600
+800
+1000
+1200
+1400
+1600
+Time step
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Fatigue value
+PF: Particle Filter
+KF: Kalman Filter
+EKF: Extended Kalman Filter
+Task-level fatigue prediction (PF/KF/EKF) vs true value, human type: weak
+True task-level predicted fatigue
+PF task-level predicted fatigue
+KF task-level predicted fatigue
+EKF task-level predicted fatigue
+True fatigue
+Task switch
+0
+10
+20
+30
+40
+50
+Estimation step
+0.125
+0.130
+0.135
+0.140
+λ value
+Subtask: put flange into cage
+PF Estimated λ
+KF Estimated λ
+EKF Estimated λ
+True λ
+0
+10
+20
+30
+40
+Estimation step
+0.20
+0.21
+0.22
+0.23
+λ value
+Subtask: put bend duct into cage
+PF Estimated λ
+KF Estimated λ
+EKF Estimated λ
+True λ
+0
+10
+20
+30
+40
+Estimation step
+0.120
+0.125
+0.130
+0.135
+0.140
+0.145
+λ value
+Subtask: put flange on side storage
+PF Estimated λ
+KF Estimated λ
+EKF Estimated λ
+True λ
+0
+10
+20
+30
+40
+Estimation step
+0.20
+0.21
+0.22
+0.23
+λ value
+Subtask: put bend duct on side storage
+PF Estimated λ
+KF Estimated λ
+EKF Estimated λ
+True λ
+0
+5
+10
+15
+20
+25
+30
+35
+Estimation step
+0.44
+0.46
+0.48
+0.50
+λ value
+Subtask: load flange on welding station 1
+PF Estimated λ
+KF Estimated λ
+EKF Estimated λ
+True λ
+0
+5
+10
+15
+20
+25
+Estimation step
+0.36
+0.38
+0.40
+0.42
+λ value
+Subtask: load flange on welding station 2
+PF Estimated λ
+KF Estimated λ
+EKF Estimated λ
+True λ
+0
+5
+10
+15
+20
+25
+30
+35
+Estimation step
+0.54
+0.56
+0.58
+0.60
+0.62
+0.64
+λ value
+Subtask: load bend duct on welding station 1
+PF Estimated λ
+KF Estimated λ
+EKF Estimated λ
+True λ
+0
+5
+10
+15
+20
+Estimation step
+0.52
+0.53
+0.54
+0.55
+0.56
+λ value
+Subtask: load bend duct on welding station 2
+PF Estimated λ
+KF Estimated λ
+EKF Estimated λ
+True λ
+0
+20
+40
+60
+80
+100
+120
+140
+160
+Estimation step
+0.0355
+0.0360
+0.0365
+0.0370
+0.0375
+λ value
+Subtask: activate station controlling code
+PF Estimated λ
+KF Estimated λ
+EKF Estimated λ
+True λ
+0
+10
+20
+30
+40
+50
+Estimation step
+0.44
+0.46
+0.48
+0.50
+0.52
+0.54
+λ value
+Subtask: place made product on storage
+PF Estimated λ
+KF Estimated λ
+EKF Estimated λ
+True λ
+0
+50
+100
+150
+200
+250
+Estimation step
+0.012
+0.013
+0.014
+0.015
+0.016
+μ value
+Subtask: free
+PF Estimated μ
+KF Estimated μ
+EKF Estimated μ
+True μ
+0
+50
+100
+150
+200
+250
+300
+350
+Estimation step
+0.0145
+0.0150
+0.0155
+0.0160
+μ value
+Subtask: waiting
+PF Estimated μ
+KF Estimated μ
+EKF Estimated μ
+True μ
+0
+100
+200
+300
+400
+500
+Estimation step
+0.0045
+0.0050
+0.0055
+0.0060
+0.0065
+μ value
+Subtask: walking
+PF Estimated μ
+KF Estimated μ
+EKF Estimated μ
+True μ
+Figure 5: Case study: Human episodic fatigue variation, fatigue model parameter estimation, and task-level fatigue prediction.
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 15 of 27
+
+
+===== PAGE 16 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+True_value
+PF
+KF
+EKF
+0.0000
+0.0005
+0.0010
+0.0015
+0.0020
+0.0025
+0.0030
+0.0035
+0.0040
+Value
+: Mean value
+0.00157
+0.00165
+0.00166
+0.00165
+Predict loss comparison 
+T­test
+baseline
+t=­5.556
+p 0
+t=­5.877
+p 0
+t=­5.558
+p 0
+PF
+KF
+EKF
+0.00
+0.02
+0.04
+0.06
+0.08
+0.10
+0.12
+Value
+0.0671
+0.0698
+0.0711
+Fatigue parameter accuracy 
+T­test
+baseline
+t=­4.861
+p 0
+t=­7.370
+p 0
+PF
+KF
+EKF
+0.00
+0.02
+0.04
+0.06
+0.08
+0.10
+0.12
+Value
+0.0532
+0.0353
+0.0352
+Recovery parameter accuracy 
+T­test
+baseline
+t=44.415
+p 0
+t=44.578
+p 0
+Figure 6: Comparison of prediction loss and parameter accuracy for PF, KF, and EKF.
+10
+4
+10
+3
+10
+2
+10
+1
+Sigma (measurement noise)
+10
+1
+100
+101
+Accuracy (
+)
+Accuracy vs. noise sigma (
+m)
+PF fatigue
+PF recover
+KF fatigue
+KF recover
+EKF fatigue
+EKF recover
+10
+4
+10
+3
+10
+2
+10
+1
+Sigma (measurement noise)
+1292
+1294
+1296
+1298
+1300
+1302
+1304
+Makespan
+PF-CD3Q metrics vs. noise sigma (
+m)
+PF-CD3Q Makespan
+PF-CD3Q Overwork
+0.004
+0.006
+0.008
+0.010
+0.012
+0.014
+0.016
+0.018
+Overwork
+Figure 7: Measurement noise analysis: filter accuracy and PF-CD3Q performance on test stage.
+fatigue prediction. The first subfigure displays the fatigue
+value change curve as a continuous red line, with vertical
+dashed lines marking human task switches. During produc-
+tion, fatigue typically rises and falls during recovery phases.
+At each task transition, the algorithm selects the next task
+and predicts the task-level fatigue change using the fatigue-
+recovery model and estimated parameters (detailed in Sec.
+4.1), estimating the fatigue increase if a human is allocated.
+For comparison, we display only the fatigue predictions for
+tasks subsequently executed by the human. Both PF, KF,
+and EKF exhibit low prediction errors compared to using
+true fatigue model parameters (𝜆, 𝜇). However, even with ac-
+curate parameters, notable differences remain between pre-
+dicted and actual production fatigue change curves. These
+discrepancies arise from: (1) task-level predictions assuming
+ideal completion times, overlooking human movement and
+waiting delays (which are challenging to account for due
+to the dynamic nature of production), and (2) the inherent
+random variability in the environment’s task completion
+times.
+Fig. 5 further displays the fatigue parameter estimation
+results. Each subtask is allocated a unique estimator to pre-
+dict its specific fatigue parameters compared to true values.
+Note that updates to the estimation occur only when a human
+is performing the current subtask. Over time, as progress
+continues, the predictions become increasingly accurate.
+The estimation is categorized into 𝜆(fatigue accumulation)
+and 𝜇(recovery) predictions. For 𝜆prediction, the particle
+filter (PF) generally exhibits faster convergence and higher
+accuracy. However, in the last three figures, KF and EKF
+outperform PF in estimating 𝜇, particularly when the true
+value is close to zero, resulting in minimal fatigue changes
+across different parameter values. This leads to smaller dif-
+ferences in posterior probabilities among particles, reducing
+the impact of weight updates in PF. Conversely, PF excels
+in handling complex nonlinear systems [27], as the fatigue
+model’s accumulation formula is more intricate, while the
+recovery formula is relatively simpler. KF and EKF, be-
+ing effective for linear or near-linear systems [11], provide
+more accurate 𝜇predictions. However, our work prioritizes
+predicting fatigue increase and task-level fatigue changes,
+making the accuracy of 𝜆estimation more critical.
+Fig. 6 presents quantitative results on the accuracy of
+fatigue and recovery parameter estimation. The task-level
+predicted fatigue value loss is evaluated using the mean
+squared error (MSE) of the final fatigue difference post-task,
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 16 of 27
+
+
+===== PAGE 17 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+ignoring variations between predicted and actual change
+curves. Results show that filter-based predictions achieve
+low error relative to the ground-truth fatigue and recov-
+ery parameters, indicating that the deviation is acceptable.
+Nonetheless, discrepancies persist even when using accurate
+parameters, primarily due to the idealized task-time model,
+which overlooks redundancy and execution uncertainty. For
+fatigue parameters (𝜆) estimation, the PF achieves the low-
+est error (0.0671). The significance analysis (t-test) further
+confirms that PF performs significantly better than KF and
+EKF in estimating 𝜆(larger t-value and smaller p-value
+indicate greater difference). However, PF underperforms KF
+and EKF in recovery parameters (𝜇) estimation.
+Fig. 7 shows the measurement noise analysis, including
+the accuracy of three types of filters, PF, KF, and EKF,
+and PF-CD3Q performance during the test stage. The first
+subplot illustrates the estimation accuracy of the fatigue and
+recovery parameters using these three filters. When 𝜎𝑚<
+10−4, all filters keep errors below 0.1. As noise increases,
+KF and EKF degrade and diverge, struggling to handle the
+higher noise levels, whereas PF maintains errors around 0.1.
+The second subplot presents the actual noise levels used
+in the experiments: 𝜎𝑚= 5 × 10−5 during training, with
+deliberately higher values introduced during testing to assess
+robustness. The lower plots show PF-CD3Q performance in
+terms of makespan and cumulative overwork under these
+elevated noise conditions. Despite the significant increase
+in measurement noise, the PF-CD3Q exhibits only minor
+fluctuations in both metrics.
+In summary, under the default low-noise setting (𝜎𝑚=
+5 × 10−5), the PF outperforms both the KF and EKF in
+estimating the fatigue parameter 𝜆, owing to its ability
+to model the fatigue dynamics’ inherent nonlinearity. In
+contrast, KF and EKF achieve higher accuracy for the re-
+covery parameter 𝜇, which follows a near-linear formula
+and typically takes small values near zero. This near-zero
+value poses a challenge for PF, as limited particle diversity
+results in minimal likelihood differences, hindering effective
+particle weighting and slightly reducing estimation accuracy
+for 𝜇. However, as measurement noise increases, KF and
+EKF rapidly degrade and eventually diverge, whereas PF
+maintains stable estimation accuracy. Consequently, the PF-
+CD3Q, which relies on PF-based task-level fatigue estima-
+tion, demonstrates robustness under high-noise conditions,
+exhibiting minor fluctuations in makespan and overwork.
+5.6. Performance of HRTPA Algorithms
+In this subsection, we evaluate whether our proposed
+PF-CD3Q algorithm supports fatigue-predictive HRTPA,
+optimizing makespan while preventing overwork, and
+compare its performance with other algorithms across
+various metrics. We first present training-stage results,
+visualized
+through
+curves.
+Subsequently,
+we
+present
+quantitative test-stage outcomes through boxplots, bar
+charts, and tables. Additionally, we study the relationship
+between overwork/makespan and the number of humans
+and robots. Radar charts provide a visual comparison
+of algorithm performances. Finally, we use D3QN and
+PF-CD3Q as illustrative examples, presenting Gantt charts
+and fatigue change curves.
+5.6.1. Performance in training stage
+Fig. 8 illustrates training-stage performance across three
+key metrics. The first subplot shows reward, revealing a no-
+table gap between PF-* and non-PF algorithms. As detailed
+in Table 2, non-PF algorithms (except PPO-Lag) employ
+overwork-related reward penalties during training, while PF-
+* algorithms avoid such adjustments, instead utilizing online
+filter-based task-level predictions to create safe action sets
+and enforce constrained decisions. The second subplot dis-
+plays makespan metrics, where D3QN achieves the best per-
+formance, with PF-CD3Q leading among PF-* algorithms.
+PPO exhibits the worst makespan curve, indicating poor
+efficiency. The third subplot focuses on overwork metrics
+and shows that all PF-* algorithms maintain nearly zero
+overwork, indicating no fatigue violations during produc-
+tion. Among non-PF algorithms, PPO-Lag performs worst
+in overwork despite being a safe RL paradigm algorithm that
+uses a separate cost function with gradient-guided actor loss
+updates rather than reward penalties. PPO shows the lowest
+overwork among non-PF algorithms, but at the cost of poor
+makespan performance. Regarding progress, all algorithms
+achieve nearly 100% production completion rates, complet-
+ing tasks within the given time horizon.
+Key findings during training: (1) PF-* algorithms excel
+in overwork performance; (2) PPO and PPO-Lag perform
+poorly, with PPO-Lag surprisingly showing the worst over-
+work performance, likely due to ineffective cost function
+guidance in actor policy updates; (3) D3QN offers optimal
+makespan performance, while PF-CD3Q effectively bal-
+ances strong makespan and overwork outcomes.
+5.6.2. Performance in test stage
+We provide more comprehensive and quantitative
+results for the test stage. Fig. 9 visualizes the makespan
+and overwork performance. For brevity, we omit the
+progress metric as all algorithms achieve 100% production
+task completion. The test-stage performance aligns with
+training-stage observations. Makespan performance: D3QN
+performs best with 1281.86, followed by PF-CD3Q with
+1300.24. PPO performs the worst with 1360.39. For
+Q-learning paradigms, incorporating particle filters worsens
+makespan performance; however, for PPO-based paradigms,
+the situation is reversed—incorporating PF shows no
+degradation in makespan. This occurs because PPO and
+PPO-Lag learn less effective policies, making the PF
+integration’s impact on the makespan less pronounced. The
+t-test results further support these observations. Although
+D3QN outperforms PF-CD3Q in makespan, its p-values
+(0.219) indicate that the differences are not statistically
+significant. PF-CD3Q shows a noticeable makespan gap
+compared with most of the other algorithms (except DQN
+and D3QN). Overall, although incorporating PF may
+slightly reduce makespan performance, the degradation is
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 17 of 27
+
+
+===== PAGE 18 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+0.0
+0.5
+1.0
+1.5
+2.0
+2.5
+Training Steps
+1e6
+1.5
+1.0
+0.5
+0.0
+0.5
+1.0
+1.5
+Return
+Return (Training)
+D3QN
+PF-CD3Q
+DQN
+PF-DQN
+PPO
+PF-PPO
+PPO-Lag
+PF-PPO-Lag
+0
+250
+500
+750
+1000
+1250
+1500
+1750
+2000
+Evaluate Episode
+1250
+1500
+1750
+2000
+2250
+2500
+2750
+3000
+Makespan
+Makespan (Evaluate during training)
+600
+800
+1000
+1200
+1400
+1600
+1800
+2000
+1275
+1300
+1325
+1350
+1375
+1400
+1425
+1450
+Zoom
+D3QN
+PF-CD3Q
+DQN
+PF-DQN
+PPO
+PF-PPO
+PPO-Lag
+PF-PPO-Lag
+0
+250
+500
+750
+1000
+1250
+1500
+1750
+2000
+Evaluate Episode
+0
+1
+2
+3
+4
+5
+Overwork
+Overwork (Evaluate during training)
+D3QN
+PF-CD3Q
+DQN
+PF-DQN
+PPO
+PF-PPO
+PPO-Lag
+PF-PPO-Lag
+0
+250
+500
+750
+1000
+1250
+1500
+1750
+2000
+Evaluate Episode
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9
+1.0
+1.1
+Progress
+Progress (Evaluate during training)
+600
+800
+1000
+1200
+1400
+1600
+1800
+2000
+0.98
+1.00
+1.02
+Zoom
+D3QN
+PF-CD3Q
+DQN
+PF-DQN
+PPO
+PF-PPO
+PPO-Lag
+PF-PPO-Lag
+Figure 8: Algorithms performance in training stage.
+D3QN
+PF-CD3Q
+DQN
+PF-DQN
+PPO
+PF-PPO
+PPO-Lag
+PF-PPO-Lag
+800
+1000
+1200
+1400
+1600
+1800
+2000
+Makespan (Test)
+1281.86
+1300.24
+1316.47
+1332.87
+1360.39
+1324.21
+1329.02
+1324.87
+: Mean value
+Makespan (Test)
+T-test
+baseline
+t=1.230
+p=0.219
+t=-0.978
+p=0.328
+t=-1.912
+p=0.056
+t=-3.653
+p
+0
+t=-1.543
+p=0.123
+t=-1.992
+p=0.047
+t=-1.631
+p=0.103
+D3QN
+PF-CD3Q
+DQN
+PF-DQN
+PPO
+PF-PPO
+PPO-Lag
+PF-PPO-Lag
+0.00
+0.05
+0.10
+0.15
+0.20
+0.25
+0.30
+Overwork (Test)
+0.258
+0.011
+0.222
+0.002
+0.189
+0.000
+0.267
+0.000
+Overwork (Test)
+T-test
+baseline
+t=-9.456
+p
+0
+t=-8.769
+p
+0
+t=1.463
+p=0.144
+t=-7.901
+p
+0
+t=1.675
+p=0.095
+t=-10.363
+p
+0
+t=1.675
+p=0.095
+Figure 9: Algorithm performance in the test stage, evaluated through makespan and overwork metrics.
+modest, and PF-CD3Q remains close to the best-performing
+algorithm (D3QN). For overwork performance: In contrast,
+D3QN exhibits the highest overwork rate, while PPO
+shows the lowest overwork among non-PF algorithms.
+Incorporating PF significantly reduces fatigue violation
+occurrences across all algorithms.
+Table 3 and Fig. 10 provide more detailed statistical
+results across different human-robot combinations. We ob-
+serve that increasing the number of humans generally re-
+duces both makespan and overwork across all algorithms.
+However, the improvement shows diminishing returns: tran-
+sitioning from 1 to 2 humans yields significant improve-
+ments in both metrics, while increasing from 2 to 3 humans
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 18 of 27
+
+
+===== PAGE 19 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+1
+2
+3
+Human num
+1100
+1200
+1300
+1400
+1500
+1600
+1700
+Makespan (Test)
+Makespan vs Human Number
+1
+2
+3
+Human num
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+0.7
+0.8
+Overwork (Test)
+Overwork vs Human Number
+D3QN
+PF-CD3Q
+DQN
+PF-DQN
+PPO
+PF-PPO
+PPO-Lag
+PF-PPO-Lag
+1
+2
+3
+Robot num
+1250
+1300
+1350
+1400
+1450
+Makespan (Test)
+Makespan vs Robot Number
+1
+2
+3
+Robot num
+0.00
+0.05
+0.10
+0.15
+0.20
+0.25
+0.30
+0.35
+Overwork (Test)
+Overwork vs Robot Number
+D3QN
+PF-CD3Q
+DQN
+PF-DQN
+PPO
+PF-PPO
+PPO-Lag
+PF-PPO-Lag
+Figure 10: Algorithm performance in various human-robot settings.
+0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
+Fatigue constraint
+1400
+1600
+1800
+2000
+2200
+2400
+Makespan
+Makespan
+PF-CD3Q
+PPO-Lag
+0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
+Fatigue constraint
+0
+5
+10
+15
+20
+25
+30
+Overwork
+Overwork
+PF-CD3Q
+PPO-Lag
+0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
+Fatigue constraint
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Progress
+Progress
+PF-CD3Q
+PPO-Lag
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9
+1.0
+Fatigue constraint
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9
+1.0
+Overwork values
+Overwork Value Distribution - PF-CD3Q
+Fatigue constraint value
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9
+1.0
+Fatigue constraint
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9
+1.0
+Overwork values
+Overwork Value Distribution - PPO-Lag
+Fatigue constraint value
+Figure 11: Sensitivity analysis of fatigue constraints: comparison of PF-CD3Q and PPO-Lag.
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 19 of 27
+
+
+===== PAGE 20 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+Table 3
+Algorithm performance in the test stage, measured by makespan and overwork metrics. Note that † denotes the performance of
+our proposed algorithm. ’Hn’ indicates n humans, and ’Rn’ signifies n robots during testing.
+Algorithm
+H1,R1
+H1,R2
+H1,R3
+H2,R1
+H2,R2
+H2,R3
+H3,R1
+H3,R2
+H3,R3
+Mean
+Makespan
+DQN
+1764.60
+1490.50
+1587.98
+1240.20
+1172.34
+1163.80
+1180.70
+1121.18
+1126.90
+1316.47
+PPO
+1615.76
+1734.76
+1738.04
+1217.74
+1215.42
+1286.34
+1149.90
+1143.76
+1141.80
+1360.39
+D3QN
+1635.94
+1506.26
+1511.24
+1193.52
+1168.44
+1174.56
+1084.46
+1129.10
+1133.18
+1281.86
+PPO-Lag
+1656.24
+1451.18
+1469.60
+1401.06
+1174.70
+1170.62
+1393.86
+1118.38
+1125.54
+1329.02
+PF-DQN
+1767.10
+1644.94
+1641.90
+1161.74
+1173.22
+1194.26
+1174.22
+1113.86
+1124.62
+1332.87
+PF-PPO
+1594.96
+1603.56
+1603.56
+1215.74
+1223.78
+1275.72
+1128.72
+1128.28
+1143.56
+1324.21
+PF-CD3Q
+1638.96
+1505.94
+1549.68
+1293.28
+1192.80
+1172.80
+1084.22
+1130.50
+1133.98
+1300.24
+PF-PPO-Lag
+1598.56
+1589.68
+1593.90
+1222.22
+1217.68
+1286.16
+1127.72
+1136.86
+1151.02
+1324.87
+Overwork
+DQN
+0.56
+0.68
+0.62
+0.14
+0.00
+0.00
+0.00
+0.00
+0.00
+0.222
+PPO
+0.46
+0.52
+0.56
+0.16
+0.00
+0.00
+0.00
+0.00
+0.00
+0.189
+D3QN
+0.56
+0.86
+0.84
+0.00
+0.04
+0.02
+0.00
+0.00
+0.00
+0.258
+PPO-Lag
+0.56
+1.00
+0.84
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.267
+PF-DQN
+0.00
+0.00
+0.00
+0.02
+0.00
+0.00
+0.00
+0.00
+0.00
+0.002
+PF-PPO
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.000
+PF-CD3Q†
+0.00
+0.00
+0.00
+0.10
+0.00
+0.00
+0.00
+0.00
+0.00
+0.011
+PF-PPO-Lag
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.000
+Progress
+Makespan
+Overwork
+0.2
+0.4
+0.6
+0.8
+1.0
+D3QN
+PF­CD3Q
+DQN
+PF­DQN
+PPO
+PF­PPO
+PPO­Lag
+PF­PPO­Lag
+Figure 12: Multi-metric algorithm ability: radar chart visual-
+ization.
+shows minimal additional benefits. Increasing the number of
+robots shows mixed effects: it slightly decreases makespan
+for most algorithms, except for PPO, PPO-Lag, and PF-PPO-
+Lag, which show limited improvement.
+Notable
+performance
+patterns:
+When
+considering
+configurations with 1 human and 1-3 robots, PF-CD3Q
+performs best among PF-* algorithms with an average
+makespan of 1564.86, followed by PF-DQN (1684.65),
+PF-PPO (1600.69), and PF-PPO-Lag (1594.04). PF-PPO
+achieves the best makespan performance in the 1-human,
+1-robot configuration while maintaining zero overwork.
+PPO-Lag
+shows
+optimal
+makespan
+performance
+in
+configurations with 1 human and 2-3 robots, but at the cost
+of the highest overwork (1.0 and 0.84). Considering average
+performance across all human-robot combinations, D3QN
+performs best in makespan, followed by PF-CD3Q.
+Key Findings: (1) Test results are consistent with
+training-stage observations; (2) In this experimental setup,
+increasing the number of humans from 1 to 2 substantially
+lowers makespan and overwork, though additional increases
+yield diminishing returns; (3) While various algorithms
+perform best with specific human-robot combinations,
+D3QN delivers the highest average makespan performance,
+with PF-CD3Q placing second in makespan while achieving
+nearly optimal overwork results. Among PF-* algorithms
+in 1-human configurations, PF-CD3Q exhibits the best
+average performance, maintaining a zero overwork value.
+5.6.3. Sensitivity analysis of PF-CD3Q across fatigue
+thresholds
+We added a comprehensive sensitivity experiment that
+varies the fatigue constraint from 0.0 to 1.0 in increments
+of 0.05. For each setting, we test configurations with 1–3
+human/robot entities, run ten randomized trials, and sum-
+marize the results using the completion time, overwork,
+and progress metrics. The finite completion time range is
+2500. The new results are presented in Fig. 11. From the
+results, when 𝑑𝑘> 0.9, PF-CD3Q can complete production
+orders within the time frame without violating fatigue limits.
+Importantly, across the full range of fatigue constraints, PF-
+CD3Q consistently yields lower overwork than PPO-Lag.
+Although both algorithms are trained under the same con-
+straint value (0.95), PF-CD3Q adapts well under different
+fatigue limits, effectively reducing overwork. In contrast,
+PPO-Lag shows limited adaptability, producing unchanged
+makespan values across all settings and failing to reduce
+overwork as the fatigue constraint changes. When the fatigue
+constraint becomes tight (𝑑𝑘< 0.9), PF-CD3Q may exhibit
+slight constraint violations; however, the overwork values
+remain close to the threshold. PPO-Lag, in comparison,
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 20 of 27
+
+
+===== PAGE 21 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+frequently exhibits overwork near 1.0 across constraint lev-
+els, indicating weak constraint adherence. In summary, the
+sensitivity analysis demonstrates that our approach remains
+robust across a wide range of fatigue-constraint settings,
+with PF-CD3Q showing strong adaptability and consistently
+lower overwork.
+5.6.4. Comprehensive analysis of experiment results
+As Sections 5.6.1 and 5.6.2 provide comprehensive re-
+sults and key findings, as illustrated in Fig. 12, this section
+analyzes these key findings and presents our conclusions. (1)
+Overwork performance improvement of PF-*: We observe
+notable improvements in overwork performance after incor-
+porating online filter-based task-level fatigue prediction to
+generate safe action sets. This improvement occurs because
+the method excludes unsafe behaviors that might lead to
+fatigue violations at each decision step. In contrast, the safe
+RL algorithm, PPO-Lag, employs soft constraints, indirectly
+restricting behavior through cost function gradients during
+actor function updates, and shows unsuccessful performance
+in fatigue-predictive scenarios. This might be due to the
+difficulty in cost function design, where cost violation oc-
+currences can be sparse, potentially leading to unstable
+training and loss updates. (2) PPO vs. D3QN performance:
+PPO underperforms compared to D3QN in our context,
+as it is primarily designed for high-dimensional and con-
+tinuous action spaces. Although PPO can manage discrete
+action spaces, it demands more careful tuning and strategy
+development than D3QN [63, 16]. In contrast, D3QN is
+specifically designed for discrete action space problems, and
+the omission of extra actor networks makes it more efficient
+for training and stability, making it suitable for our HRTPA
+problem domain. (3) Optimal human workforce number:
+For different production problems, there exists an optimal
+number of human workers. In this study, increasing the
+number of workers from one to two significantly reduces
+the makespan and overwork. However, further increases
+yield diminishing returns, with minimal additional benefits.
+(4) Comprehensive multi-metric performance: As shown in
+Fig. 12, considering comprehensive multi-metric ability, PF-
+CD3Q emerges as the best performer. It achieves the second-
+best makespan while maintaining nearly zero overwork.
+Notably, in configurations with 1 human and 1-3 robots, PF-
+CD3Q maintains zero overwork and the lowest makespan
+among all PF-* algorithms.
+5.6.5. Case study of HRTPA algorithms
+As shown in Fig. 13, we finally showcase the real-time
+results of an episode HRTPA scenario with fatigue value
+changes, where the number of humans is 1, and robots are
+set to 2. For the fatigue curves, we use different colors
+to represent different tasks, and these colors are consistent
+with the color scheme in the Gantt chart: PF-CD3Q (fatigue
+curve shown as dashed lines) vs D3QN (fatigue curve shown
+as solid lines). We observe that during the initial stage
+of the production process, the fatigue curves of these two
+algorithms show similar trends. However, when approaching
+the fatigue threshold, their decision-making strategies di-
+verge significantly. For example, after 400 time steps, D3QN
+decides to perform task 4 immediately after task 1 with
+minimal idle free time. In contrast, PF-CD3Q allocates more
+rest time for the human worker and chooses to perform task
+7 instead. Subsequently, we observe that for PF-CD3Q, the
+human worker has more idle free time for recovery compared
+to D3QN, but this results in a longer makespan. In contrast,
+D3QN shows several instances of fatigue violations for the
+human worker. In summary, this case study demonstrates
+how our PF-CD3Q algorithm facilitates real-time HRTPA
+in dynamic production scenarios while maintaining effective
+fatigue management.
+6. Discussion
+This work presents the particle filter with constrained
+dueling double deep Q-learning (PF-CD3Q) algorithm as
+a novel solution to the HRTPA problem. The experimental
+results highlight several important advantages over exist-
+ing methods. First, the PF-based online filter [27] enables
+real-time parameter updates with low latency and demon-
+strates strong robustness to measurement noise, making it
+suitable for dynamic production environments. Second, by
+integrating online filtering with safe RL, the proposed ap-
+proach effectively handles scenarios where fatigue-related
+hyperparameters are initially inaccurate, whereas most ex-
+isting work assumes full knowledge of the fatigue–recovery
+model parameters [8]. Third, PF-CD3Q incorporates ex-
+plicit fatigue constraints through effective fatigue-predictive
+decision-making, outperforming algorithms such as PPO-
+Lag [61], and can adapt to varying fatigue-limit settings in
+the test stage. Fourth, the ablation study confirms that the
+architectural components of our network design, including
+dueling networks [72], noisy layers [23], and cross-attention
+[68], collectively, contribute to improved decision-making
+performance, validating the architecture’s effectiveness for
+real-time HRTPA.
+Despite these strengths, this study also has limitations.
+The proposed approach is evaluated within a limited
+type of production scenario, and validation in real-world
+human–robot collaborative systems has not yet been
+conducted. Deploying PF-CD3Q in physical environments
+will require accurate real-time fatigue monitoring and a
+robust digital-twin infrastructure, both of which require
+further research and development. These considerations
+point to important future directions for expanding the
+applicability and robustness of the algorithm in practical
+settings.
+7. Conclusion
+This work addresses the human-robot task planning and
+allocation (HRTPA) problem in dynamic production sce-
+narios, tackling key challenges including real-time decision,
+physical fatigue constraints, varying worker efficiency, and
+inaccurate fatigue model hyperparameters. We present the
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 21 of 27
+
+
+===== PAGE 22 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+0
+200
+400
+600
+800
+1000
+1200
+1400
+1600
+Time Step
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Fatigue Value
+Worker Fatigue Changes Comparison
+D3QN
+PF-CD3Q
+task 0 (recover)
+task 1
+task 2
+task 3
+task 4
+task 5
+task 6
+task 7
+task 9
+Fatigue Threshold (0.95)
+200
+400
+600
+800
+1000
+1200
+1400
+Time Step
+Worker 1
+Robot 1
+Robot 2
+Task-Level Gantt Chart - D3QN
+200
+400
+600
+800
+1000
+1200
+1400
+1600
+Time Step
+Worker 1
+Robot 1
+Robot 2
+Task-Level Gantt Chart - PF-CD3Q
+Figure 13: PF-CD3Q vs D3QN: Case study of real-time HRTPA in the production process.
+particle filter with constrained dueling double deep Q-
+learning (PF-CD3Q), a real-time fatigue-predictive HRTPA
+algorithm that integrates explicit fatigue constraints through
+a safe RL paradigm. Our key contributions include: (1) the
+first application of safe RL to HRTPA, ensuring fatigue-
+predictive and dynamic HRTPA, and can adapt to unseen
+fatigue constraints after training; (2) the particle filter (PF)-
+based online fatigue estimators that enable real-time fatigue
+tracking and generate safe action sets, and exhibit robustness
+to measurement noise; and (3) an attention-based Trans-
+former architecture designed for processing heterogeneous
+data, including fatigue-related data, enhancing ergonomics-
+informed decision-making. Extensive experiments demon-
+strate that PF-based estimators achieve high accuracy in fa-
+tigue parameter estimation and task-level fatigue prediction.
+The PF-CD3Q algorithm excels in the overwork metric by
+utilizing online filter-based predictions to generate safe ac-
+tion sets, while securing the second-best makespan, resulting
+in the best overall performance across multiple metrics. In
+addition, the test-stage sensitivity analysis shows that PF-
+CD3Q generalizes well to unseen fatigue-constraint settings.
+Limitations include the need to examine broader pro-
+duction environments, and real-world deployment has not
+yet been validated. Applying our framework to physical
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 22 of 27
+
+
+===== PAGE 23 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+human–robot systems will require reliable real-time fatigue
+monitoring and a robust digital-twin infrastructure, both of
+which must be further developed. Future research directions
+include: (1) expanding algorithm applicability to diverse
+manufacturing scenarios, including assembly lines, ware-
+house operations, and other collaborative manufacturing
+environments, to enhance the algorithm’s adaptability and
+robustness across different production contexts; (2) address-
+ing real-world implementation challenges, particularly the
+integration of wearable devices and perception technologies
+for real-time fatigue monitoring, including the development
+of reliable sensor fusion techniques and robust fatigue es-
+timation models; (3) improving task description efficiency
+and algorithm scalability through the development of stan-
+dardized task representation frameworks and automated task
+decomposition methods that can handle complex, multi-
+step manufacturing processes; (4) emergencies in produc-
+tion environments, including the implementation of online
+adaptation mechanisms, uncertainty quantification methods,
+and fallback strategies that can maintain system safety and
+performance under unexpected conditions.
+CRediT authorship contribution statement
+Jintao Xue: Methodology, Software, Data curation,
+Writing – original draft. Xiao Li: Conceptualization,
+Supervision, Writing – review & editing. Nianmin Zhang:
+methodology analysis, experiment design.
+Declaration of Competing Interest
+The authors declare that they have no known competing
+financial interests or personal relationships that could have
+appeared to influence the work reported in this paper.
+Data availability
+Data will be made available on request.
+Acknowledgments
+The work described in this paper is supported by grants
+from Technology Cooperation Funding Scheme (TCFS)
+(Ref No.GHP/321/22SZ), The University of Hong Kong
+(Ref No.109002002), and Innovation and Technology Fund
+(ITF) (Ref No. TP/041/24LP).
+References
+[1] , 2022. A note on two problems in connexion with graphs, in: Edsger
+Wybe Dijkstra: his life, work, and legacy, pp. 287–290. doi:10.1145/
+3544585.3544600.
+[2] Achiam, J., Held, D., Tamar, A., Abbeel, P., 2017. Constrained policy
+optimization, in: International Conference on Machine Learning,
+PMLR. pp. 22–31. doi:10.48550/arXiv.1705.09209.
+[3] Alshiekh, M., Bloem, R., Ehlers, R., Könighofer, B., Niekum, S.,
+Topcu, U., 2018. Safe reinforcement learning via shielding, in: Pro-
+ceedings of the AAAI Conference on Artificial Intelligence. doi:10.
+1609/aaai.v32i1.11797.
+[4] Altman, E., 1993.
+Asymptotic properties of constrained markov
+decision processes. Zeitschrift für Operations Research 37, 151–170.
+doi:10.1007/bf01414154.
+[5] Altman, E., 2021. Constrained Markov Decision Processes. Rout-
+ledge. doi:10.1201/9781315140223-3.
+[6] Asadayoobi, N., Taghipour, S., Jaber, M.Y., 2023.
+Optimising
+stochastic task allocation and scheduling plans for mission workers
+subject to learning-forgetting, fatigue-recovery, and stress-recovery
+effects. Expert Systems with Applications 229, 120524. doi:10.1016/
+j.eswa.2023.120524.
+[7] Bänziger, T., Kunz, A., Wegener, K., 2020. Optimizing human–robot
+task allocation using a simulation tool based on standardized work
+descriptions. Journal of Intelligent Manufacturing 31, 1635–1648.
+doi:10.1007/s10845-018-1411-1.
+[8] Cai, M., Liang, R., Luo, X., Liu, C., 2023. Task allocation strategies
+considering task matching and ergonomics in the human-robot col-
+laborative hybrid assembly cell. International Journal of Production
+Research 61, 7213–7232. doi:10.1080/00207543.2022.2147234.
+[9] Calzavara, M., Persona, A., Sgarbossa, F., Visentin, V., 2019.
+A
+model for rest allowance estimation to improve tasks assignment to
+operators. International Journal of Production Research 57, 948–962.
+doi:10.1080/00207543.2018.1497816.
+[10] Chen, S.Y., 2011. Kalman filter for robot vision: a survey. IEEE
+Transactions on Industrial Electronics 59, 4409–4420. doi:10.1109/
+tie.2011.2162714.
+[11] Chen, Z., 2003. Bayesian filtering: From kalman filters to particle
+filters, and beyond. Statistics 182, 1–69.
+[12] Cheng, Y., Sun, F., Zhang, Y., Tao, F., 2019. Task allocation in manu-
+facturing: A review. Journal of Industrial Information Integration 15,
+207–218. doi:10.1016/j.jii.2018.08.001.
+[13] Cherubini, A., Passama, R., Crosnier, A., Lasnier, A., Fraisse, P.,
+2016. Collaborative manufacturing with physical human–robot inter-
+action. Robotics and Computer-Integrated Manufacturing 40, 1–13.
+doi:10.1016/j.rcim.2015.12.007.
+[14] Chow,
+Y.,
+Nachum,
+O.,
+Faust,
+A.,
+Duenez-Guzman,
+E.,
+Ghavamzadeh, M., 2019. Lyapunov-based safe policy optimization
+for
+continuous
+control.
+arXiv
+Preprint
+arXiv:1901.10031
+doi:10.48550/arXiv.1901.10031.
+[15] Dawson, D., McCulloch, K., 2005. Managing fatigue: it’s about sleep.
+Sleep Medicine Reviews 9, 365–380.
+doi:10.1016/j.smrv.2005.03.
+002.
+[16] De La Fuente, N., Guerra, D.A.V., 2024. A comparative study of deep
+reinforcement learning models: Dqn vs ppo vs a2c. arXiv Preprint
+arXiv:2407.14151 doi:10.48550/arXiv.2407.14151.
+[17] Dhanda, M., Rogers, B.A., Hall, S., Dekoninck, E., Dhokia, V., 2025.
+Reviewing human-robot collaboration in manufacturing: Opportuni-
+ties and challenges in the context of industry 5.0.
+Robotics and
+Computer-Integrated Manufacturing 93, 102937. doi:10.1016/j.rcim.
+2024.102937.
+[18] Digiesi, S., Kock, A.A., Mummolo, G., Rooda, J.E., 2009. The effect
+of dynamic worker behavior on flow line performance. International
+Journal of Production Economics 120, 368–377. doi:10.1016/j.ijpe.
+2008.12.012.
+[19] Faccio, M., Granata, I., Menini, A., Milanese, M., Rossato, C., Bottin,
+M., Minto, R., Pluchino, P., Gamberini, L., Boschetti, G., 2023.
+Human factors in cobot era: a review of modern production systems
+features. Journal of Intelligent Manufacturing 34, 85–106. doi:10.
+48550/arXiv.1707.06347.
+[20] Faccio, M., Granata, I., Minto, R., 2024.
+Task allocation model
+for human-robot collaboration with variable cobot speed.
+Jour-
+nal of Intelligent Manufacturing 35, 793–806.
+doi:10.1007/
+s10845-023-02073-9.
+[21] Ferjani, A., Ammar, A., Pierreval, H., Elkosantini, S., 2017.
+A
+simulation-optimization based heuristic for the online assignment of
+multi-skilled workers subjected to fatigue in manufacturing systems.
+Computers & Industrial Engineering 112, 663–674. doi:10.1016/j.
+cie.2017.02.008.
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 23 of 27
+
+
+===== PAGE 24 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+[22] Fontes, D.B., Homayouni, S.M., Gonçalves, J.F., 2023.
+A hybrid
+particle swarm optimization and simulated annealing algorithm for
+the job shop scheduling problem with transport resources. European
+Journal of Operational Research 306, 1140–1157.
+doi:10.1016/j.
+ejor.2022.09.006.
+[23] Fortunato, M., Azar, M.G., Piot, B., Menick, J., Osband, I., Graves, A.,
+Mnih, V., Munos, R., Hassabis, D., Pietquin, O., Blundell, C., Legg,
+S., 2017. Noisy networks for exploration. CoRR abs/1706.10295.
+doi:10.48550/arXiv.1706.10295.
+[24] Geramifard, A., Redding, J., How, J.P., 2013. Intelligent cooperative
+control architecture: a framework for performance improvement using
+safe learning. Journal of Intelligent & Robotic Systems 72, 83–103.
+doi:10.1016/j.rcim.2024.102906.
+[25] Gong, X., Wang, T., Huang, T., Cui, Y., 2022. Toward safe and effi-
+cient human–swarm collaboration: A hierarchical multi-agent pickup
+and delivery framework. IEEE Transactions on Intelligent Vehicles
+8, 1664–1675. doi:10.1109/tiv.2022.3172342.
+[26] Gu, S., Yang, L., Du, Y., Chen, G., Walter, F., Wang, J., Knoll, A.,
+2024. A review of safe reinforcement learning: Methods, theories
+and applications. IEEE Transactions on Pattern Analysis and Machine
+Intelligence doi:10.1109/tpami.2024.3457538.
+[27] Gustafsson, F., Gunnarsson, F., Bergman, N., Forssell, U., Jansson,
+J., Karlsson, R., Nordlund, P.J., 2002. Particle filters for positioning,
+navigation, and tracking. IEEE Transactions on Signal Processing 50,
+425–437. doi:10.1109/78.978396.
+[28] He, K., Zhang, X., Ren, S., Sun, J., 2016. Deep residual learning
+for image recognition, in: Proceedings of the IEEE Conference on
+Computer Vision and Pattern Recognition, pp. 770–778. doi:10.1109/
+CVPR.2016.90.
+[29] Hietanen, A., Pieters, R., Lanz, M., Latokartano, J., Kämäräinen, J.K.,
+2020. Ar-based interaction for human-robot collaborative manufac-
+turing. Robotics and Computer-Integrated Manufacturing 63, 101891.
+doi:10.1016/j.rcim.2019.101891.
+[30] Huang, S., Wang, B., Li, X., Zheng, P., Mourtzis, D., Wang, L.,
+2022. Industry 5.0 and society 5.0—comparison, complementation
+and co-evolution. Journal of Manufacturing Systems 64, 424–428.
+doi:10.1016/j.jmsy.2022.07.010.
+[31] Jaber, M.Y., Givi, Z., Neumann, W.P., 2013. Incorporating human
+fatigue and recovery into the learning–forgetting process. Applied
+Mathematical Modelling 37, 7287–7299. doi:10.1016/j.apm.2013.02.
+028.
+[32] Ji, J., Zhou, J., Zhang, B., Dai, J., Pan, X., Sun, R., Huang, W.,
+Geng, Y., Liu, M., Yang, Y., 2024. Omnisafe: An infrastructure for
+accelerating safe reinforcement learning research. Journal of Machine
+Learning Research 25, 1–6.
+[33] Kalweit, G., Huegle, M., Werling, M., Boedecker, J., 2020.
+Deep
+constrained q-learning.
+arXiv Preprint arXiv:2003.09398 doi:10.
+48550/arXiv.2003.09398.
+[34] Keshvarparast, A., Berti, N., Chand, S., Guidolin, M., Lu, Y., Battaia,
+O., Xu, X., Battini, D., 2024.
+Ergonomic design of human-robot
+collaborative workstation in the era of industry 5.0. Computers &
+Industrial Engineering 198, 110729. doi:10.1016/j.cie.2024.110729.
+[35] Kim, E., Kirschner, R., Yamada, Y., Okamoto, S., 2020. Estimating
+probability of human hand intrusion for speed and separation moni-
+toring using interference theory. Robotics and Computer-Integrated
+Manufacturing 61, 101819. doi:10.1016/j.rcim.2019.101819.
+[36] Kingma, D.P., Ba, J., 2015. Adam: A method for stochastic optimiza-
+tion, in: ICLR (Poster). doi:10.48550/arXiv.1412.6980.
+[37] Konz, S., 1998.
+Work/rest: Part ii-the scientific basis (knowledge
+base) for the guide. International Journal of Industrial Ergonomics
+22, 73–99. doi:10.1016/s0169-8141(97)00069-3.
+[38] Krupas, M., Chand, S., Lu, Y., Xu, X., Kajati, E., Zolotova, I.,
+2023.
+Human-centric uav-ugv collaboration, in: 2023 IEEE 19th
+International Conference on Automation Science and Engineering
+(CASE), IEEE. pp. 1–6. doi:10.1109/case56687.2023.10260412.
+[39] Lee, D., Lee, S., Masoud, N., Krishnan, M., Li, V.C., 2022a. Digital
+twin-driven deep reinforcement learning for adaptive task allocation
+in robotic construction.
+Advanced Engineering Informatics 53,
+101710. doi:10.1016/j.aei.2022.101710.
+[40] Lee, M.L., Behdad, S., Liang, X., Zheng, M., 2022b. Task allocation
+and planning for product disassembly with human–robot collabora-
+tion. Robotics and Computer-Integrated Manufacturing 76, 102306.
+doi:10.1016/j.rcim.2021.102306.
+[41] Leng, J., Sha, W., Wang, B., Zheng, P., Zhuang, C., Liu, Q., Wuest, T.,
+Mourtzis, D., Wang, L., 2022. Industry 5.0: Prospect and retrospect.
+Journal of Manufacturing Systems 65, 279–295. doi:10.1016/j.jmsy.
+2022.09.017.
+[42] Li, X., Guo, A., Yin, X., Tang, H., Wu, R., Zhao, Q., Li, Y., Wang,
+X., 2025.
+A q-learning improved differential evolution algorithm
+for human-centric dynamic distributed flexible job shop scheduling
+problem. Journal of Manufacturing Systems 80, 794–823. doi:10.
+1016/j.jmsy.2025.04.001.
+[43] Li, X., Wu, C., Yang, Z., Guo, Y., Jiang, R., 2023. Knowledge graph-
+enabled adaptive work packaging approach in modular construction.
+Knowledge-Based Systems 260, 110115. doi:10.1016/j.knosys.2022.
+110115.
+[44] Liang, J., Makoviychuk, V., Handa, A., Chentanez, N., Macklin, M.,
+Fox, D., 2018.
+Gpu-accelerated robotic simulation for distributed
+reinforcement learning, in: Conference on Robot Learning, PMLR.
+pp. 270–282. doi:10.11371/journmlr.v87.liang18a.
+[45] Liu, Y., Ding, J., Liu, X., 2020. Ipo: Interior-point policy optimization
+under constraints, in: Proceedings of the AAAI Conference on Artifi-
+cial Intelligence, pp. 4940–4947. doi:10.1609/aaai.v34i04.5932.
+[46] Liu, Y., Fan, J., Zhao, L., Shen, W., Zhang, C., 2023. Integration
+of deep reinforcement learning and multi-agent system for dynamic
+scheduling of re-entrant hybrid flow shop considering worker fatigue
+and skill levels. Robotics and Computer-Integrated Manufacturing
+84, 102605. doi:10.1016/j.rcim.2023.102605.
+[47] Liu, Y., Habibnezhad, M., Jebelli, H., 2021.
+Brainwave-driven
+human-robot collaboration in construction. Automation in Construc-
+tion 124, 103556. doi:10.1016/j.autcon.2021.103556.
+[48] Lu, C., Gao, R., Yin, L., Zhang, B., 2023. Human–robot collaborative
+scheduling in energy-efficient welding shop. IEEE Transactions on
+Industrial Informatics 20, 963–971. doi:10.1109/tii.2023.3271749.
+[49] Malik, A.A., Masood, T., Brem, A., 2024.
+Intelligent humanoid
+robots in manufacturing, in: Companion of the 2024 ACM/IEEE
+International Conference on Human-Robot Interaction, pp. 20–27.
+doi:10.1145/3610978.3640765.
+[50] Matheson, E., Minto, R., Zampieri, E.G., Faccio, M., Rosati, G., 2019.
+Human–robot collaboration in manufacturing applications: a review.
+Robotics 8, 100. doi:10.3390/robotics8040100.
+[51] Meegahapola, P.A., Prabodanie, R.R., 2018. Impact of environmen-
+tal conditions on workers’ productivity and health.
+International
+Journal of Workplace Health Management 11, 74–84. doi:10.1108/
+ijwhm-10-2017-0082.
+[52] Merlo, E., Lamon, E., Fusaro, F., Lorenzini, M., Carfì, A., Mas-
+trogiovanni, F., Ajoudani, A., 2023. An ergonomic role allocation
+framework for dynamic human–robot collaborative tasks. Journal of
+Manufacturing Systems 67, 111–121. doi:10.1016/j.jmsy.2022.12.
+011.
+[53] Mnih, V., 2013. Playing atari with deep reinforcement learning. arXiv
+preprint doi:10.48550/arXiv.1312.5602.
+[54] Moldovan, T.M., Abbeel, P., 2012. Safe exploration in markov deci-
+sion processes, in: Proceedings of the 29th International Conference
+on Machine Learning, pp. 1451–1458. doi:10.48550/arXiv.1205.4810.
+[55] Montemerlo, M., Becker, J., Bhat, S., Dahlkamp, H., Dolgov, D.,
+Ettinger, S., Haehnel, D., Hilden, T., Hoffmann, G., Huhnke, B., 2008.
+Junior: The stanford entry in the urban challenge. Journal of Field
+Robotics 25, 569–597. doi:10.1007/978-3-642-03991-1_3.
+[56] Mukherjee, D., Gupta, K., Chang, L.H., Najjaran, H., 2022.
+A
+survey of robot learning strategies for human-robot collaboration in
+industrial settings. Robotics and Computer-Integrated Manufacturing
+73, 102231. doi:10.1016/j.rcim.2021.102231.
+[57] Ostermeier, F.F., 2020. The impact of human consideration, schedule
+types and product mix on scheduling objectives for unpaced mixed-
+model assembly lines. International Journal of Production Research
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 24 of 27
+
+
+===== PAGE 25 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+58, 4386–4405. doi:10.1080/00207543.2019.1652780.
+[58] Patel, R., Rudnick-Cohen, E., Azarm, S., Otte, M., Xu, H., Herrmann,
+J.W., 2020.
+Decentralized task allocation in multi-agent systems
+using a decentralized genetic algorithm, in: 2020 IEEE International
+Conference on Robotics and Automation (ICRA), IEEE. pp. 3770–
+3776. doi:10.1109/icra40945.2020.9197314.
+[59] Peternel, L., Fang, C., Tsagarakis, N., Ajoudani, A., 2019. A selective
+muscle fatigue management approach to ergonomic human-robot co-
+manipulation. Robotics and Computer-Integrated Manufacturing 58,
+69–79. doi:10.1016/j.rcim.2019.01.013.
+[60] Prunet, T., Absi, N., Borodin, V., Cattaruzza, D., 2024. Optimization
+of human-aware logistics and manufacturing systems: A survey on the
+human-aware models. EURO Journal on Transportation and Logistics
+, 100137doi:10.1016/j.ejtl.2024.100137.
+[61] Ray, A., Achiam, J., Amodei, D., 2019.
+Benchmarking safe
+exploration in deep reinforcement learning.
+arXiv Preprint
+arXiv:1910.01708 .
+[62] Schaul, T., 2015.
+Prioritized experience replay.
+arXiv preprint
+doi:10.48550/arXiv.1511.05952.
+[63] Schulman, J., Wolski, F., Dhariwal, P., Radford, A., Klimov, O.,
+2017.
+Proximal policy optimization algorithms.
+arXiv Preprint
+arXiv:1707.06347 doi:10.48550/arXiv.1707.06347.
+[64] Stooke, A., Achiam, J., Abbeel, P., 2020.
+Responsive safety in
+reinforcement learning by pid lagrangian methods, in: International
+Conference on Machine Learning, PMLR. pp. 9133–9143. doi:10.
+48550/arXiv.2006.04609.
+[65] Sutton, R.S., Barto, A.G., 1998. Reinforcement Learning: An Intro-
+duction. volume 1. MIT Press. doi:10.1109/TNN.1998.712192.
+[66] Tessler, C., Mankowitz, D.J., Mannor, S., 2018. Reward constrained
+policy optimization. arXiv Preprint arXiv:1805.11074 doi:10.48550/
+arXiv.1805.11074.
+[67] Van Hasselt, H., Guez, A., Silver, D., 2016. Deep reinforcement learn-
+ing with double q-learning, in: Proceedings of the AAAI Conference
+on Artificial Intelligence. doi:10.1609/aaai.v30i1.10295.
+[68] Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez,
+A.N., Kaiser, Ł., Polosukhin, I., 2017.
+Attention is all you need.
+Advances in Neural Information Processing Systems 30. doi:10.5555/
+3295222.3295349.
+[69] Wang, B., Song, C., Li, X., Zhou, H., Yang, H., Wang, L., 2025a. A
+deep learning-enabled visual-inertial fusion method for human pose
+estimation in occluded human-robot collaborative assembly scenar-
+ios. Robotics and Computer-Integrated Manufacturing 93, 102906.
+doi:10.1016/j.rcim.2024.102906.
+[70] Wang, P., Liu, H., Wang, L., Gao, R.X., 2018. Deep learning-based
+human motion recognition for predictive context-aware human-robot
+collaboration. CIRP annals 67, 17–20. doi:10.1016/j.cirp.2018.04.
+066.
+[71] Wang, T., Liu, Z., Wang, L., Li, M., Wang, X.V., 2025b. A design
+framework for high-fidelity human-centric digital twin of collabora-
+tive work cell in industry 5.0. Journal of Manufacturing Systems 80,
+140–156. doi:10.1016/j.jmsy.2025.02.018.
+[72] Wang, Z., Schaul, T., Hessel, M., Hasselt, H., Lanctot, M., Freitas, N.,
+2016. Dueling network architectures for deep reinforcement learning,
+in: International Conference on Machine Learning, PMLR. pp. 1995–
+2003. doi:10.11371/journmlr.v48.wangf16.
+[73] Watkins, C.J.C.H., 1989. Learning from delayed rewards .
+[74] Welch, G., Bishop, G., 1995. An introduction to the kalman filter .
+[75] Xu, H., Zhan, X., Zhu, X., 2022. Constraints penalized q-learning
+for safe offline reinforcement learning, in: Proceedings of the AAAI
+Conference on Artificial Intelligence, pp. 8753–8760. doi:10.1609/
+aaai.v36i8.20855.
+[76] Xu, X., Lu, Y., Vogel-Heuser, B., Wang, L., 2021.
+Industry 4.0
+and industry 5.0—inception, conception and perception. Journal of
+Manufacturing Systems 61, 530–535. doi:10.1016/j.jmsy.2021.10.
+006.
+[77] Xue, J., Li, X., Zhang, N., 2026.
+A hierarchical spatial-aware
+algorithm with efficient reinforcement learning for human–robot task
+planning and allocation in production.
+Robotics and Computer-
+Integrated Manufacturing 98, 103159.
+doi:10.1016/j.rcim.2025.
+103159.
+[78] Yao, B., Li, X., Ji, Z., Xiao, K., Xu, W., 2024. Task reallocation of
+human-robot collaborative production workshop based on a dynamic
+human fatigue model.
+Computers & Industrial Engineering 189,
+109855. doi:10.1016/j.cie.2023.109855.
+[79] Zeng, F., Fan, C., Shirafuji, S., Wang, Y., Nishio, M., Ota, J., 2025.
+Task allocation and scheduling to enhance human–robot collaboration
+in production line by synergizing efficiency and fatigue. Journal of
+Manufacturing Systems 80, 309–323. doi:10.1016/j.jmsy.2025.03.
+006.
+[80] Zhang, L., Shen, L., Yang, L., Chen, S., Yuan, B., Wang, X., Tao, D.,
+2022a. Penalized proximal policy optimization for safe reinforcement
+learning. arXiv Preprint arXiv:2205.11814 doi:10.48550/arXiv.2205.
+11814.
+[81] Zhang, R., Lv, Q., Li, J., Bao, J., Liu, T., Liu, S., 2022b. A reinforce-
+ment learning method for human-robot collaboration in assembly
+tasks. Robotics and Computer-Integrated Manufacturing 73, 102227.
+doi:10.1016/j.rcim.2021.102227.
+[82] Zhao, R., Tao, S., Li, P., 2025. Safety-efficiency integrated assembly:
+The next-stage adaptive task allocation and planning framework for
+human–robot collaboration. Robotics and Computer-Integrated Man-
+ufacturing 94, 102942. doi:10.1016/j.rcim.2024.102942.
+[83] Zheng, H., Chand, S., Keshvarparast, A., Battini, D., Lu, Y., 2023.
+Video-based fatigue estimation for human-robot task allocation opti-
+misation, in: 2023 IEEE 19th International Conference on Automa-
+tion Science and Engineering (CASE), IEEE. pp. 1–6. doi:10.1109/
+case56687.2023.10260460.
+[84] Zheng, H., Xia, W., Xu, X., 2025.
+A human-robot collaborative
+assembly framework with quality checking based on real-time dual-
+hand action segmentation. Robotics and Computer-Integrated Manu-
+facturing 94, 102976. doi:10.2139/ssrn.4987667.
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 25 of 27
+
+
+===== PAGE 26 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+A. Implementation Details and Additional
+Results
+Detailed hyperparameters of the training process are
+summarized in Table 4. The sum-up task-level fatigue pre-
+diction latency of the proposed particle filter (PF) is approx-
+imately 20 𝜇s, while the neural-network inference time is
+around 2 ms.
+In addition, we examine the PFs’ weights update latency.
+As described in Algorithm 3 and Sec. 4.1, we employ
+independent PFs for each subtask–human pair, with a default
+particle count of 500. Figure 14 further illustrates the latency
+of particle weight updates as a function of the number of
+humans and particles. The left subplot shows that, for a
+single human, the total PF latency across all subtasks is 65
+𝜇s, compared with 51 𝜇s for the Kalman filter (KF) and 32
+𝜇s for the extended Kalman filter (EKF). As the number
+of humans increases, the latency exhibits roughly linear
+growth; for three humans, the PF latency reaches 158 𝜇s. The
+right subplot investigates the effect of particle count (ranging
+from 100 to 1000). Increasing the number of particles causes
+only limited fluctuations in the estimation accuracy of the
+fatigue and recovery parameters, which consistently achieve
+estimation errors below 0.07 for the fatigue 𝜆and below
+0.055 for the recovery 𝜇. Meanwhile, the mean latency
+increases linearly from 52.4 𝜇s (averaged over 1–3 humans)
+to 58.0 𝜇s.
+In summary, the task-level fatigue prediction using PF
+requires only 20 𝜇s; the complete particle-weight update
+across all subtasks and three humans takes 158 𝜇s; and
+neural-network inference dominates at 2 ms. The total in-
+ference time of the entire pipeline comfortably satisfies the
+real-time requirements of human-robot task planning and
+allocation in production environments.
+We also conduct additional experiments on model ab-
+lations (Fig. 15 and Fig. 16) and evaluate an additional
+algorithmic baseline, CPO, in Fig. 17. For the model ablation
+study, we compare our full network architecture (Fig. 3)
+against simplified variants, including (i) a pure MLP model,
+(ii) our architecture without dueling networks [72], noisy
+layers [23], or cross-attention (i.e., using only self-attention)
+[68], and (iii) a version without noisy layers. As shown in
+the training results, the MLP baseline exhibits a clear perfor-
+mance gap in both return and makespan upon convergence,
+and the self-attention–only variant also shows a notice-
+able degradation in makespan. In the test stage, PF-CD3Q
+achieves the best makespan, averaging 1300.24 time steps.
+The self-attention–only model performs the worst (1382.75),
+while the no-noisy-layer variant achieves the second-best
+makespan but suffers from the worst overwork. The t-test
+results further support these differences: for example, both
+the MLP and the self-attention–only variants show with p-
+values approaching 0 (larger t-values and smaller p-values
+indicate stronger statistical differences). Overall, removing
+these architectural components leads to varying degrees of
+performance degradation for PF-CD3Q.
+Finally, we also attempted to implement the Constrained
+Policy Optimization (CPO) algorithm [2]. Although CPO
+enforces a trust-region constraint and performs a conjugate-
+gradient-based second-order optimization step to guarantee
+theoretically bounded policy improvement, this mechanism
+is highly sensitive to training noise in non-convex envi-
+ronments. As a result, CPO often becomes unstable and
+eventually diverges during training, as evidenced in Fig. 17.
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 26 of 27
+
+
+===== PAGE 27 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+Table 4
+Training hyper-parameters across each algorithm family.
+Settings
+DQN
+PF-DQN
+D3QN
+PF-CD3Q
+PPO
+PF-PPO
+PPO-Lag
+PF-PPO-Lag
+Network capacity
+8.9M
+9.4M
+12.8M
+16.1M
+Replay setting
+buffer size = 5e5
+buffer size = 5e5
+buffer size = 1e4
+buffer size = 1e4
+Optimizer
+Adam lr 1×10−4
+Adam lr 1×10−4
+Adam lr 3×10−4
+Adam lr 3×10−4
+Warmup steps
+5e4
+5e4
+1e3
+1e3
+Batch size
+512
+512
+512
+512
+Q-func update
+per 400 steps
+per 400 steps
+nan
+nan
+Actor update
+nan
+nan
+per 400 steps
+per 400 steps
+Critic update
+nan
+nan
+per 1000 steps
+per 1000 steps
+Cost update
+nan
+nan
+nan
+per 1000 steps
+Noisynet 𝜎
+0.1
+0.1
+0.1
+0.1
+𝛾
+0.99
+0.99
+0.99
+0.99
+1
+2
+3
+Number of humans
+40
+60
+80
+100
+120
+140
+160
+Cumulative latency (µs)
+Filter latency cumsum vs. humans
+PF latency cumsum (µs)
+KF latency cumsum (µs)
+EKF latency cumsum (µs)
+200
+400
+600
+800
+1000
+Number of particles
+53
+54
+55
+56
+57
+58
+PF latency (µs)
+PF latency & accuracy vs. particles
+Latency (µs)
+Fatigue coeff. accuracy
+Recovery coeff. accuracy
+0.0500
+0.0525
+0.0550
+0.0575
+0.0600
+0.0625
+0.0650
+0.0675
+Accuracy (
+)
+Figure 14: Filter latency and algorithm performance in the test stage, varying number particles.
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 27 of 27
+
+
+===== PAGE 28 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+0.0
+0.5
+1.0
+1.5
+2.0
+2.5
+Training Steps
+1e6
+1.5
+1.0
+0.5
+0.0
+0.5
+1.0
+1.5
+Return
+Return (Training)
+No_noisy
+No_dueling
+SelfAttn
+MLP
+PF-CD3Q
+0
+250
+500
+750
+1000
+1250
+1500
+1750
+2000
+Evaluate Episode
+1250
+1500
+1750
+2000
+2250
+2500
+2750
+3000
+Makespan
+Makespan (Evaluate during training)
+600
+800
+1000
+1200
+1400
+1600
+1800
+2000
+1275
+1300
+1325
+1350
+1375
+1400
+1425
+1450
+Zoom
+No_noisy
+No_dueling
+SelfAttn
+MLP
+PF-CD3Q
+0
+250
+500
+750
+1000
+1250
+1500
+1750
+2000
+Evaluate Episode
+0.000
+0.025
+0.050
+0.075
+0.100
+0.125
+0.150
+0.175
+0.200
+Overwork
+Overwork (Evaluate during training)
+No_noisy
+No_dueling
+SelfAttn
+MLP
+PF-CD3Q
+0
+250
+500
+750
+1000
+1250
+1500
+1750
+2000
+Evaluate Episode
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9
+1.0
+1.1
+Progress
+Progress (Evaluate during training)
+600
+800
+1000
+1200
+1400
+1600
+1800
+2000
+0.98
+1.00
+1.02
+Zoom
+No_noisy
+No_dueling
+SelfAttn
+MLP
+PF-CD3Q
+Figure 15: Ablation Study: training stage metrics.
+No_noisy
+No_dueling
+SelfAttn
+MLP
+PF-CD3Q
+800
+1000
+1200
+1400
+1600
+1800
+2000
+Makespan (Test)
+1318.82
+1327.30
+1382.75
+1364.42
+1300.24
+: Mean value
+Makespan (Test)
+T-test
+baseline
+t=-1.051
+p=0.294
+t=-1.660
+p=0.097
+t=-4.878
+p
+0
+t=-4.007
+p
+0
+No_noisy
+No_dueling
+SelfAttn
+MLP
+PF-CD3Q
+0.0000
+0.0025
+0.0050
+0.0075
+0.0100
+0.0125
+0.0150
+0.0175
+Overwork (Test)
+0.016
+0.004
+0.002
+0.013
+0.011
+Overwork (Test)
+T-test
+baseline
+t=-1.448
+p=0.148
+t=1.260
+p=0.208
+t=1.463
+p=0.144
+t=0.157
+p=0.876
+Figure 16: Ablation Study: test stage metrics.
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 28 of 27
+
+
+===== PAGE 29 =====
+Safe reinforcement learning with online filtering for fatigue-predictive human-robot task planning and allocation in production
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+1.2
+Training Steps
+1e6
+175
+150
+125
+100
+75
+50
+25
+0
+Return
+Return (Training)
+CPO
+0
+200
+400
+600
+800
+1000
+1200
+Episodes step
+1500
+2000
+2500
+3000
+Makespan
+Makespan (Training)
+CPO
+Figure 17: The training curves of CPO exhibit clear divergence trends.
+Jintao Xue et al.: Preprint submitted to Elsevier
+Page 29 of 27

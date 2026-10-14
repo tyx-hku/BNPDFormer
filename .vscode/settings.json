@@ -13,27 +13,25 @@
   },
 
   "latex-workshop.latex.autoBuild.run": "onSave",
-  "latex-workshop.latex.recipe.default": "tinytex",
-  "latex-workshop.latex.outDir": "%DIR%/build",
+  "latex-workshop.latex.recipe.default": "xelatex",
+  "latex-workshop.latex.outDir": "%DIR%",
 
   "latex-workshop.latex.tools": [
     {
-      "name": "tinytex",
-      "command": "/Users/xuwantong/Library/TinyTeX/bin/universal-darwin/latexmk",
+      "name": "xelatex",
+      "command": "C:/Users/tiany/AppData/Local/Programs/MiKTeX/miktex/bin/x64/xelatex.exe",
       "args": [
-        "-xelatex",
         "-synctex=1",
         "-interaction=nonstopmode",
-        "-file-line-error",
-        "-outdir=%OUTDIR%",
+        "-output-directory=%OUTDIR%",
         "%DOC%"
       ]
     }
   ],
   "latex-workshop.latex.recipes": [
     {
-      "name": "tinytex",
-      "tools": ["tinytex"]
+      "name": "xelatex",
+      "tools": ["xelatex", "xelatex"]
     }
   ],
 
@@ -50,5 +48,6 @@
 
   "files.associate": {
     "*.tex": "latex"
-  }
+  },
+  "liveServer.settings.port": 5501
 }
