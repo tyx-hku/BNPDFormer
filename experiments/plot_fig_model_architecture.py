@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Clean, publication-ready PHAST-DP model architecture diagram."""
+"""Clean, publication-ready PHGST-DP model architecture diagram."""
 
 from __future__ import annotations
 
@@ -16,26 +16,27 @@ from matplotlib.patches import Circle, FancyArrowPatch, FancyBboxPatch, Rectangl
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "figures" / "fig_model_architecture"
 
-# Restrained academic palette. Red is reserved for the delay-pattern pathway.
+# Palette from the paper color sheet. Neutrals stay for text and rules.
+# Red is reserved for the delay-pattern pathway.
 INK = "#20262D"
 MUTED = "#65717A"
 EDGE = "#3B4650"
 LIGHT_EDGE = "#B8C1C8"
-PANEL = "#F3F4F5"
+PANEL = "#F7F5F2"
 WHITE = "#FFFFFF"
-NAVY = "#315A86"
-BLUE = "#6E9CC5"
-BLUE_BG = "#E7F0F8"
-TEAL = "#5D9B94"
-TEAL_BG = "#E4F1EF"
-VIOLET = "#8A78B4"
-VIOLET_BG = "#EEEAF6"
-GOLD = "#C88A32"
-GOLD_BG = "#FAEFCF"
-RED = "#C74E4E"
-RED_BG = "#F8E4E1"
-GREEN = "#7D9F6B"
-GREEN_BG = "#EAF1E5"
+NAVY = "#3D6EB4"
+BLUE = "#5BA7D9"
+BLUE_BG = "#A6DCED"
+TEAL = "#3D6EB4"
+TEAL_BG = "#E4EEF8"
+VIOLET = "#F26121"
+VIOLET_BG = "#FDE4D4"
+GOLD = "#F26121"
+GOLD_BG = "#FFF2C7"
+RED = "#CB001C"
+RED_BG = "#F8D5D2"
+GREEN = "#5BA7D9"
+GREEN_BG = "#E7F4FB"
 
 
 def rbox(ax, x, y, w, h, fc=WHITE, ec=EDGE, lw=0.9, radius=0.75,
@@ -84,7 +85,7 @@ def heading(ax, x, y, index, title, subtitle=None):
 
 def draw_tensor(ax, x, y):
     rng = np.random.default_rng(12)
-    cols = ["#ECF3F8", "#D5E4EF", "#A9C7DC", "#6E9CC5"]
+    cols = ["#FFF2C7", "#A6DCED", "#5BA7D9", "#3D6EB4"]
     for layer in range(3):
         ox, oy = 0.34 * layer, 0.32 * layer
         ax.add_patch(Rectangle((x + ox, y + oy), 5.3, 4.2,
@@ -139,7 +140,7 @@ def draw_inputs(ax):
     text(ax, 3.4, 11.95, "short-pattern bank", size=9.0,
          weight="bold", ha="left")
     text(ax, 15.7, 11.95, r"$K^P:16\times3$", size=9.3,
-         color="#80581F", weight="bold", ha="right")
+         color="#F26121", weight="bold", ha="right")
 
 
 def token_bar(ax, y, label, dim, fc, ec):
@@ -154,11 +155,11 @@ def draw_embedding(ax):
 
     groups = [
         ("Queue", 4, BLUE_BG, BLUE),
-        ("Stall", 6, RED_BG, "#D47A72"),
+        ("Stall", 6, RED_BG, RED),
         ("Logistics", 4, TEAL_BG, TEAL),
         ("Shortage", 1, GOLD_BG, GOLD),
         ("Context", 7, VIOLET_BG, VIOLET),
-        ("Type", 5, GREEN_BG, GREEN),
+        ("Type", 5, "#FFF2C7", NAVY),
     ]
     for i, args in enumerate(groups):
         token_bar(ax, 34.8 - i * 4.15, *args)

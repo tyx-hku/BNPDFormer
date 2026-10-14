@@ -26,19 +26,20 @@ SUMMARY = Path(__file__).resolve().parent / "data" / "bottleneck_eval_summary.cs
 MAIN_EVENTS = SUMMARY.parent / "main_event_metrics_dev_tyx_29655ba.csv"
 BASELINE_EVENTS = SUMMARY.parent / "baseline_metrics_common_archived.csv"
 
+# Scientific palette: red, orange, gold, cream, light blue, blue, deep blue.
 PALETTE = {
-    "blue_main": "#0F4D92",
-    "blue_secondary": "#3775BA",
-    "green_3": "#8BCF8B",
-    "red_strong": "#B64342",
-    "teal": "#42949E",
-    "violet": "#9A4D8E",
-    "neutral": "#CFCECE",
+    "blue_main": "#3D6EB4",
+    "blue_secondary": "#5BA7D9",
+    "blue_light": "#A6DCED",
+    "gold": "#FCB84D",
+    "cream": "#FFF2C7",
+    "orange": "#F26121",
+    "red": "#CB001C",
 }
 
 STARTS = (5, 10, 15)
 ARMS = {
-    "PHAST-DP": "bestmodel_start{s}_seed42",
+    "PHGST-DP": "bestmodel_start{s}_seed42",
     "NoFarBoost": "full_nofarboost_start{s}_seed42",
     "NoCluster": "ablation_nocluster_start{s}_seed42",
     "NoGraph": "ablation_nograph_start{s}_seed42",
@@ -50,14 +51,24 @@ ARMS = {
     "MachineOnly": "entity_machineonly_start{s}_min8_cold_ep50_seed42",
 }
 
+# Baseline lines: medium blue, muted purple, light yellow, orange, and green.
+# The palette cream #FFF2C7 disappears on white, so the yellow series uses a
+# deeper tint of that swatch. Line style remains a second cue.
 BASELINE_COLORS = {
-    "PHAST-DP": PALETTE["blue_main"],
-    "XGBoost": PALETTE["red_strong"],
-    "LSTM": PALETTE["green_3"],
-    "BTGCN": PALETTE["violet"],
-    "BSTAN": PALETTE["teal"],
+    "PHGST-DP": "#5BA7D9",
+    "XGBoost": "#7A5898",
+    "LSTM": "#E6C200",
+    "BTGCN": "#F26121",
+    "BSTAN": "#2F9E5A",
 }
-BASELINE_MARKERS = {"PHAST-DP": "o", "XGBoost": "s", "LSTM": "^", "BTGCN": "D", "BSTAN": "v"}
+BASELINE_MARKERS = {"PHGST-DP": "o", "XGBoost": "s", "LSTM": "^", "BTGCN": "D", "BSTAN": "v"}
+BASELINE_LINESTYLES = {
+    "PHGST-DP": "-",
+    "XGBoost": "--",
+    "LSTM": "-.",
+    "BTGCN": (0, (1.2, 1.1)),
+    "BSTAN": (0, (3.2, 1.0, 1.0, 1.0)),
+}
 
 RASTER_FIGURES = (
     "key_device_main",
@@ -103,7 +114,7 @@ def plot_baseline_comparison(out: Path) -> None:
     main = _read_summary(MAIN_EVENTS)
     with BASELINE_EVENTS.open(encoding="utf-8") as fh:
         baseline = {(r["model"], int(r["start_cap"])): r for r in csv.DictReader(fh)}
-    values = {"PHAST-DP": {
+    values = {"PHGST-DP": {
         key: [main[f"bestmodel_start{s}_seed42"][field] for s in STARTS]
         for key, field in (("report_f1", "report_f1"), ("upcoming_r", "who_recall_upcoming"), ("dur_mae", "dur_mae_tp"))
     }}
@@ -125,10 +136,13 @@ def plot_baseline_comparison(out: Path) -> None:
                 vals[key],
                 marker=BASELINE_MARKERS[model],
                 color=BASELINE_COLORS[model],
-                lw=2.0 if model == "PHAST-DP" else 1.3,
-                ms=5,
+                linestyle=BASELINE_LINESTYLES[model],
+                lw=2.4 if model == "PHGST-DP" else 1.7,
+                ms=6.5,
+                markeredgecolor=BASELINE_COLORS[model],
+                markeredgewidth=0.6,
                 label=model,
-                zorder=3 if model == "PHAST-DP" else 2,
+                zorder=3 if model == "PHGST-DP" else 2,
             )
         ax.set_title(title, fontsize=10)
         ax.set_xticks(STARTS)
@@ -149,7 +163,7 @@ def _bars(summary: dict, panels: tuple[tuple[str, str], ...], out: Path, f1_axis
     arms = {a: p for a, p in (ARMS if arm_patterns is None else arm_patterns).items() if any(p.format(s=s) in summary for s in STARTS)}
     x = np.arange(len(arms))
     w = 0.26
-    colors = (PALETTE["blue_main"], PALETTE["teal"], PALETTE["neutral"])
+    colors = ("#5BA7D9", "#FCB84D", "#2F9E5A")
     fig, axes = plt.subplots(1, len(panels), figsize=(7.2, 2.7))
     for ax, (key, ylab) in zip(axes, panels):
         for i, s in enumerate(STARTS):
@@ -159,8 +173,7 @@ def _bars(summary: dict, panels: tuple[tuple[str, str], ...], out: Path, f1_axis
                 [np.nan if v is None else v for v in vals],
                 w,
                 color=colors[i],
-                edgecolor="black",
-                linewidth=0.3,
+                edgecolor="none",
                 label=f"Start≤{s}",
             )
         ax.set_xticks(x)
@@ -216,7 +229,7 @@ def main() -> None:
         (("remain_mae", "Remaining-time MAE (min)"), ("remain_mae_early", "Early-phase MAE (min)"), ("remain_mae_late", "Late-phase MAE (min)")),
         args.out / "remain_bars.pdf",
         False,
-        {"PHAST-DP (stage 1)": "full_farboost_start{s}_seed42", **{a: p for a, p in ARMS.items() if a != "PHAST-DP"}},
+        {"PHGST-DP (stage 1)": "full_farboost_start{s}_seed42", **{a: p for a, p in ARMS.items() if a != "PHGST-DP"}},
     )
     for name in (() if args.charts_only else RASTER_FIGURES):
         png = args.out / f"{name}.png"

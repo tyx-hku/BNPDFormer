@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PHAST-DP framework figure as an editable PPTX; PDF/PNG are exported from it via PowerPoint."""
+"""PHGST-DP framework figure as an editable PPTX; PDF/PNG are exported from it via PowerPoint."""
 
 from __future__ import annotations
 
@@ -43,8 +43,10 @@ MUTED = "595959"
 GRAY = "8C8C8C"
 LGRAY = "BFBFBF"
 
-FONT = "Arial"
+FONT = "Times New Roman"
+# Times New Roman has no check, cross, or element-of glyphs.
 SYMBOL_FONT = "Segoe UI Symbol"
+MATH_FONT = "Cambria Math"
 
 ENTITY = {"machine": DBLUE, "gantry": MBLUE, "robot": LBLUE, "human": AMBER, "buffer": GRAY}
 
@@ -180,11 +182,11 @@ class Canvas:
             r = p.add_run()
             r.text = body
             f = r.font
-            f.name = st.get("font", FONT)
             f.size = Pt(st["size"])
             f.bold = st["bold"]
             f.italic = st["italic"]
             f.color.rgb = rgb(st["color"])
+            _force_typeface(r, st.get("font", FONT))
             if kind != "n":
                 r._r.get_or_add_rPr().set("baseline", "-25000" if kind == "sub" else "30000")
             pos += 1
@@ -257,6 +259,33 @@ class Canvas:
         return self.polygon([(x + px * s, y + py * s) for px, py in pts], RED, "FFFFFF")
 
 
+def _force_typeface(run, name: str) -> None:
+    """Set latin, east-Asian, and complex-script faces so PowerPoint does not fall back to the theme font."""
+    rPr = run._r.get_or_add_rPr()
+    for tag in ("a:latin", "a:ea", "a:cs"):
+        el = rPr.find(qn(tag))
+        if el is None:
+            el = etree.SubElement(rPr, qn(tag))
+        el.set("typeface", name)
+
+
+def set_theme_typeface(prs: Presentation, name: str) -> None:
+    master = prs.slide_masters[0]
+    theme_part = next(rel.target_part for rel in master.part.rels.values() if rel.reltype.endswith("/theme"))
+    root = etree.fromstring(theme_part.blob)
+    ns = {"a": "http://schemas.openxmlformats.org/drawingml/2006/main"}
+    for path in (".//a:majorFont", ".//a:minorFont"):
+        node = root.find(path, ns)
+        if node is None:
+            continue
+        for tag in ("a:latin", "a:ea", "a:cs"):
+            el = node.find(tag, ns)
+            if el is None:
+                el = etree.SubElement(node, qn(tag))
+            el.set("typeface", name)
+    theme_part._blob = etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
+
+
 def _tokens(chunk: str):
     """Split '_{...}' / '^{...}' markup into (kind, text) runs."""
     out, i, buf = [], 0, ""
@@ -304,7 +333,7 @@ def gap_pair(c: Canvas, x, y, w_prior, w_ours, h, color, prior_cap, ours_cap, dr
     ox = ax + 0.27
     c.box(ox, y, w_ours, h, ours_fill, color, 1.0, radius=0.06)
     c.text(ox + 0.08, y + 0.03, w_ours - 0.1, 0.2,
-           [[("\u2713 ", {"font": SYMBOL_FONT, "bold": True}), ("PHAST-DP", {"bold": True})]],
+           [[("\u2713 ", {"font": SYMBOL_FONT, "bold": True}), ("PHGST-DP", {"bold": True})]],
            size=10, color=color)
     draw_ours(ox, y + 0.24, w_ours, h - 0.46)
     c.text(ox + 0.05, y + h - 0.23, w_ours - 0.1, 0.2, ours_cap, size=9.5, color=color, align="c", bold=True)
@@ -343,8 +372,8 @@ def panel_data(slide, a):
     for key, n in [("machine", 7), ("gantry", 4), ("robot", 4), ("human", 5), ("buffer", 18)]:
         c.box(tx - 0.12, yy, 0.08, n * seg, ENTITY[key], "FFFFFF", 0.3, radius=0)
         yy += n * seg
-    c.text(1.95, 4.05, 1.95, 0.22, [[("X_{t} ", {}), ("\u2208 \u211D", {"font": "Cambria Math"}),
-                                      ("^{30\u00D738\u00D727}", {})]], size=10.5, align="c")
+    c.text(1.95, 4.05, 1.95, 0.22, [[("X_{t} ", {}), ("\u2208", {"font": MATH_FONT}),
+                                      (" \u211D^{30\u00D738\u00D727}", {})]], size=10.5, align="c")
     c.text(1.95, 4.25, 1.95, 0.2, "resources \u00D7 minutes \u00D7 features", size=8.5, color=MUTED, align="c")
 
 
@@ -501,7 +530,7 @@ def panel_labels(slide):
 def panel_model(slide):
     c = group(slide)
     c.box(0.15, 4.9, 11.3, 3.95, "F3F8FC", MBLUE, 1.25)
-    c.text(0.3, 4.96, 2.0, 0.3, "PHAST-DP", size=13, bold=True, color=DBLUE)
+    c.text(0.3, 4.96, 2.0, 0.3, "PHGST-DP", size=13, bold=True, color=DBLUE)
 
     # grouped embedding
     c.box(0.3, 5.35, 2.35, 3.35, "FFFFFF", MBLUE, 1.0, radius=0.06)
@@ -651,6 +680,7 @@ def build_pptx(path: Path) -> None:
     prs = Presentation()
     prs.slide_width, prs.slide_height = E(SW), E(SH)
     slide = prs.slides.add_slide(prs.slide_layouts[6])
+    set_theme_typeface(prs, FONT)
     panel_data(slide, assets)
     panel_graph(slide)
     panel_labels(slide)

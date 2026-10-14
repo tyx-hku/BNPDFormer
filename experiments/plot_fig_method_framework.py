@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PHAST-DP framework figure (v2): data construction on top, model and report below."""
+"""PHGST-DP framework figure (v2): data construction on top, model and report below."""
 
 from __future__ import annotations
 
@@ -287,7 +287,7 @@ def panel_graph(ax):
 def panel_model(ax):
     x0, x1, y0, y1 = 22.0, 99.0, 1.0, 28.0
     rbox(ax, x0, y0, x1 - x0, y1 - y0, *STAGE["model"])
-    stage_title(ax, x0 + 1.5, y1 - 1.7, 5, "PHAST-DP", STAGE["model"][1])
+    stage_title(ax, x0 + 1.5, y1 - 1.7, 5, "PHGST-DP", STAGE["model"][1])
     txt(ax, 41.5, y1 - 1.75, "process-informed heterogeneous-graph Transformer", size=5.2, color=MUTED, style="italic")
 
     # grouped embedding
