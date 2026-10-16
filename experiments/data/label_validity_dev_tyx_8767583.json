@@ -1,0 +1,207 @@
+{
+  "source": {
+    "repository": "jintaoXue/isaac_factory",
+    "branch": "dev_tyx",
+    "commit": "8767583f3ed6392cfd8061d4a80de94fcfb9d7a0",
+    "report": "瓶颈groundtruth有效性实验.md",
+    "report_date": "2026-10-14",
+    "import_date": "2026-10-15",
+    "precision": "Values transcribed from committed report (3 decimals); no raw per-sample exports included in that commit."
+  },
+  "oracle_pilot": {
+    "scope": "3 disturbance-free development episodes; full oracle not run; no significance claim",
+    "metrics": [
+      {
+        "method": "Ops",
+        "ndcg3": 0.531,
+        "positive_recall2": 0.556,
+        "positive_recall3": 0.685,
+        "weighted_recall3": 0.716,
+        "coverage3_rho90": 0.722
+      },
+      {
+        "method": "Queue-Wait",
+        "ndcg3": 0.495,
+        "positive_recall2": 0.444,
+        "positive_recall3": 0.556,
+        "weighted_recall3": 0.585,
+        "coverage3_rho90": 0.611
+      },
+      {
+        "method": "Active Period",
+        "ndcg3": 0.382,
+        "positive_recall2": 0.278,
+        "positive_recall3": 0.315,
+        "weighted_recall3": 0.377,
+        "coverage3_rho90": 0.389
+      },
+      {
+        "method": "TPM",
+        "ndcg3": 0.372,
+        "positive_recall2": 0.278,
+        "positive_recall3": 0.389,
+        "weighted_recall3": 0.421,
+        "coverage3_rho90": 0.444
+      },
+      {
+        "method": "Utilization",
+        "ndcg3": 0.183,
+        "positive_recall2": 0.222,
+        "positive_recall3": 0.204,
+        "weighted_recall3": 0.23,
+        "coverage3_rho90": 0.222
+      }
+    ]
+  },
+  "separability": {
+    "representation": "raw_last",
+    "target": "any valid hot state in first 5 future windows",
+    "metrics": [
+      {
+        "method": "Active Period",
+        "test_positive_rate": 0.038,
+        "macro_f1": 0.628,
+        "balanced_accuracy": 0.904,
+        "auroc": 0.963,
+        "station_macro_f1": 0.59,
+        "silhouette": 0.272,
+        "davies_bouldin": 2.33,
+        "fisher_ratio": 0.114
+      },
+      {
+        "method": "Utilization",
+        "test_positive_rate": 0.045,
+        "macro_f1": 0.6,
+        "balanced_accuracy": 0.853,
+        "auroc": 0.921,
+        "station_macro_f1": 0.556,
+        "silhouette": 0.178,
+        "davies_bouldin": 2.997,
+        "fisher_ratio": 0.073
+      },
+      {
+        "method": "Ops",
+        "test_positive_rate": 0.015,
+        "macro_f1": 0.581,
+        "balanced_accuracy": 0.849,
+        "auroc": 0.908,
+        "station_macro_f1": 0.619,
+        "silhouette": 0.147,
+        "davies_bouldin": 3.571,
+        "fisher_ratio": 0.064
+      },
+      {
+        "method": "Queue-Wait",
+        "test_positive_rate": 0.087,
+        "macro_f1": 0.542,
+        "balanced_accuracy": 0.788,
+        "auroc": 0.846,
+        "station_macro_f1": 0.614,
+        "silhouette": 0.13,
+        "davies_bouldin": 3.717,
+        "fisher_ratio": 0.048
+      },
+      {
+        "method": "TPM",
+        "test_positive_rate": 0.018,
+        "macro_f1": 0.512,
+        "balanced_accuracy": 0.841,
+        "auroc": 0.92,
+        "station_macro_f1": 0.534,
+        "silhouette": 0.146,
+        "davies_bouldin": 3.5,
+        "fisher_ratio": 0.059
+      }
+    ]
+  },
+  "cause_comparison": {
+    "seed": 42,
+    "n_test": 3245,
+    "class_support": {
+      "transport_delay": 1188,
+      "material_shortage": 88,
+      "starved_upstream": 794,
+      "queue_buildup": 1175
+    },
+    "metrics": [
+      {
+        "method": "Queue-Wait",
+        "selected_epoch": 42.0,
+        "accuracy": 0.959,
+        "macro_f1": 0.94,
+        "balanced_accuracy": 0.958,
+        "transport_delay": 0.988,
+        "material_shortage": 0.989,
+        "starved_upstream": 0.863,
+        "queue_buildup": 0.993
+      },
+      {
+        "method": "Active Period",
+        "selected_epoch": 44.0,
+        "accuracy": 0.896,
+        "macro_f1": 0.885,
+        "balanced_accuracy": 0.91,
+        "transport_delay": 0.844,
+        "material_shortage": 0.977,
+        "starved_upstream": 0.84,
+        "queue_buildup": 0.979
+      },
+      {
+        "method": "Utilization",
+        "selected_epoch": 41.0,
+        "accuracy": 0.914,
+        "macro_f1": 0.883,
+        "balanced_accuracy": 0.911,
+        "transport_delay": 0.917,
+        "material_shortage": 0.932,
+        "starved_upstream": 0.832,
+        "queue_buildup": 0.964
+      },
+      {
+        "method": "Ops",
+        "selected_epoch": 12.0,
+        "accuracy": 0.856,
+        "macro_f1": 0.839,
+        "balanced_accuracy": 0.856,
+        "transport_delay": 0.92,
+        "material_shortage": 0.966,
+        "starved_upstream": 0.543,
+        "queue_buildup": 0.995
+      },
+      {
+        "method": "TPM",
+        "selected_epoch": 32.0,
+        "accuracy": 0.777,
+        "macro_f1": 0.799,
+        "balanced_accuracy": 0.832,
+        "transport_delay": 0.66,
+        "material_shortage": 1.0,
+        "starved_upstream": 0.824,
+        "queue_buildup": 0.846
+      }
+    ]
+  },
+  "verification": {
+    "configuration": "Five inherited method_compare configurations differ only by label method and output/run names; batch 16, learning rate 5e-5, max epochs 50, patience 40, w_cause 0.1, w_remain_len 0, fuse_hist_cluster false.",
+    "evaluation_sources": [
+      "factory_bn/label_methods.py",
+      "factory_bn/eval_label_validity.py",
+      "factory_bn/eval_representation_separability.py",
+      "factory_bn/eval_label_method_cause.py",
+      "scripts/run_oracle_pilot.sh",
+      "scripts/run_oracle_full.sh",
+      "env_asset_cfg/cfg_disturbance.py"
+    ],
+    "oracle_implementation": "Duration scale 0.8 gives service increment 1/0.8 = 1.25 for machine and related human service, over 1200 simulation steps; evaluated on seven machine/workstation candidates.",
+    "anchor_count": "Report says 3 episodes × 9 anchors; default pilot script saves 3 anchors per episode. Manuscript reports only the verified 3-episode scope pending raw run manifest.",
+    "separability_sample_count": "Shared sampling confirmed by code fingerprints; launcher defaults max_windows=3000 and max_metric_samples=1500. Actual run counts/overrides are not committed and are not asserted in the manuscript.",
+    "main_comparison": "Existing three model-comparison tables left unchanged. Older provenance comparison_sources_2026-10-10.json records baseline 6886 versus main 5354 windows; common-manifest baseline reevaluation remains pending.",
+    "remaining_work": [
+      "Independent full counterfactual campaign",
+      "Common-manifest baseline reevaluation",
+      "Measured efficiency and held-out-condition generalization",
+      "Additional seeds and raw per-sample exports"
+    ],
+    "scope": "Chapter 5 only in main.tex, plus new figure, plotting script, and this evidence snapshot. No commit or push performed."
+  }
+}
