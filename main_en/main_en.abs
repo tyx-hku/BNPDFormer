@@ -1,0 +1,14 @@
+Dynamic bottleneck prediction can warn manufacturers of emerging throughput constraints and guide resource adjustment before production is disrupted.
+This study addresses not only which resource and station will become the bottleneck, but also when the event will begin, how long it will persist, what observable process condition is associated with it, and how much order-processing time remains.
+Existing studies mainly rely on single-entity data returned by machine or workstation sensors, with limited representation of workers, materials, buffers, and logistics and of their relations.
+This narrow observation scope leads to incomplete factory-graph modelling, reduces prediction accuracy, and makes it difficult to capture disturbances that propagate across resources after a delay.
+To address these limitations, we propose the \textbf{Process-Informed Heterogeneous-Graph Spatiotemporal Transformer with Delayed Propagation (PHGST-DP)}.
+A disturbance-controlled digital production line provides traceable multi-resource trajectories, while process-informed labelling and clustering construct sustained bottleneck events, process-cause targets, operating regimes, and precursor patterns.
+PHGST-DP then combines a heterogeneous process--logistics graph with delay-pattern-conditioned spatiotemporal interaction to model typed resource relations and associate earlier cross-resource states with later constraints.
+The model jointly reports the bottleneck station, onset, duration, process cause, and remaining order time.
+Multi-model comparison on the unified test sample shows that PHGST-DP achieves the best overall performance among the compared methods, leading on the principal metrics for bottleneck-event identification, early warning, future-state tracking, and bottleneck-duration estimation.
+Ablation experiments further show that restricting heterogeneous resource representation or cross-resource interaction, removing process-informed supervision, or disabling delay-pattern conditioning degrades key predictive capabilities, thereby confirming the effectiveness of the proposed design.
+Report generation also fits comfortably within the production update interval on the tested platform.
+These results validate PHGST-DP under the studied digital-twin conditions and support its use for production warning and decision support, including resource rescheduling, material replenishment, maintenance, and logistics adjustment.
+
+

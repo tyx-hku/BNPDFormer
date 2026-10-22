@@ -70,8 +70,12 @@ def main() -> None:
         rows = list(csv.DictReader(stream))
     arrays = {key: np.array([float(r[key]) for r in rows]) for key in rows[0]}
     assert np.array_equal(arrays["window"], np.arange(231))
+    # NOTE: the final combined figure is redrawn by redraw_ch5_raster_times.py
+    # (Times New Roman throughout, baselines recovered from these panels).
     plt.rcParams.update({
-        "font.family": "DejaVu Sans", "font.size": 7.5,
+        "font.family": "serif",
+        "font.serif": ["Times New Roman", "Times", "DejaVu Serif", "serif"],
+        "font.size": 7.5,
         "axes.titlesize": 8.8, "axes.labelsize": 7.5,
         "axes.linewidth": 0.65, "xtick.labelsize": 7.2, "ytick.labelsize": 7.2,
         "xtick.major.width": 0.6, "ytick.major.width": 0.6,

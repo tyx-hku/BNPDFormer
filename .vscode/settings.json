@@ -11,27 +11,35 @@
     "editor.wrappingIndent": "same"
   },
   "latex-workshop.latex.autoBuild.run": "onSave",
-  "latex-workshop.latex.recipe.default": "tinytex",
-  "latex-workshop.latex.outDir": "%DIR%/build",
+  "latex-workshop.latex.recipe.default": "xelatex",
+  "latex-workshop.latex.outDir": "%DIR%",
   "latex-workshop.latex.tools": [
     {
-      "name": "tinytex",
-      "command": "/Users/xuwantong/Library/TinyTeX/bin/universal-darwin/latexmk",
+      "name": "xelatex",
+      "command": "xelatex",
       "args": [
-        "-xelatex",
         "-synctex=1",
         "-interaction=nonstopmode",
         "-file-line-error",
-        "-outdir=%OUTDIR%",
         "%DOC%"
+      ]
+    },
+    {
+      "name": "bibtex",
+      "command": "bibtex",
+      "args": [
+        "%DOCFILE%"
       ]
     }
   ],
   "latex-workshop.latex.recipes": [
     {
-      "name": "tinytex",
+      "name": "xelatex",
       "tools": [
-        "tinytex"
+        "xelatex",
+        "bibtex",
+        "xelatex",
+        "xelatex"
       ]
     }
   ],

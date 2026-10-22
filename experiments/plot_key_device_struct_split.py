@@ -139,8 +139,8 @@ def _extract(im: np.ndarray) -> dict[str, tuple[np.ndarray, np.ndarray]]:
 def _draw(series: dict[str, tuple[np.ndarray, np.ndarray]], names: tuple[str, ...], out: Path) -> None:
     plt.rcParams.update(
         {
-            "font.family": "sans-serif",
-            "font.sans-serif": ["Arial", "DejaVu Sans", "Helvetica", "sans-serif"],
+            "font.family": "serif",
+            "font.serif": ["Times New Roman", "Times", "DejaVu Serif", "serif"],
             "font.size": 10,
             "axes.linewidth": 1.0,
             "axes.spines.top": False,

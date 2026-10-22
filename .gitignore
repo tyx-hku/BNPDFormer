@@ -27,3 +27,7 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+~$*
+
+# 临时检查产物
+tmp/
