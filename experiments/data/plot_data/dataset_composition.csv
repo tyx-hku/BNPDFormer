@@ -1,0 +1,7 @@
+split,episodes,windows,upcoming,ongoing,no_event,n_true_who,n_window_resource_pairs
+train,140,20826,,,,,
+val,28,4331,,,,,
+test,36,5354,,,,,
+test_start5,,,336,766,79208,1102,80310
+test_start10,,,604,768,78938,1372,80310
+test_start15,,,708,770,78832,1478,80310

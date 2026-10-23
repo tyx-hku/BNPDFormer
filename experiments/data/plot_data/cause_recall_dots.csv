@@ -1,0 +1,6 @@
+method,transport_delay,material_shortage,starved_upstream,queue_buildup,macro_f1
+Active Period,0.844,0.977,0.84,0.979,0.885
+Utilization,0.917,0.932,0.832,0.964,0.883
+Ops,0.92,0.966,0.543,0.995,0.839
+Queue-Wait,0.988,0.989,0.863,0.993,0.94
+TPM,0.66,1.0,0.824,0.846,0.799

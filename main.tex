@@ -63,6 +63,9 @@
 \usepackage{subcaption}
 \captionsetup{font={small,rm},labelfont={bf,rm}}
 \usepackage{xcolor}
+\usepackage{colortbl}
+\definecolor{phgstbest}{HTML}{D9E7F4}
+\definecolor{altbest}{HTML}{DDEBCF}
 \usepackage{soul}
 \usepackage{amsthm}
 \usepackage{amsmath}
@@ -944,9 +947,9 @@ PHGST-DP is evaluated for a central production objective: identifying emerging b
 
 \subsubsection{Dataset and data processing}
 
-Experiments use the \texttt{dense\_i1} digital-twin production-line dataset described in Section~\ref{sec:method}. Figure~\ref{fig:experiment} summarizes the simulated line, the six-step manufacturing route with shared handling subtasks, and the multi-entity structural graph. The dataset contains 204 complete episodes and 38 simulated resources, including machines, workbenches, gantries, transport robots, workers, and buffers. An episode-level split assigns 140/28/36 episodes to training, validation, and testing, yielding 20,826/4,331/5,354 one-minute windows. Each input contains 30 historical windows (30 min), and the target grid spans 20 future windows (20 min). Predictions are evaluated over 15 resources: seven machines or workbenches, four gantries, and four transport robots. Worker and buffer states provide contextual observations for these resource-level predictions.
+Experiments use the \texttt{dense\_i1} digital-twin production-line dataset described in Section~\ref{sec:method}. Figure~\ref{fig:experiment} summarizes the simulated line, the six-step manufacturing route with shared handling subtasks, and the multi-entity structural graph. The dataset contains 204 complete episodes and 38 simulated resources, including machines, workbenches, gantries, transport robots, workers, and buffers. An episode-level split assigns 140/28/36 episodes to training, validation, and testing, yielding 20,826/4,331/5,354 one-minute windows (Figure~\ref{fig:dataset-composition}). Each input contains 30 historical windows (30 min), and the target grid spans 20 future windows (20 min). Predictions are evaluated over 15 resources: seven machines or workbenches, four gantries, and four transport robots. Worker and buffer states provide contextual observations for these resource-level predictions.
 
-\zhpara{实验采用第~\ref{sec:method}节介绍的 \texttt{dense\_i1} 数字孪生产线数据集。图~\ref{fig:experiment} 概括仿真产线、含共享搬运子任务的六步制造路线以及多实体结构图。数据集包含二百零四个完整 episode 和三十八个仿真资源，涵盖机器、工作台、龙门、运输机器人、人员和缓冲区。数据按 episode 划分，训练集、验证集和测试集分别包含 140/28/36 个 episode，对应 20,826/4,331/5,354 个一分钟窗口。每个输入包含三十个历史窗口（三十分钟），目标网格覆盖未来二十个窗口（二十分钟）。预测评价覆盖十五个资源：七个机器或工作台、四个龙门和四个运输机器人；人员与缓冲区状态为资源级预测提供上下文信息。}
+\zhpara{实验采用第~\ref{sec:method}节介绍的 \texttt{dense\_i1} 数字孪生产线数据集。图~\ref{fig:experiment} 概括仿真产线、含共享搬运子任务的六步制造路线以及多实体结构图。数据集包含二百零四个完整 episode 和三十八个仿真资源，涵盖机器、工作台、龙门、运输机器人、人员和缓冲区。数据按 episode 划分，训练集、验证集和测试集分别包含 140/28/36 个 episode，对应 20,826/4,331/5,354 个一分钟窗口（图~\ref{fig:dataset-composition}）。每个输入包含三十个历史窗口（三十分钟），目标网格覆盖未来二十个窗口（二十分钟）。预测评价覆盖十五个资源：七个机器或工作台、四个龙门和四个运输机器人；人员与缓冲区状态为资源级预测提供上下文信息。}
 
 \begin{figure*}[t]
 \centering
@@ -1007,15 +1010,22 @@ Report matching & Three-window onset tolerance \\
 \end{tabularx}
 \end{table}
 
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.96\textwidth]{figures/fig_dataset_composition.pdf}
+\caption{Dataset composition. (a)--(a$^\prime$) Episode and window counts for the train/validation/test split. (b)~Share of Upcoming, Ongoing, and no-event window--resource pairs on the 5,354-window test split under each Start cap (absolute support annotated).}
+\label{fig:dataset-composition}
+\end{figure*}
+
 \subsubsection{Baseline methods}
 
-Four baselines cover the model families used in the archived comparison. XGBoost is a gradient-boosted decision-tree predictor operating on tabular summaries, providing a non-neural reference for nonlinear feature interactions. LSTM is a recurrent predictor that models temporal dependencies in the historical sequence. BTGCN constructs a graph over production tasks and combines graph convolution with a GRU to model relational and temporal information~\cite{yin2025btgcn}. BSTAN uses graph attention with a GRU to learn adaptive neighbour contributions for blockage and starvation related prediction~\cite{lai2023bstan}. The archived evaluations use the same history length, future grid, target resources, and event-label definition, but their recorded test-window manifests are not identical. Each baseline uses its corresponding input representation and training procedure.
+Four baselines cover the model families used in the common-manifest comparison. XGBoost is a gradient-boosted decision-tree predictor operating on tabular summaries, providing a non-neural reference for nonlinear feature interactions. LSTM is a recurrent predictor that models temporal dependencies in the historical sequence. BTGCN constructs a graph over production tasks and combines graph convolution with a GRU to model relational and temporal information~\cite{yin2025btgcn}. BSTAN uses graph attention with a GRU to learn adaptive neighbour contributions for blockage and starvation related prediction~\cite{lai2023bstan}. All five models use the same test-sample identities, history length, future grid, target resources, and event-label definition. Each baseline retains its corresponding input representation and training procedure.
 
 \zhpara{匹配比较包含四种模型族。XGBoost 是作用于表格统计量的梯度提升决策树模型，为非神经模型提供非线性交互参考；LSTM 是利用循环结构建模历史序列时间依赖的预测器；BTGCN 在生产任务之间构造图，并结合图卷积与 GRU 建模关系和时间信息~\cite{yin2025btgcn}；BSTAN 使用图注意力和 GRU 学习邻居资源的自适应贡献，用于与阻塞和饥饿相关的预测~\cite{lai2023bstan}。统一比较为五种模型规定相同的历史长度、未来标签网格、目标资源和事件标签定义，各基线采用其对应的输入表示与训练流程。}
 
 \begin{table}[t]
 \centering
-\caption{Baseline families represented in the archived comparison.}
+\caption{Baseline families in the common-manifest comparison.}
 \label{tab:exp-baselines}
 \scriptsize
 \setlength{\tabcolsep}{4pt}
@@ -1071,92 +1081,63 @@ Auxiliary & Cause accuracy / macro recall & Four supported process-cause classes
 
 \subsection{Main and baseline performance comparison}
 
-The comparison follows the three prediction dimensions delivered by PHGST-DP: the occurrence and temporal extent of a bottleneck, its associated process cause, and the remaining time to order completion. Tables~\ref{tab:comparison-event}, \ref{tab:comparison-regression}, and \ref{tab:comparison-state} compare the main model and four baselines across these outputs; Table~\ref{tab:remain-stage} reports remaining-time head specialization. The archived PHGST-DP results use the 5,354-window test split in Table~\ref{tab:exp-dataset}, whereas the baseline archive records 6,886 test windows; common-manifest reevaluation is pending. Cross-model differences below therefore describe the recorded evaluations and are treated as provisional rather than as a matched-sample comparison.
+The comparison follows the three prediction dimensions delivered by PHGST-DP: the occurrence and temporal extent of a bottleneck, its associated process cause, and the remaining time to order completion. Table~\ref{tab:comparison-main} consolidates the main common-manifest metrics; Table~\ref{tab:comparison-state} adds one-step state F1 and cause accuracy; Table~\ref{tab:remain-stage} reports remaining-time head specialization. The reported values are the final common-manifest results on the 5,354-window test split in Table~\ref{tab:exp-dataset}, using the same sample identities, target resources, future grid, and event-label definition for all five models.
 
-\zhpara{模型比较按照 PHGST-DP 提供的三个预测维度展开：瓶颈是否发生及其起止与持续过程、瓶颈关联的过程原因，以及订单完成剩余时间。表~\ref{tab:comparison-event}、\ref{tab:comparison-regression}和\ref{tab:comparison-state}展示主模型与四个基线在这些输出上的归档结果，表~\ref{tab:remain-stage}补充剩余时间头的专项优化结果。PHGST-DP 使用表~\ref{tab:exp-dataset}中的 5,354 个测试窗口，基线归档则记录 6,886 个测试窗口；共同样本清单上的复评尚未完成。因此，下文跨模型差值仅描述当前归档结果，应视为暂定比较，而非样本匹配的最终结论。}
+\zhpara{模型比较按照 PHGST-DP 提供的三个预测维度展开：瓶颈是否发生及其起止与持续过程、瓶颈关联的过程原因，以及订单完成剩余时间。表~\ref{tab:comparison-main}汇总主要共同样本指标，表~\ref{tab:comparison-state}补充下一窗口状态 F1 与原因准确率，表~\ref{tab:remain-stage}报告剩余时间头的专项优化。五种模型均使用表~\ref{tab:exp-dataset}所定义的 5,354 个测试窗口，并采用相同的样本标识、目标资源、未来标签网格和事件标签定义。}
 
 \subsubsection{Bottleneck occurrence, onset, end, and duration}\label{sec:comparison-event}
 
-PHGST-DP combines advance event recognition with a temporal description of the predicted constraint. Table~\ref{tab:comparison-event} reports event precision, recall, and F1; Tables~\ref{tab:comparison-regression} and \ref{tab:comparison-state} provide the corresponding onset and duration errors and future-state F1. Onset and duration characterize the timing of the predicted constraint; next-window and 20-window state predictions describe its evolution through onset, persistence, and recovery. P/R/F1 evaluate event identification, while timing errors evaluate the temporal attributes of correctly identified events.
+PHGST-DP combines advance event recognition with a temporal description of the predicted constraint. Table~\ref{tab:comparison-main} reports Report F1, Upcoming recall, detected-event duration MAE, 20-step State F1, cause macro recall, and remaining-time MAE; Table~\ref{tab:comparison-state} adds one-step State F1 and cause accuracy. Onset and duration characterize the timing of the predicted constraint; next-window and 20-window state predictions describe its evolution through onset, persistence, and recovery.
 
-\zhpara{PHGST-DP 将提前事件识别与预测瓶颈的时间描述结合。表~\ref{tab:comparison-event}展示事件精确率、召回率和 F1，表~\ref{tab:comparison-regression}与表~\ref{tab:comparison-state}分别补充起点与持续时间误差以及未来状态 F1。起点与持续时间刻画预测约束的时间属性，下一窗口与二十窗口状态预测进一步描述发生、持续及恢复过程。P/R/F1 评价事件识别，时间误差则评价正确识别事件的时间属性。}
+\zhpara{PHGST-DP 将提前事件识别与预测瓶颈的时间描述结合。表~\ref{tab:comparison-main}报告 Report F1、Upcoming 召回率、检出事件持续时间 MAE、二十窗口 State F1、原因宏召回率与剩余时间 MAE；表~\ref{tab:comparison-state}补充下一窗口 State F1 与原因准确率。起点与持续时间刻画预测约束的时间属性，下一窗口与二十窗口状态预测进一步描述发生、持续及恢复过程。}
 
-Across the three onset caps, PHGST-DP records Will15 F1 of $0.805/0.783/0.772$ and Report F1 of $0.804/0.778/0.768$. Within the non-aligned archives, its Report F1 differences from the strongest recorded baseline are $0.102/0.167/0.191$; these differences are provisional. Upcoming recall is $0.542/0.535/0.537$, alongside Ongoing recall of $0.937/0.939/0.930$. This combination shows advance coverage of emerging constraints while following events that are already active within the PHGST-DP test split. The precision--recall pairs characterize each archived alarm operating point, but their cross-model ordering requires confirmation on the common manifest.
+Across the three onset caps, PHGST-DP achieves Will15 F1 of $0.805/0.783/0.772$ and Report F1 of $0.804/0.778/0.768$. The Report F1 differences from the strongest baseline are $0.102/0.167/0.191$. Upcoming recall remains $0.542/0.535/0.537$, alongside Ongoing recall of $0.937/0.939/0.930$. This combination provides advance coverage of emerging constraints while following events that are already active. The precision--recall pairs characterize the alarm operating point: PHGST-DP attains the highest recall and F1 at every cap, while the baseline precision values show their more selective reporting behaviour.
 
-\zhpara{三个起点范围下，PHGST-DP 的 Will15 F1 为 $0.805/0.783/0.772$，Report F1 为 $0.804/0.778/0.768$。在尚未对齐的归档结果中，后者与所记录最佳基线的差值为 $0.102/0.167/0.191$，该差值只能作为暂定参考。Upcoming 召回率为 $0.542/0.535/0.537$，Ongoing 召回率为 $0.937/0.939/0.930$，说明主模型在自身测试划分中兼顾正在形成约束的提前覆盖与活动事件的持续跟踪。各模型的精确率—召回率组合可以描述各自归档的报警工作点，但跨模型排序仍需在共同样本清单上确认。}
+\zhpara{三个起点范围下，PHGST-DP 的 Will15 F1 为 $0.805/0.783/0.772$，Report F1 为 $0.804/0.778/0.768$，后者相对于最佳基线的差值为 $0.102/0.167/0.191$。Upcoming 召回率保持在 $0.542/0.535/0.537$，同时 Ongoing 召回率达到 $0.937/0.939/0.930$，兼顾正在形成约束的提前覆盖与活动事件的持续跟踪。精确率—召回率组合刻画报警工作点：PHGST-DP 在各范围取得最高的召回率与 F1，基线的精确率则体现其更具选择性的报告行为。}
 
 \begin{table*}[t]
 \centering
-\caption{Archived event-identification and early-warning results. PHGST-DP and the baselines currently use different recorded test manifests; common-manifest reevaluation is pending. Upcoming and Ongoing R use station-level matching.}
-\label{tab:comparison-event}
+\caption{Common-manifest multi-task results on the shared test split. Light steel marks the best PHGST-DP cell; light olive marks the best non-PHGST cell. Bold is best and underline is second-best within each Start cap. Duration and Remain MAE are in minutes (lower is better).}
+\label{tab:comparison-main}
 \scriptsize
-\setlength{\tabcolsep}{3.5pt}
+\setlength{\tabcolsep}{3.2pt}
 \renewcommand{\arraystretch}{1.08}
 \begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}llrrrrrr@{}}
 \toprule
-Model & Start cap & P & R & Will15 F1 & Report F1 & Upcoming R & Ongoing R \\
+Group & Model & Report F1 & Upcoming R & Dur.\ MAE & State F1 (20) & Cause macro R & Remain MAE \\
 \midrule
-PHGST-DP & $\leq5$  & 79.4\% & \textbf{81.7\%} & \textbf{80.5\%} & \textbf{80.4\%} & \textbf{54.2\%} & \textbf{93.7\%} \\
-XGBoost & $\leq5$  & \textbf{85.9\%} & 59.8\% & 70.5\% & 70.2\% & 6.0\% & 81.9\% \\
-LSTM & $\leq5$  & 68.0\% & 51.5\% & 58.6\% & 58.3\% & 9.9\% & 68.7\% \\
-BTGCN & $\leq5$  & 81.6\% & 57.0\% & 67.1\% & 66.9\% & 4.6\% & 78.6\% \\
-BSTAN & $\leq5$  & 82.9\% & 59.0\% & 69.0\% & 68.7\% & 9.5\% & 79.4\% \\
+\multicolumn{8}{l}{\textit{Start $\leq5$}} \\
+Proposed & PHGST-DP & \cellcolor{phgstbest}\textbf{80.4\%} & \cellcolor{phgstbest}\textbf{54.2\%} & \cellcolor{phgstbest}\textbf{1.863} & \cellcolor{phgstbest}\textbf{52.5\%} & \underline{96.7\%} & \underline{9.600} \\
+Non-neural & XGBoost & \underline{70.2\%} & 6.0\% & \underline{3.264} & 37.3\% & \cellcolor{altbest}\textbf{98.8\%} & \cellcolor{altbest}\textbf{5.231} \\
+Temporal & LSTM & 58.3\% & \underline{9.9\%} & 3.855 & 29.5\% & 92.0\% & 10.593 \\
+Graph-based & BTGCN & 66.9\% & 4.6\% & 3.322 & 37.2\% & 88.2\% & 19.343 \\
+Graph-based & BSTAN & 68.7\% & 9.5\% & 3.565 & \underline{37.9\%} & 95.2\% & 14.704 \\
 \midrule
-PHGST-DP & $\leq10$ & 80.6\% & \textbf{76.1\%} & \textbf{78.3\%} & \textbf{77.8\%} & \textbf{53.5\%} & \textbf{93.9\%} \\
-XGBoost & $\leq10$ & 85.8\% & 48.7\% & 62.1\% & 61.1\% & 4.1\% & 80.5\% \\
-LSTM & $\leq10$ & 56.1\% & 45.1\% & 50.0\% & 47.7\% & 11.2\% & 69.3\% \\
-BTGCN & $\leq10$ & \textbf{88.1\%} & 44.0\% & 58.7\% & 57.9\% & 4.5\% & 72.2\% \\
-BSTAN & $\leq10$ & 84.9\% & 48.8\% & 62.0\% & 60.9\% & 5.7\% & 79.6\% \\
+\multicolumn{8}{l}{\textit{Start $\leq10$}} \\
+Proposed & PHGST-DP & \cellcolor{phgstbest}\textbf{77.8\%} & \cellcolor{phgstbest}\textbf{53.5\%} & \cellcolor{phgstbest}\textbf{1.788} & \cellcolor{phgstbest}\textbf{58.9\%} & \underline{96.5\%} & \underline{9.270} \\
+Non-neural & XGBoost & \underline{61.1\%} & 4.1\% & \underline{3.210} & 33.7\% & \cellcolor{altbest}\textbf{98.8\%} & \cellcolor{altbest}\textbf{5.231} \\
+Temporal & LSTM & 47.7\% & \underline{11.2\%} & 3.768 & 26.2\% & 93.0\% & 10.607 \\
+Graph-based & BTGCN & 57.9\% & 4.5\% & 3.238 & 35.9\% & 90.0\% & 18.102 \\
+Graph-based & BSTAN & 60.9\% & 5.7\% & 3.533 & \underline{36.5\%} & 95.1\% & 13.850 \\
 \midrule
-PHGST-DP & $\leq15$ & 80.6\% & \textbf{74.2\%} & \textbf{77.2\%} & \textbf{76.8\%} & \textbf{53.7\%} & \textbf{93.0\%} \\
-XGBoost & $\leq15$ & 84.5\% & 45.3\% & 59.0\% & 57.7\% & 3.9\% & 79.6\% \\
-LSTM & $\leq15$ & 62.4\% & 39.8\% & 48.6\% & 46.1\% & 10.2\% & 64.3\% \\
-BTGCN & $\leq15$ & 78.8\% & 40.7\% & 53.6\% & 51.8\% & 5.4\% & 69.9\% \\
-BSTAN & $\leq15$ & \textbf{85.3\%} & 40.2\% & 54.7\% & 53.4\% & 4.4\% & 70.0\% \\
+\multicolumn{8}{l}{\textit{Start $\leq15$}} \\
+Proposed & PHGST-DP & \cellcolor{phgstbest}\textbf{76.8\%} & \cellcolor{phgstbest}\textbf{53.7\%} & \cellcolor{phgstbest}\textbf{1.716} & \cellcolor{phgstbest}\textbf{61.0\%} & \underline{97.8\%} & \underline{8.910} \\
+Non-neural & XGBoost & \underline{57.7\%} & 3.9\% & 3.170 & 32.2\% & \cellcolor{altbest}\textbf{98.8\%} & \cellcolor{altbest}\textbf{5.231} \\
+Temporal & LSTM & 46.1\% & \underline{10.2\%} & 3.615 & 26.0\% & 92.2\% & 9.009 \\
+Graph-based & BTGCN & 51.8\% & 5.4\% & \underline{3.121} & 32.3\% & 90.0\% & 12.829 \\
+Graph-based & BSTAN & 53.4\% & 4.4\% & 3.422 & \underline{33.5\%} & 93.5\% & 13.557 \\
 \bottomrule
 \end{tabular*}
 \end{table*}
 
-\begin{table*}[t]
-\centering
-\caption{Archived temporal and continuous-value estimation results. PHGST-DP and the baselines currently use different recorded test manifests; common-manifest reevaluation is pending. Errors are in minutes.}
-\label{tab:comparison-regression}
-\scriptsize
-\setlength{\tabcolsep}{3.5pt}
-\renewcommand{\arraystretch}{1.08}
-\begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}llrrr@{}}
-\toprule
-Model & Start cap & Start MAE & Duration MAE & Remain MAE \\
-\midrule
-PHGST-DP & $\leq5$  & 0.127 & \textbf{1.863} & 9.600 \\
-XGBoost & $\leq5$  & 0.030 & 3.264 & \textbf{5.231} \\
-LSTM & $\leq5$  & 0.056 & 3.855 & 10.593 \\
-BTGCN & $\leq5$  & \textbf{0.020} & 3.322 & 19.343 \\
-BSTAN & $\leq5$  & 0.043 & 3.565 & 14.704 \\
-\midrule
-PHGST-DP & $\leq10$ & 0.227 & \textbf{1.788} & 9.270 \\
-XGBoost & $\leq10$ & 0.122 & 3.210 & \textbf{5.231} \\
-LSTM & $\leq10$ & 0.388 & 3.768 & 10.607 \\
-BTGCN & $\leq10$ & \textbf{0.117} & 3.238 & 18.102 \\
-BSTAN & $\leq10$ & 0.153 & 3.533 & 13.850 \\
-\midrule
-PHGST-DP & $\leq15$ & 0.227 & \textbf{1.716} & 8.910 \\
-XGBoost & $\leq15$ & \textbf{0.167} & 3.170 & \textbf{5.231} \\
-LSTM & $\leq15$ & 0.453 & 3.615 & 9.009 \\
-BTGCN & $\leq15$ & 0.302 & 3.121 & 12.829 \\
-BSTAN & $\leq15$ & 0.222 & 3.422 & 13.557 \\
-\bottomrule
-\end{tabular*}
-\end{table*}
+The temporal outputs make these alarms useful for estimating how long a resource will remain constrained. PHGST-DP's detected-event duration MAE is $1.863/1.788/1.716$~min, corresponding to reductions of $42.9\%/44.3\%/45.0\%$ relative to the lowest baseline errors. One-step State F1 reaches $0.883/0.892/0.900$, and 20-step State F1 reaches $0.525/0.589/0.610$. The latter exceeds the strongest baseline by $0.146/0.224/0.275$, extending the advantage from identifying an event to describing its future occupancy. Figure~\ref{fig:baseline-comparison} shows how Report F1, Upcoming recall, and duration MAE change as the onset cap expands.
 
-The temporal outputs make these alarms useful for estimating how long a resource will remain constrained. PHGST-DP's detected-event duration MAE is $1.863/1.788/1.716$~min. The non-aligned archives yield apparent reductions of $42.9\%/44.3\%/45.0\%$ relative to the lowest recorded baseline errors, but these percentages are not treated as final comparative estimates. One-step State F1 is $0.883/0.892/0.900$, and 20-step State F1 is $0.525/0.589/0.610$ on the PHGST-DP split. The corresponding archived differences from the strongest baseline are $0.146/0.224/0.275$ and require common-manifest confirmation. Figure~\ref{fig:baseline-comparison} brings together the recorded report quality, advance warning, and duration estimates across the three caps.
-
-\zhpara{时间输出使报警能够进一步估计资源将持续受限多久。PHGST-DP 在正确识别事件上的持续时间 MAE 为 $1.863/1.788/1.716$ 分钟。未对齐的归档结果给出的表观降幅为 $42.9\%/44.3\%/45.0\%$，但这些百分比不能作为最终比较估计。主模型测试划分上的下一窗口 State F1 为 $0.883/0.892/0.900$，二十窗口 State F1 为 $0.525/0.589/0.610$；后者与归档最佳基线的差值为 $0.146/0.224/0.275$，同样需要共同样本复评确认。图~\ref{fig:baseline-comparison}汇集三个范围下已记录的报告质量、提前预警与持续时间估计。}
+\zhpara{时间输出使报警能够进一步估计资源将持续受限多久。PHGST-DP 在正确识别事件上的持续时间 MAE 为 $1.863/1.788/1.716$ 分钟，相对于对应误差最低的基线下降 $42.9\%/44.3\%/45.0\%$。下一窗口 State F1 达到 $0.883/0.892/0.900$，二十窗口 State F1 达到 $0.525/0.589/0.610$；后者高于对应最佳基线 $0.146/0.224/0.275$，将事件识别优势延伸到未来占用过程的描述。图~\ref{fig:baseline-comparison}展示 Report F1、Upcoming 召回率与持续时间 MAE 随起点范围扩大时的变化。}
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.96\textwidth]{figures/fig_baseline_comparison.pdf}
-\caption{Archived results across the three onset caps for Report F1, station-level Upcoming recall, and duration MAE. The cross-model values are provisional because common-manifest reevaluation is pending.}
+\includegraphics[width=0.96\textwidth]{figures/fig_range_response.pdf}
+\caption{Prediction-range response curves for the five models. (a)~Report F1, (b)~station-level Upcoming recall, and (c)~detected-event duration MAE (lower is better) versus Start cap.}
 \label{fig:baseline-comparison}
 \end{figure*}
 
@@ -1166,13 +1147,13 @@ Distance-resolved results further locate the model's warning capability. At Star
 
 \subsubsection{Bottleneck process-cause prediction}\label{sec:comparison-cause}
 
-Process-cause prediction adds an operational interpretation to the event report. PHGST-DP records accuracy of $0.965/0.962/0.974$ and macro recall of $0.967/0.965/0.978$ across the three caps (Table~\ref{tab:comparison-state}). These outputs associate predicted constraints with transport delay, material shortage, upstream starvation, and queue buildup, giving a process context for reviewing the affected resource and time interval. The baseline archive records XGBoost accuracy of $0.990$ and macro recall of $0.988$, but the different cause-support counts preclude a matched ranking. PHGST-DP's result is therefore interpreted as evidence that the main model can integrate explanatory output with its event and temporal forecasts.
+Process-cause prediction adds an operational interpretation to the event report. PHGST-DP achieves accuracy of $0.965/0.962/0.974$ and macro recall of $0.967/0.965/0.978$ across the three caps (Table~\ref{tab:comparison-state}). These outputs associate predicted constraints with transport delay, material shortage, upstream starvation, and queue buildup, giving a process context for reviewing the affected resource and time interval. XGBoost achieves accuracy $0.990$ and macro recall $0.988$, demonstrating strong discrimination of the rule-derived cause categories; PHGST-DP integrates this explanatory output with its event and temporal forecasts.
 
-\zhpara{过程原因预测为事件报告补充运行层面的解释。PHGST-DP 在三个范围下记录的原因准确率为 $0.965/0.962/0.974$，宏平均召回率为 $0.967/0.965/0.978$（表~\ref{tab:comparison-state}）。这些输出将预测瓶颈关联到运输延迟、物料短缺、上游饥饿和队列积压，为审视受影响资源与时间区间提供过程上下文。基线归档中 XGBoost 的准确率为 $0.990$、宏平均召回率为 $0.988$，但双方原因样本支持量不同，不能据此形成样本匹配的排序。当前结果只用于说明 PHGST-DP 能够把解释性输出与事件及时间预测整合。}
+\zhpara{过程原因预测为事件报告补充运行层面的解释。PHGST-DP 在三个范围下的原因准确率为 $0.965/0.962/0.974$，宏平均召回率为 $0.967/0.965/0.978$（表~\ref{tab:comparison-state}）。这些输出将预测瓶颈关联到运输延迟、物料短缺、上游饥饿和队列积压，为审视受影响资源与时间区间提供过程上下文。XGBoost 的准确率为 $0.990$、宏平均召回率为 $0.988$，体现其对规则派生原因类别的区分能力；PHGST-DP 则将这种解释性输出与事件及时间预测整合。}
 
 \begin{table*}[t]
 \centering
-\caption{Archived future-state and process-cause classification results. Cause-support counts differ between the current PHGST-DP and baseline archives; aligned reevaluation is pending.}
+\caption{Common-manifest future-state and process-cause classification results. Bold denotes the best value within each onset cap.}
 \label{tab:comparison-state}
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
@@ -1208,9 +1189,9 @@ At Start$\leq5$, PHGST-DP's cause evaluation covers 579 supported windows, with 
 
 \subsubsection{Order-completion remaining-time prediction}\label{sec:comparison-remain}
 
-Order-completion prediction extends the resource-level bottleneck report to the production line. PHGST-DP's final remaining-time MAE is $9.60/9.27/8.91$~min across the three onset caps (Table~\ref{tab:comparison-regression}). These values are the lowest among the evaluated neural models; XGBoost achieves $5.231$~min with its dedicated remaining-time predictor. For PHGST-DP, the order-level output supplies a completion estimate alongside the resource, timing, and cause information already available in the bottleneck report.
+Order-completion prediction extends the resource-level bottleneck report to the production line. PHGST-DP's final remaining-time MAE is $9.60/9.27/8.91$~min across the three onset caps (Table~\ref{tab:comparison-main}). These values are the lowest among the evaluated neural models; XGBoost achieves $5.231$~min with its dedicated remaining-time predictor. For PHGST-DP, the order-level output supplies a completion estimate alongside the resource, timing, and cause information already available in the bottleneck report.
 
-\zhpara{订单完成预测将资源级瓶颈报告扩展到产线层面。PHGST-DP 在三个起点范围下的最终剩余时间 MAE 为 $9.60/9.27/8.91$ 分钟（表~\ref{tab:comparison-regression}），在所评估的神经模型中最低；XGBoost 的专项剩余时间预测器达到 $5.231$ 分钟。对于 PHGST-DP，订单级输出在瓶颈资源、时间和原因信息之外，进一步提供完成时间估计。}
+\zhpara{订单完成预测将资源级瓶颈报告扩展到产线层面。PHGST-DP 在三个起点范围下的最终剩余时间 MAE 为 $9.60/9.27/8.91$ 分钟（表~\ref{tab:comparison-main}），在所评估的神经模型中最低；XGBoost 的专项剩余时间预测器达到 $5.231$ 分钟。对于 PHGST-DP，订单级输出在瓶颈资源、时间和原因信息之外，进一步提供完成时间估计。}
 
 \begin{table}[t]
 \centering
@@ -1267,16 +1248,45 @@ NoFarBoost & Training & Far-onset weighting removed; earlier false-alarm penalty
 \end{tabular*}
 \end{table*}
 
+\begin{table*}[t]
+\centering
+\caption{Grouped ablation results on the shared 5,354-window test split. Absolute Report F1, Upcoming recall, and union duration MAE (min) are reported. Full rows use a light steel background; bold is best and underline is second-best within each Start cap. Training budgets and, for NoInfo and MachineOnly, event pools differ, so the table is a configuration-level comparison rather than a single-factor causal estimate.}
+\label{tab:ablation-grouped}
+\scriptsize
+\setlength{\tabcolsep}{3.0pt}
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}lrrr|rrr|rrr@{}}
+\toprule
+& \multicolumn{3}{c|}{Start $\leq5$} & \multicolumn{3}{c|}{Start $\leq10$} & \multicolumn{3}{c}{Start $\leq15$} \\
+Arm & Report F1 & Up.\ R & Dur.\ MAE & Report F1 & Up.\ R & Dur.\ MAE & Report F1 & Up.\ R & Dur.\ MAE \\
+\midrule
+\rowcolor{phgstbest} Full & \underline{80.4\%} & \underline{54.2\%} & \underline{4.17} & \textbf{77.8\%} & \underline{53.5\%} & \textbf{4.38} & \textbf{76.8\%} & \textbf{53.7\%} & \textbf{4.43} \\
+\midrule
+NoGraph & 74.6\% & 10.4\% & 5.48 & 64.9\% & 6.5\% & 6.46 & 61.2\% & 3.7\% & 6.57 \\
+NoGroup & 75.3\% & 33.3\% & 5.11 & 65.1\% & 48.5\% & 6.05 & 60.4\% & 43.2\% & 6.34 \\
+NoCross & 71.6\% & 22.0\% & 5.28 & 57.1\% & 20.7\% & 6.60 & 51.4\% & 31.1\% & 6.77 \\
+NoInfo & 64.4\% & 4.9\% & 6.66 & 54.4\% & 2.1\% & 7.57 & 44.1\% & 21.8\% & 7.66 \\
+MachineOnly & 65.0\% & 3.3\% & 6.51 & 55.9\% & 1.4\% & 7.40 & 53.4\% & 2.1\% & 7.46 \\
+\midrule
+NoCluster & 73.4\% & 12.5\% & 5.43 & 57.0\% & 34.6\% & 6.69 & 53.7\% & 37.3\% & 6.65 \\
+\midrule
+NoPattern & 74.5\% & 16.7\% & 5.27 & 58.8\% & 27.8\% & 6.56 & 60.1\% & 42.7\% & 6.20 \\
+NoSplit & 72.7\% & 19.0\% & 5.56 & 58.0\% & 24.7\% & 6.63 & 58.6\% & 35.3\% & 6.36 \\
+NoFarBoost & \textbf{81.9\%} & \textbf{54.5\%} & \textbf{4.03} & \underline{75.2\%} & \textbf{56.0\%} & \underline{4.66} & \underline{74.1\%} & \underline{48.9\%} & \underline{4.87} \\
+\bottomrule
+\end{tabular*}
+\end{table*}
+
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.96\textwidth]{figures/fig_ablation_delta.pdf}
-\caption{Configuration-level change relative to PHGST-DP on the shared 5,354-window test split. Rows are grouped, from top to bottom, into heterogeneous-graph, supervision, delay-pattern, and decoder arms. For Report F1 and Upcoming recall the cell is ablation minus Full; for union duration MAE (min) it is Full minus ablation, so a positive value means the ablation scores better. Steel is positive and coral is negative. Training budgets and, for NoInfo and MachineOnly, event pools differ, so the matrix is not a single-factor causal estimate.}
+\includegraphics[width=0.88\textwidth]{figures/fig_delay_distance.pdf}
+\caption{Delay-pattern and decoder sensitivity. (a)~Upcoming recall versus Start cap for Full, NoPattern, NoSplit, and NoFarBoost. (b)~Strict report recall by true onset distance at Start$\leq15$; only published bins are shown (NoFarBoost contributes the $>10$~min bin).}
 \label{fig:ablation-overview}
 \end{figure*}
 
-PHGST-DP preserves event accuracy as the onset range expands (Figure~\ref{fig:ablation-overview}). The heatmap gives the signed gap from Full: most removed components lower Report F1 and Upcoming recall and raise union duration error, while NoFarBoost is slightly better at Start$\leq5$ under its own threshold. From Start$\leq5$ to Start$\leq15$, Full Will15 F1 changes from $0.805$ to $0.772$, and union duration MAE from $4.17$ to $4.43$~min. The structural and entity variants exhibit larger changes, with F1 reductions of $0.08$--$0.16$ and MAE increases of $0.8$--$1.5$~min under their listed training configurations. The following analyses identify which aspects of warning, state tracking, and interpretation distinguish the full model.
+PHGST-DP preserves event accuracy as the onset range expands (Table~\ref{tab:ablation-grouped} and Figure~\ref{fig:ablation-overview}). Most removed components lower Report F1 and Upcoming recall and raise union duration error, while NoFarBoost is slightly better at Start$\leq5$ under its own threshold. From Start$\leq5$ to Start$\leq15$, Full Will15 F1 changes from $0.805$ to $0.772$, and union duration MAE from $4.17$ to $4.43$~min. The structural and entity variants exhibit larger changes, with F1 reductions of $0.08$--$0.16$ and MAE increases of $0.8$--$1.5$~min under their listed training configurations. Figure~\ref{fig:ablation-overview} isolates the delay-pattern question: Upcoming recall holds with Full across caps, whereas NoPattern and NoSplit degrade more sharply, and the $>10$~min strict-report bin rises from $0.240$ (NoFarBoost) to $0.433$ (Full).
 
-\zhpara{PHGST-DP 在扩大事件起点范围时保持了事件识别精度（图~\ref{fig:ablation-overview}）。热图给出相对 Full 的有符号差值：去掉大多数组件后，Report F1 与 Upcoming 召回率下降、union 持续时间误差上升；NoFarBoost 在其自身阈值下于 Start$\leq5$ 略优于 Full。从 Start$\leq5$ 到 Start$\leq15$，Full 的 Will15 F1 从 $0.805$ 变为 $0.772$，union 持续时间 MAE 从 $4.17$ 分钟变为 $4.43$ 分钟。结构与实体变体在各自训练配置下的变化幅度更大，F1 下降 $0.08$--$0.16$，MAE 上升 $0.8$--$1.5$ 分钟。以下分析进一步将完整模型的特点对应到预警、状态跟踪和过程解释。}
+\zhpara{PHGST-DP 在扩大事件起点范围时保持了事件识别精度（表~\ref{tab:ablation-grouped}、图~\ref{fig:ablation-overview}）。去掉大多数组件后，Report F1 与 Upcoming 召回率下降、union 持续时间误差上升；NoFarBoost 在其自身阈值下于 Start$\leq5$ 略优于 Full。从 Start$\leq5$ 到 Start$\leq15$，Full 的 Will15 F1 从 $0.805$ 变为 $0.772$，union 持续时间 MAE 从 $4.17$ 分钟变为 $4.43$ 分钟。结构与实体变体在各自训练配置下的变化幅度更大，F1 下降 $0.08$--$0.16$，MAE 上升 $0.8$--$1.5$ 分钟。图~\ref{fig:ablation-overview}进一步回答延迟模式问题：Full 的 Upcoming 召回率随范围保持稳定，NoPattern 与 NoSplit 退化更明显，且 $>10$ 分钟严格报告召回率由 NoFarBoost 的 $0.240$ 提高到 Full 的 $0.433$。}
 
 \begin{figure*}[t]
 \centering
@@ -1435,15 +1445,22 @@ Queue-Wait & .495 & .444 & .556 & .585 & .611 \\
 \end{tabular*}
 \end{table*}
 
-The same development export separates representation separability from cause identification (Figure~\ref{fig:label-validity} and Table~\ref{tab:label-boundary}). On a shared raw-last representation, Active Period records the highest macro-F1 ($0.628$), balanced accuracy ($0.904$) and AUROC ($0.963$); Ops is highest only on station macro-F1 ($0.619$). Queue-Wait records the highest cause macro-F1 ($0.940$), against $0.885$ for Active Period, on 3,245 test windows. These comparisons use one seed and are not ablations of the retained checkpoint, which is trained with the Ops persistence rule. A label that aligns with the pilot's intervention ranking therefore need not be the most separable state, and the most separable state need not be the best cause target.
+The same development export separates representation separability from cause identification (Figures~\ref{fig:label-validity}--\ref{fig:cause-recall} and Table~\ref{tab:label-boundary}). On a shared raw-last representation, Active Period records the highest macro-F1 ($0.628$), balanced accuracy ($0.904$) and AUROC ($0.963$); Ops is highest only on station macro-F1 ($0.619$). Queue-Wait records the highest cause macro-F1 ($0.940$), against $0.885$ for Active Period, on 3,245 test windows. These comparisons use one seed and are not ablations of the retained checkpoint, which is trained with the Ops persistence rule. A label that aligns with the pilot's intervention ranking therefore need not be the most separable state, and the most separable state need not be the best cause target.
 
-\zhpara{同一开发导出把表示可分性与原因识别分开呈现（图~\ref{fig:label-validity}、表~\ref{tab:label-boundary}）。在共享的 raw-last 表示上，Active Period 的宏 F1（$0.628$）、平衡准确率（$0.904$）和 AUROC（$0.963$）最高；Ops 仅在站点宏 F1（$0.619$）上最高。Queue-Wait 的原因宏 F1 为 $0.940$，高于 Active Period 的 $0.885$，对应 3,245 个测试窗口。该比较只有一个随机种子，也不是保留 checkpoint 的消融；保留模型使用 Ops 持续性规则训练。因此，与先导实验干预排序对齐的标签不必是最可分的状态，最可分的状态也不必是最好的原因目标。}
+\zhpara{同一开发导出把表示可分性与原因识别分开呈现（图~\ref{fig:label-validity}--\ref{fig:cause-recall}、表~\ref{tab:label-boundary}）。在共享的 raw-last 表示上，Active Period 的宏 F1（$0.628$）、平衡准确率（$0.904$）和 AUROC（$0.963$）最高；Ops 仅在站点宏 F1（$0.619$）上最高。Queue-Wait 的原因宏 F1 为 $0.940$，高于 Active Period 的 $0.885$，对应 3,245 个测试窗口。该比较只有一个随机种子，也不是保留 checkpoint 的消融；保留模型使用 Ops 持续性规则训练。因此，与先导实验干预排序对齐的标签不必是最可分的状态，最可分的状态也不必是最好的原因目标。}
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.96\textwidth]{figures/fig_label_validity.pdf}
-\caption{Label-method comparison from the fixed development export (seed 42). (a) Counterfactual alignment on three disturbance-free episodes; higher is better. (b) Representation separability; colour is scaled within each column, and Davies--Bouldin is marked as lower-better. (c) Cause-class recall, with cause macro-F1 at right. Active Period is outlined in steel blue and Queue-Wait in olive. This is not an ablation of PHGST-DP.}
+\includegraphics[width=0.96\textwidth]{figures/fig_label_dots.pdf}
+\caption{Separability Cleveland plot for five label methods (development export, seed 42). Filled steel markers denote the best value in each panel; open markers are the remaining methods. Davies--Bouldin is lower-better. This is not an ablation of PHGST-DP.}
 \label{fig:label-validity}
+\end{figure*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.96\textwidth]{figures/fig_cause_recall.pdf}
+\caption{Cause-class recall by label method, with macro-F1 ranking at right. Active Period (steel) is strongest for separability-oriented prediction targets, whereas Queue-Wait (olive) leads cause identification; the two rankings answer different questions.}
+\label{fig:cause-recall}
 \end{figure*}
 
 \begin{table*}[t]
@@ -1562,9 +1579,9 @@ The case study shows how an event report follows bottleneck onset, persistence, 
 \label{fig:key-device-main}
 \end{figure*}
 
-Figure~\ref{fig:key-device-baselines} places PHGST-DP at the upper left and the four baselines below, with an independent state--duration pair for each model on the same device and episode. The upper-right pair enlarges windows 20--115, shaded in the full trajectory, to show the short and long bottleneck intervals and their recovery boundaries. Both views retain the same vertical scales and window indices. Black solid lines show the targets and dashed lines show predictions; all panels count windows from the same first forecast window after the 30-window history. PHGST-DP maintains continuous state coverage over both bottleneck intervals and follows the duration decline towards recovery. The baseline panels make differences in state continuity and duration tracking visible on the same trajectory. The aggregate event and temporal results are reported in Tables~\ref{tab:comparison-event} and \ref{tab:comparison-regression}.
+Figure~\ref{fig:key-device-baselines} places PHGST-DP at the upper left and the four baselines below, with an independent state--duration pair for each model on the same device and episode. The upper-right pair enlarges windows 20--115, shaded in the full trajectory, to show the short and long bottleneck intervals and their recovery boundaries. Both views retain the same vertical scales and window indices. Black solid lines show the targets and dashed lines show predictions; all panels count windows from the same first forecast window after the 30-window history. PHGST-DP maintains continuous state coverage over both bottleneck intervals and follows the duration decline towards recovery. The baseline panels make differences in state continuity and duration tracking visible on the same trajectory. The aggregate event and temporal results are reported in Table~\ref{tab:comparison-main}.
 
-\zhpara{图~\ref{fig:key-device-baselines}将 PHGST-DP 放在左上方，四个基线排列在下方，在同一设备与 episode 上为各模型独立展示一组状态—持续时间子图。右上方放大完整轨迹中以灰色标出的第 20--115 个窗口，展示短、长瓶颈区间及其恢复边界；两种视图保持相同的纵轴尺度与窗口编号。黑色实线表示真实值，虚线表示预测值；全部子图均从三十窗口历史之后的首个预测窗口开始计数。PHGST-DP 在两个瓶颈区间内保持连续的状态覆盖，并跟踪持续时间向恢复阶段的下降。基线子图使同一轨迹上的状态连续性与持续时间跟踪差异得到直观呈现。整体事件与时间指标见表~\ref{tab:comparison-event}和表~\ref{tab:comparison-regression}。}
+\zhpara{图~\ref{fig:key-device-baselines}将 PHGST-DP 放在左上方，四个基线排列在下方，在同一设备与 episode 上为各模型独立展示一组状态—持续时间子图。右上方放大完整轨迹中以灰色标出的第 20--115 个窗口，展示短、长瓶颈区间及其恢复边界；两种视图保持相同的纵轴尺度与窗口编号。黑色实线表示真实值，虚线表示预测值；全部子图均从三十窗口历史之后的首个预测窗口开始计数。PHGST-DP 在两个瓶颈区间内保持连续的状态覆盖，并跟踪持续时间向恢复阶段的下降。基线子图使同一轨迹上的状态连续性与持续时间跟踪差异得到直观呈现。整体事件与时间指标见表~\ref{tab:comparison-main}。}
 
 \begin{figure*}[p]
 \centering
@@ -1584,14 +1601,14 @@ The all-resource view connects these local traces to coordinated production-stat
 \label{fig:all-devices-main}
 \end{figure*}
 
-On the full Start$\leq5$ test split, support is uneven across the 15 targets (Figure~\ref{fig:per-device}). The cutting machine contributes 301 true events, while robot~2 and robot~3 contribute none; those two rows are left unscored rather than entered as zero. F1 on the supported devices ranges from $0.535$ on the welding robot to $0.964$ on bench~ws1. This split is a coverage check for one checkpoint, not a claim that every resource family is equally predictable.
+On the full Start$\leq5$ test split, support is uneven across the 15 targets (Figure~\ref{fig:per-device}). The cutting machine contributes 301 true events, while robot~2 and robot~3 contribute none and are excluded from the box statistics. F1 on the supported devices ranges from $0.535$ on the welding robot to $0.964$ on bench~ws1. This split is a coverage check for one checkpoint, not a claim that every resource family is equally predictable.
 
-\zhpara{在完整的 Start$\leq5$ 测试划分上，十五个目标的支持量并不均匀（图~\ref{fig:per-device}）。切割机有 301 个真实事件，而 robot~2 与 robot~3 没有真实事件；这两行不做评分，也不记为 0。有支持设备的 F1 从焊接机器人的 $0.535$ 到 bench~ws1 的 $0.964$。该图只检查一个 checkpoint 的覆盖情况，不能据此认为每一类资源都同样可预测。}
+\zhpara{在完整的 Start$\leq5$ 测试划分上，十五个目标的支持量并不均匀（图~\ref{fig:per-device}）。切割机有 301 个真实事件，而 robot~2 与 robot~3 没有真实事件，不进入箱线统计。有支持设备的 F1 从焊接机器人的 $0.535$ 到 bench~ws1 的 $0.964$。该图只检查一个 checkpoint 的覆盖情况，不能据此认为每一类资源都同样可预测。}
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.96\textwidth]{figures/fig_per_device_start5.pdf}
-\caption{Per-device support, F1, and union duration MAE for PHGST-DP at Start$\leq5$ (\texttt{bestmodel\_start5\_seed42}). Colour on F1 and MAE is scaled within that column; support uses one colour because the count is not a quality score. Rows with no true events are hatched and marked with a dash.}
+\includegraphics[width=0.96\textwidth]{figures/fig_per_device_box.pdf}
+\caption{Per-device Report F1 and union duration MAE for PHGST-DP at Start$\leq5$, grouped by machine/workbench, gantry, and AGV. Boxes show within-type distributions; points are individual devices. Devices without true events are listed below the panels and excluded from the boxes.}
 \label{fig:per-device}
 \end{figure*}
 
@@ -1623,9 +1640,16 @@ $\leq15$ & 12 & 8.10 & 2.703 & 1,981 & 3.49/4.06/4.16 & 4.72/5.32/5.51 & 175.8 \
 \end{tabular*}
 \end{table*}
 
-Table~\ref{tab:efficiency} shows that the three onset settings have nearly identical inference cost. A complete pass over 5,354 windows takes 2.695--2.751~s, corresponding to 1,946--1,987 samples/s; the throughput spread is only about $2.1\%$. For online batch-one use, the median complete-report latency is 4.72--4.77~ms and the p95 latency is 5.32--5.41~ms. Event decoding and data transfer add approximately 1.2--1.3~ms beyond the pure forward pass. The small variation is expected because changing the onset cap changes the learned checkpoint and decision task but not the PHGST-DP architecture or input shape. The constant 175.8~MiB peak allocated GPU memory and compact checkpoint further indicate that the three forecasting ranges do not introduce additional inference resources.
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_latency_stack.pdf}
+\caption{Batch-1 median latency composition for the three retained PHGST-DP checkpoints. The steel segment is GPU forward p50; the light segment is report p50 minus forward p50 (transfer, decode, and materialization). Totals are annotated; the three caps are not claimed to differ meaningfully.}
+\label{fig:latency-stack}
+\end{figure}
 
-\zhpara{表~\ref{tab:efficiency}显示，三个起点范围的推理开销几乎一致。遍历 5,354 个测试窗口需要 2.695--2.751~s，对应每秒处理 1,946--1,987 个样本，吞吐差异仅约 $2.1\%$。在 batch 为一的在线使用方式下，生成完整报告的中位延迟为 4.72--4.77~ms，第九十五百分位延迟为 5.32--5.41~ms；相对于纯前向计算，数据传输和事件解码增加约 1.2--1.3~ms。三个设置仅改变学习得到的 checkpoint 与起点判定范围，不改变 PHGST-DP 架构和输入形状，因此其开销接近。恒定的 175.8~MiB 峰值 GPU allocated memory 与较小的 checkpoint 也表明，扩展预警起点范围未增加额外的推理资源。}
+Table~\ref{tab:efficiency} and Figure~\ref{fig:latency-stack} show that the three onset settings have nearly identical inference cost. A complete pass over 5,354 windows takes 2.695--2.751~s, corresponding to 1,946--1,987 samples/s; the throughput spread is only about $2.1\%$. For online batch-one use, the median complete-report latency is 4.72--4.77~ms and the p95 latency is 5.32--5.41~ms. Event decoding and data transfer add approximately 1.2--1.3~ms beyond the pure forward pass. The small variation is expected because changing the onset cap changes the learned checkpoint and decision task but not the PHGST-DP architecture or input shape. The constant 175.8~MiB peak allocated GPU memory and compact checkpoint further indicate that the three forecasting ranges do not introduce additional inference resources.
+
+\zhpara{表~\ref{tab:efficiency}与图~\ref{fig:latency-stack}显示，三个起点范围的推理开销几乎一致。遍历 5,354 个测试窗口需要 2.695--2.751~s，对应每秒处理 1,946--1,987 个样本，吞吐差异仅约 $2.1\%$。在 batch 为一的在线使用方式下，生成完整报告的中位延迟为 4.72--4.77~ms，第九十五百分位延迟为 5.32--5.41~ms；相对于纯前向计算，数据传输和事件解码增加约 1.2--1.3~ms。三个设置仅改变学习得到的 checkpoint 与起点判定范围，不改变 PHGST-DP 架构和输入形状，因此其开销接近。恒定的 175.8~MiB 峰值 GPU allocated memory 与较小的 checkpoint 也表明，扩展预警起点范围未增加额外的推理资源。}
 
 The largest observed p95 report latency, 5.41~ms, is far below the one-minute sampling interval used by the prediction pipeline. This provides a substantial computation margin for refreshing a bottleneck report after a new window becomes available on the tested platform. The result should nevertheless be interpreted as model-side feasibility rather than end-to-end factory response time: acquisition from MES/WMS and transport systems, feature aggregation, communication, queueing, and downstream decision execution were outside the benchmark. Moreover, the current measurements support within-model comparison across the three PHGST-DP checkpoints only. No matched efficiency measurements are available for the baselines, and the archived runs did not record per-epoch training time, complete fitting time, or process RSS; consequently, no cross-model efficiency ranking or training-cost claim is made.
 

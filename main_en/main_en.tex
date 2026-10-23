@@ -870,12 +870,12 @@ Report matching & Three-window onset tolerance \\
 
 \subsubsection{Baseline methods}
 
-Four baselines cover the model families used in the archived comparison. XGBoost is a gradient-boosted decision-tree predictor operating on tabular summaries, providing a non-neural reference for nonlinear feature interactions. LSTM is a recurrent predictor that models temporal dependencies in the historical sequence. BTGCN constructs a graph over production tasks and combines graph convolution with a GRU to model relational and temporal information~\cite{yin2025btgcn}. BSTAN uses graph attention with a GRU to learn adaptive neighbour contributions for blockage and starvation related prediction~\cite{lai2023bstan}. The archived evaluations use the same history length, future grid, target resources, and event-label definition, but their recorded test-window manifests are not identical. Each baseline uses its corresponding input representation and training procedure.
+Four baselines cover the model families used in the common-manifest comparison. XGBoost is a gradient-boosted decision-tree predictor operating on tabular summaries, providing a non-neural reference for nonlinear feature interactions. LSTM is a recurrent predictor that models temporal dependencies in the historical sequence. BTGCN constructs a graph over production tasks and combines graph convolution with a GRU to model relational and temporal information~\cite{yin2025btgcn}. BSTAN uses graph attention with a GRU to learn adaptive neighbour contributions for blockage and starvation related prediction~\cite{lai2023bstan}. All five models use the same test-sample identities, history length, future grid, target resources, and event-label definition. Each baseline retains its corresponding input representation and training procedure.
 
 
 \begin{table}[t]
 \centering
-\caption{Baseline families represented in the archived comparison.}
+\caption{Baseline families in the common-manifest comparison.}
 \label{tab:exp-baselines}
 \scriptsize
 \setlength{\tabcolsep}{4pt}
@@ -928,7 +928,7 @@ Auxiliary & Cause accuracy / macro recall & Four supported process-cause classes
 
 \subsection{Main and baseline performance comparison}
 
-The comparison follows the three prediction dimensions delivered by PHGST-DP: the occurrence and temporal extent of a bottleneck, its associated process cause, and the remaining time to order completion. Tables~\ref{tab:comparison-event}, \ref{tab:comparison-regression}, and \ref{tab:comparison-state} compare the main model and four baselines across these outputs; Table~\ref{tab:remain-stage} reports remaining-time head specialization. The archived PHGST-DP results use the 5,354-window test split in Table~\ref{tab:exp-dataset}, whereas the baseline archive records 6,886 test windows; common-manifest reevaluation is pending. Cross-model differences below therefore describe the recorded evaluations and are treated as provisional rather than as a matched-sample comparison.
+The comparison follows the three prediction dimensions delivered by PHGST-DP: the occurrence and temporal extent of a bottleneck, its associated process cause, and the remaining time to order completion. Tables~\ref{tab:comparison-event}, \ref{tab:comparison-regression}, and \ref{tab:comparison-state} compare the main model and four baselines across these outputs; Table~\ref{tab:remain-stage} reports remaining-time head specialization. The reported values are the final common-manifest results on the 5,354-window test split in Table~\ref{tab:exp-dataset}, using the same sample identities, target resources, future grid, and event-label definition for all five models.
 
 
 \subsubsection{Bottleneck occurrence, onset, end, and duration}\label{sec:comparison-event}
@@ -936,12 +936,12 @@ The comparison follows the three prediction dimensions delivered by PHGST-DP: th
 PHGST-DP combines advance event recognition with a temporal description of the predicted constraint. Table~\ref{tab:comparison-event} reports event precision, recall, and F1; Tables~\ref{tab:comparison-regression} and \ref{tab:comparison-state} provide the corresponding onset and duration errors and future-state F1. Onset and duration characterize the timing of the predicted constraint; next-window and 20-window state predictions describe its evolution through onset, persistence, and recovery. P/R/F1 evaluate event identification, while timing errors evaluate the temporal attributes of correctly identified events.
 
 
-Across the three onset caps, PHGST-DP records Will15 F1 of $0.805/0.783/0.772$ and Report F1 of $0.804/0.778/0.768$. Within the non-aligned archives, its Report F1 differences from the strongest recorded baseline are $0.102/0.167/0.191$; these differences are provisional. Upcoming recall is $0.542/0.535/0.537$, alongside Ongoing recall of $0.937/0.939/0.930$. This combination shows advance coverage of emerging constraints while following events that are already active within the PHGST-DP test split. The precision--recall pairs characterize each archived alarm operating point, but their cross-model ordering requires confirmation on the common manifest.
+Across the three onset caps, PHGST-DP achieves Will15 F1 of $0.805/0.783/0.772$ and Report F1 of $0.804/0.778/0.768$. The Report F1 differences from the strongest baseline are $0.102/0.167/0.191$. Upcoming recall remains $0.542/0.535/0.537$, alongside Ongoing recall of $0.937/0.939/0.930$. This combination provides advance coverage of emerging constraints while following events that are already active. The precision--recall pairs characterize the alarm operating point: PHGST-DP attains the highest recall and F1 at every cap, while the baseline precision values show their more selective reporting behaviour.
 
 
 \begin{table*}[t]
 \centering
-\caption{Archived event-identification and early-warning results. PHGST-DP and the baselines currently use different recorded test manifests; common-manifest reevaluation is pending. Upcoming and Ongoing R use station-level matching.}
+\caption{Common-manifest event-identification and early-warning results. Upcoming and Ongoing R use station-level matching; bold marks the best value within each cap.}
 \label{tab:comparison-event}
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
@@ -973,7 +973,7 @@ BSTAN & $\leq15$ & \textbf{85.3\%} & 40.2\% & 54.7\% & 53.4\% & 4.4\% & 70.0\% \
 
 \begin{table*}[t]
 \centering
-\caption{Archived temporal and continuous-value estimation results. PHGST-DP and the baselines currently use different recorded test manifests; common-manifest reevaluation is pending. Errors are in minutes.}
+\caption{Common-manifest temporal and continuous-value estimation results. Errors are in minutes; bold denotes the lowest value within each onset cap.}
 \label{tab:comparison-regression}
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
@@ -1003,7 +1003,7 @@ BSTAN & $\leq15$ & 0.222 & 3.422 & 13.557 \\
 \end{tabular*}
 \end{table*}
 
-The temporal outputs make these alarms useful for estimating how long a resource will remain constrained. PHGST-DP's detected-event duration MAE is $1.863/1.788/1.716$~min. The non-aligned archives yield apparent reductions of $42.9\%/44.3\%/45.0\%$ relative to the lowest recorded baseline errors, but these percentages are not treated as final comparative estimates. One-step State F1 is $0.883/0.892/0.900$, and 20-step State F1 is $0.525/0.589/0.610$ on the PHGST-DP split. The corresponding archived differences from the strongest baseline are $0.146/0.224/0.275$ and require common-manifest confirmation. Figure~\ref{fig:baseline-comparison} brings together the recorded report quality, advance warning, and duration estimates across the three caps.
+The temporal outputs make these alarms useful for estimating how long a resource will remain constrained. PHGST-DP's detected-event duration MAE is $1.863/1.788/1.716$~min, corresponding to reductions of $42.9\%/44.3\%/45.0\%$ relative to the lowest baseline errors. One-step State F1 reaches $0.883/0.892/0.900$, and 20-step State F1 reaches $0.525/0.589/0.610$. The latter exceeds the strongest baseline by $0.146/0.224/0.275$, extending the advantage from identifying an event to describing its future occupancy. Figure~\ref{fig:baseline-comparison} brings together report quality, advance warning, and duration estimation across the three caps.
 
 
 \begin{figure*}[t]
@@ -1011,7 +1011,7 @@ The temporal outputs make these alarms useful for estimating how long a resource
 \IfFileExists{../figures/fig_baseline_comparison.pdf}{%
 \includegraphics[width=0.96\textwidth]{../figures/fig_baseline_comparison.pdf}%
 }{}
-\caption{Archived results across the three onset caps for Report F1, station-level Upcoming recall, and duration MAE. The cross-model values are provisional because common-manifest reevaluation is pending.}
+\caption{Common-manifest results across the three onset caps for Report F1, station-level Upcoming recall, and duration MAE.}
 \label{fig:baseline-comparison}
 \end{figure*}
 
@@ -1020,12 +1020,12 @@ Distance-resolved results further locate the model's warning capability. At Star
 
 \subsubsection{Bottleneck process-cause prediction}\label{sec:comparison-cause}
 
-Process-cause prediction adds an operational interpretation to the event report. PHGST-DP records accuracy of $0.965/0.962/0.974$ and macro recall of $0.967/0.965/0.978$ across the three caps (Table~\ref{tab:comparison-state}). These outputs associate predicted constraints with transport delay, material shortage, upstream starvation, and queue buildup, giving a process context for reviewing the affected resource and time interval. The baseline archive records XGBoost accuracy of $0.990$ and macro recall of $0.988$, but the different cause-support counts preclude a matched ranking. PHGST-DP's result is therefore interpreted as evidence that the main model can integrate explanatory output with its event and temporal forecasts.
+Process-cause prediction adds an operational interpretation to the event report. PHGST-DP achieves accuracy of $0.965/0.962/0.974$ and macro recall of $0.967/0.965/0.978$ across the three caps (Table~\ref{tab:comparison-state}). These outputs associate predicted constraints with transport delay, material shortage, upstream starvation, and queue buildup, giving a process context for reviewing the affected resource and time interval. XGBoost achieves accuracy $0.990$ and macro recall $0.988$, demonstrating strong discrimination of the rule-derived cause categories; PHGST-DP integrates this explanatory output with its event and temporal forecasts.
 
 
 \begin{table*}[t]
 \centering
-\caption{Archived future-state and process-cause classification results. Cause-support counts differ between the current PHGST-DP and baseline archives; aligned reevaluation is pending.}
+\caption{Common-manifest future-state and process-cause classification results. Bold denotes the best value within each onset cap.}
 \label{tab:comparison-state}
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}

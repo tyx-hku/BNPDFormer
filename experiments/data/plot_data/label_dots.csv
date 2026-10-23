@@ -1,0 +1,6 @@
+method,macro_f1,balanced_accuracy,auroc,silhouette,davies_bouldin,fisher_ratio,station_macro_f1
+Active Period,0.628,0.904,0.963,0.272,2.33,0.114,0.59
+Utilization,0.6,0.853,0.921,0.178,2.997,0.073,0.556
+Ops,0.581,0.849,0.908,0.147,3.571,0.064,0.619
+Queue-Wait,0.542,0.788,0.846,0.13,3.717,0.048,0.614
+TPM,0.512,0.841,0.92,0.146,3.5,0.059,0.534
