@@ -939,9 +939,9 @@ The report-generation stage of Algorithm~\ref{alg:phgst-predict} is also used du
 %% ========================================================================
 \section{Experiments}\label{sec:exp}
 
-PHGST-DP is evaluated for a central production objective: identifying emerging bottlenecks with sufficient temporal and process detail to support intervention planning. The experiments connect event detection and early warning with duration and state prediction, then examine the heterogeneous resource representation, process-informed supervision, and delay-pattern conditioning that support these outputs. Resource-level traces illustrate how the predictions describe bottleneck onset, persistence, and recovery. A complementary evaluation examines the computational efficiency of report generation.
+PHGST-DP is evaluated for a central production objective: identifying emerging bottlenecks and describing their timing and process context for intervention planning. The comparison examines three complementary outputs: bottleneck events and temporal evolution, process causes, and order-completion remaining time. Component analyses connect these outputs to heterogeneous resource information, process-informed supervision, and delay-pattern conditioning. Resource-level traces show onset, persistence, and recovery, and the efficiency evaluation establishes the computation required to update the event report.
 
-\zhpara{PHGST-DP 的实验围绕一个核心生产目标展开：识别正在形成的瓶颈，并提供支持干预规划的时间与过程信息。实验将事件识别和提前预警与持续时间、状态预测相联系，进一步分析异构资源表示、过程启发式监督和延迟模式条件化对这些输出的作用。资源级轨迹展示预测如何刻画瓶颈的发生、持续与恢复；补充评价进一步考察模型生成瓶颈报告的计算效率。}
+\zhpara{PHGST-DP 的实验围绕一个核心生产目标展开：识别正在形成的瓶颈，并描述其时间与过程信息，为干预规划提供依据。模型比较考察三类互补输出：瓶颈事件及其时间演化、过程原因和订单完成剩余时间。组件分析将这些输出与异构资源信息、过程启发式监督和延迟模式条件化联系起来。资源级轨迹展示瓶颈的发生、持续与恢复，效率评价则刻画更新事件报告所需的计算成本。}
 
 \subsection{Experimental setup}
 
@@ -1093,9 +1093,9 @@ Auxiliary & Cause accuracy / macro recall & Four supported process-cause classes
 
 \subsection{Main and baseline performance comparison}\label{sec:comparison-overview}
 
-The comparison follows the three outputs required for production decisions. Table~\ref{tab:comparison-main} evaluates bottleneck identification and its temporal extent, Table~\ref{tab:comparison-state} evaluates the associated process cause, and Table~\ref{tab:comparison-remain} evaluates the remaining time to order completion. The common evaluation protocol specifies the main experiment's 5,354 test windows, with shared sample identities, target resources, future grid, and label definitions for PHGST-DP and the four baselines.
+The comparison evaluates three complementary capabilities of the production forecast. Bottleneck event and temporal prediction identifies the affected resource and describes when its constraint begins, persists, and ends (Table~\ref{tab:comparison-main}). Process-cause prediction supplies an operational interpretation of that constraint (Table~\ref{tab:comparison-state}), and remaining-time prediction places it in the context of order completion (Table~\ref{tab:comparison-remain}). Together, these outputs provide resource-level warning and order-level progress information. The common evaluation protocol specifies the main experiment's 5,354 test windows, with shared sample identities, target resources, future grid, and label definitions for PHGST-DP and the four baselines.
 
-\zhpara{模型比较围绕生产决策所需的三个输出展开：表~\ref{tab:comparison-main}评价瓶颈识别及其时间范围，表~\ref{tab:comparison-state}评价关联的过程原因，表~\ref{tab:comparison-remain}评价订单完成剩余时间。统一评估协议规定 PHGST-DP 与四个基线使用主实验的同一批 5,354 个测试窗口，并保持样本标识、目标资源、未来网格和标签定义一致。}
+\zhpara{模型比较评价生产预测的三项互补能力。瓶颈事件与时间预测识别受影响资源，并描述约束何时发生、如何持续及何时结束（表~\ref{tab:comparison-main}）；过程原因预测提供该约束的运行解释（表~\ref{tab:comparison-state}）；剩余时间预测则将资源约束置于订单完成进度中考察（表~\ref{tab:comparison-remain}）。三类输出共同提供资源级预警和订单级进度信息。统一评估协议规定 PHGST-DP 与四个基线使用主实验的同一批 5,354 个测试窗口，并保持样本标识、目标资源、未来网格和标签定义一致。}
 
 \textit{Evaluation note for this draft.} The 5,354-window protocol is the specified comparison setting. The baseline numbers currently available are archived exports from 6,886 windows; their tables, plots, and numerical comparisons remain provisional until reevaluation on the shared sample manifest.
 
@@ -1103,13 +1103,13 @@ The comparison follows the three outputs required for production decisions. Tabl
 
 \subsubsection{Bottleneck occurrence, onset, end, and duration}\label{sec:comparison-event}
 
-PHGST-DP describes both which resource becomes constrained and how the constraint develops over time. Table~\ref{tab:comparison-main} groups event precision, recall, Will15 F1 and Report F1 with Upcoming/Ongoing recall, onset and duration MAE, and one-step/20-step State F1. P/R/F1 measure event identification, timing errors measure correctly detected events, and State F1 evaluates the predicted occupancy sequence. Onset and duration jointly describe the event interval within the 20-min horizon; the state sequence shows its persistence and recovery.
+PHGST-DP couples resource identification with the expected bottleneck interval and its evolving occupancy. Table~\ref{tab:comparison-main} evaluates this capability through event P/R/F1, Upcoming/Ongoing recall, onset and duration MAE, and one-step/20-step State F1. Onset and duration jointly specify the reported interval within the 20-min horizon, while the future state sequence describes persistence and recovery. Temporal MAE is evaluated on correctly detected events and is read alongside event recall to characterize both coverage and localization.
 
-\zhpara{PHGST-DP 同时描述哪个资源形成约束，以及约束如何随时间演化。表~\ref{tab:comparison-main}集中呈现事件精确率、召回率、Will15 F1 和 Report F1，Upcoming/Ongoing 召回率，起点与持续时间 MAE，以及单步和二十步 State F1。P/R/F1 评价事件识别，时间误差评价正确检出事件的时间属性，State F1 评价预测状态序列。起点与持续时间共同刻画二十分钟预测范围内的事件区间，状态序列进一步展示持续与恢复过程。}
+\zhpara{PHGST-DP 将资源识别、瓶颈时间区间及其占用变化联合起来。表~\ref{tab:comparison-main}通过事件 P/R/F1、Upcoming/Ongoing 召回率、起点与持续时间 MAE，以及单步和二十步 State F1 评价这一能力。起点与持续时间共同描述二十分钟预测范围内的报告区间，未来状态序列进一步刻画持续与恢复过程。时间 MAE 在正确检出的事件上评价，并与事件召回率共同反映覆盖范围和时间定位表现。}
 
-Across the three onset caps, PHGST-DP achieves Will15 F1 of $0.805/0.783/0.772$ and Report F1 of $0.804/0.778/0.768$. Relative to the archived baselines, the Report F1 differences are $0.102/0.167/0.191$. Upcoming recall remains $0.542/0.535/0.537$, alongside Ongoing recall of $0.937/0.939/0.930$. This combination provides advance coverage of emerging constraints while following events that are already active. The precision--recall pairs characterize the alarm operating point: PHGST-DP attains the highest recall and F1 at every cap, while the baseline precision values show their more selective reporting behaviour.
+PHGST-DP combines broad event coverage with early warning across the three onset caps. Will15 F1 reaches $0.805/0.783/0.772$ and Report F1 reaches $0.804/0.778/0.768$; the reported Report F1 differences from the strongest baseline are $10.2/16.7/19.1$ percentage points. Upcoming recall remains $0.542/0.535/0.537$, alongside Ongoing recall of $0.937/0.939/0.930$. Precision of $0.794/0.806/0.806$ accompanies the highest reported recall and F1 at each cap. The resulting operating points combine advance coverage of emerging constraints with sustained tracking of active events, supplying warning information before the affected resource is already constrained.
 
-\zhpara{三个起点范围下，PHGST-DP 的 Will15 F1 为 $0.805/0.783/0.772$，Report F1 为 $0.804/0.778/0.768$，后者与存档最佳基线结果的差值为 $0.102/0.167/0.191$。Upcoming 召回率保持在 $0.542/0.535/0.537$，同时 Ongoing 召回率达到 $0.937/0.939/0.930$，兼顾正在形成约束的提前覆盖与活动事件的持续跟踪。精确率—召回率组合刻画报警工作点：PHGST-DP 在各范围取得最高的召回率与 F1，基线的精确率则体现其更具选择性的报告行为。}
+\zhpara{PHGST-DP 在三个起点范围下兼顾事件覆盖与提前预警。Will15 F1 达到 $0.805/0.783/0.772$，Report F1 达到 $0.804/0.778/0.768$，后者与已报告最佳基线的差值为 $10.2/16.7/19.1$ 个百分点。Upcoming 召回率保持在 $0.542/0.535/0.537$，Ongoing 召回率达到 $0.937/0.939/0.930$。在精确率为 $0.794/0.806/0.806$ 的同时，模型在各范围取得最高的已报告召回率与 F1。这样的报警工作点兼顾正在形成约束的提前覆盖与活动事件的持续跟踪，使预警能够在资源实际受限之前提供信息。}
 
 \begin{table*}[t]
 \centering
@@ -1148,9 +1148,9 @@ BSTAN & \cellcolor{altbest}\textbf{85.3\%} & 40.2\% & 54.7\% & 53.4\% & 4.4\% & 
 \end{tabular*}
 \end{table*}
 
-The temporal outputs make these alarms useful for estimating how long a resource will remain constrained. PHGST-DP's detected-event duration MAE is $1.863/1.788/1.716$~min, corresponding to reductions of $42.9\%/44.3\%/45.0\%$ relative to the lowest baseline errors. One-step State F1 reaches $0.883/0.892/0.900$, and 20-step State F1 reaches $0.525/0.589/0.610$. The latter exceeds the strongest baseline by $0.146/0.224/0.275$, extending the advantage from identifying an event to describing its future occupancy. Figure~\ref{fig:baseline-comparison} compares these three metrics with a separate marker for each onset cap, highlighting both the model differences and the variation across settings.
+The temporal outputs extend event identification into a forecast of how long a resource will remain constrained. PHGST-DP's onset MAE is $0.127/0.227/0.227$~min, and detected-event duration MAE is $1.863/1.788/1.716$~min. The latter corresponds to reductions of $42.9\%/44.3\%/45.0\%$ relative to the lowest reported baseline errors. One-step State F1 reaches $0.883/0.892/0.900$, and 20-step State F1 reaches $0.525/0.589/0.610$, exceeding the strongest reported baseline by $14.6/22.4/27.5$ percentage points at the full horizon. Together, onset localization, duration estimation, and occupancy prediction describe the interval available for planning resource attention and recovery. Figure~\ref{fig:baseline-comparison} summarizes Report F1, Upcoming recall, and duration MAE: PHGST-DP maintains Upcoming recall near $0.54$ and duration MAE below 2~min across all three cap settings.
 
-\zhpara{时间输出使报警能够进一步估计资源将持续受限多久。PHGST-DP 在正确识别事件上的持续时间 MAE 为 $1.863/1.788/1.716$ 分钟，相对于对应误差最低的基线下降 $42.9\%/44.3\%/45.0\%$。下一窗口 State F1 达到 $0.883/0.892/0.900$，二十窗口 State F1 达到 $0.525/0.589/0.610$；后者高于对应最佳基线 $0.146/0.224/0.275$，将事件识别优势延伸到未来占用过程的描述。图~\ref{fig:baseline-comparison}以不同标记呈现各起点范围下的 Report F1、Upcoming 召回率与持续时间 MAE，同时展示模型差异与不同范围下的变化。}
+\zhpara{时间输出将事件识别进一步扩展为资源持续受限过程的预测。PHGST-DP 的起点 MAE 为 $0.127/0.227/0.227$ 分钟，正确检出事件的持续时间 MAE 为 $1.863/1.788/1.716$ 分钟，后者相对于已报告误差最低的基线下降 $42.9\%/44.3\%/45.0\%$。下一窗口 State F1 达到 $0.883/0.892/0.900$，二十窗口 State F1 达到 $0.525/0.589/0.610$；在完整预测范围内，后者高于已报告最佳基线 $14.6/22.4/27.5$ 个百分点。起点定位、持续时间估计和占用预测共同描述了可用于规划资源关注与恢复的时间区间。图~\ref{fig:baseline-comparison}汇总 Report F1、Upcoming 召回率和持续时间 MAE：PHGST-DP 在三个起点范围下的 Upcoming 召回率均保持在 $0.54$ 左右，持续时间 MAE 均低于两分钟。}
 
 \begin{figure*}[t]
 \centering
@@ -1159,15 +1159,15 @@ The temporal outputs make these alarms useful for estimating how long a resource
 \label{fig:baseline-comparison}
 \end{figure*}
 
-Distance-resolved results further locate the model's warning capability. At Start$\leq15$, strict report recall is $0.574$, $0.522$, and $0.433$ for true onsets within 5, 6--10, and more than 10~min, respectively. Among station-matched true positives, exact-onset accuracy is $0.896/0.844/0.831$ across the three caps, and onset-bucket accuracy is $0.921/0.918/0.920$. The forecasts also cover material-handling assets: machine/gantry/robot F1 is $0.805/0.811/0.771$ at Start$\leq5$ and $0.751/0.840/0.639$ at Start$\leq15$. These results connect temporal warning to the different resources through which production constraints develop.
+Within the Start$\leq15$ task, grouping events by their true onset distance shows how warning extends into the future: strict report recall is $0.574$, $0.522$, and $0.433$ for onsets within 5, 6--10, and more than 10~min, respectively. The last group directly demonstrates warning coverage beyond 10~min. Across the three separately configured cap tasks, exact-onset accuracy among station-matched true positives is $0.896/0.844/0.831$, and onset-bucket accuracy is $0.921/0.918/0.920$. Warning also spans processing and material handling: machine/gantry/robot F1 is $0.805/0.811/0.771$ at Start$\leq5$ and $0.751/0.840/0.639$ at Start$\leq15$. These results place the temporal forecast across the resource types through which production constraints emerge.
 
-\zhpara{按距离展开的结果进一步定位模型的预警能力。Start$\leq15$ 下，真实起点为五分钟内、六至十分钟及十分钟以后的严格报告召回率分别为 $0.574$、$0.522$ 和 $0.433$。在工位匹配成功的真阳性样本中，三个范围的精确起点准确率为 $0.896/0.844/0.831$，起点分档准确率为 $0.921/0.918/0.920$。预测同时覆盖物料搬运资源：机器/龙门/运输机器人的 F1 在 Start$\leq5$ 下为 $0.805/0.811/0.771$，在 Start$\leq15$ 下为 $0.751/0.840/0.639$。这些结果将带有时间信息的预警对应到生产约束形成过程中涉及的不同资源。}
+\zhpara{在 Start$\leq15$ 任务内部，按真实起点距离分组可以展示预警向未来延伸的覆盖情况：五分钟内、六至十分钟及十分钟以后事件的严格报告召回率分别为 $0.574$、$0.522$ 和 $0.433$，其中最后一组直接体现十分钟以后的预警覆盖。在三个分别配置的起点范围任务中，工位匹配成功的真阳性样本的精确起点准确率为 $0.896/0.844/0.831$，起点分档准确率为 $0.921/0.918/0.920$。预警还覆盖加工与物料搬运资源：机器/龙门/运输机器人的 F1 在 Start$\leq5$ 下为 $0.805/0.811/0.771$，在 Start$\leq15$ 下为 $0.751/0.840/0.639$。这些结果将时间预测扩展到生产约束形成过程中涉及的多类资源。}
 
 \subsubsection{Bottleneck process-cause prediction}\label{sec:comparison-cause}
 
-Process-cause prediction adds an operational interpretation to the event report. PHGST-DP achieves accuracy of $0.965/0.962/0.974$ and macro recall of $0.967/0.965/0.978$ across the three caps (Table~\ref{tab:comparison-state}). These outputs associate predicted constraints with transport delay, material shortage, upstream starvation, and queue buildup, giving a process context for reviewing the affected resource and time interval. XGBoost achieves accuracy $0.990$ and macro recall $0.988$, demonstrating strong discrimination of the rule-derived cause categories; PHGST-DP integrates this explanatory output with its event and temporal forecasts.
+PHGST-DP provides process explanations alongside its event and temporal forecasts, with cause accuracy of $0.965/0.962/0.974$ and macro recall of $0.967/0.965/0.978$ across the three caps (Table~\ref{tab:comparison-state}). The close agreement between accuracy and macro recall indicates strong recognition across the supported categories. XGBoost achieves accuracy $0.990$ and macro recall $0.988$ using a classifier over explicit history statistics. Its partition-based representation may be well suited to the boundaries of rule-derived cause categories. PHGST-DP's high cause recognition complements its event coverage by associating the predicted resource and interval with transport delay, material shortage, upstream starvation, or queue buildup.
 
-\zhpara{过程原因预测为事件报告补充运行层面的解释。PHGST-DP 在三个范围下的原因准确率为 $0.965/0.962/0.974$，宏平均召回率为 $0.967/0.965/0.978$（表~\ref{tab:comparison-state}）。这些输出将预测瓶颈关联到运输延迟、物料短缺、上游饥饿和队列积压，为审视受影响资源与时间区间提供过程上下文。XGBoost 的准确率为 $0.990$、宏平均召回率为 $0.988$，体现其对规则派生原因类别的区分能力；PHGST-DP 则将这种解释性输出与事件及时间预测整合。}
+\zhpara{PHGST-DP 在事件与时间预测之外提供过程解释，三个起点范围下的原因准确率为 $0.965/0.962/0.974$，宏平均召回率为 $0.967/0.965/0.978$（表~\ref{tab:comparison-state}）。准确率与宏平均召回率相近，体现出对有支持类别的整体识别能力。XGBoost 通过显式历史统计特征进行分类，准确率达到 $0.990$、宏平均召回率达到 $0.988$；其分区表示可能较适合表达规则派生原因类别的判别边界。PHGST-DP 的高原因识别水平则与事件覆盖形成互补，将预测资源及时间区间关联到运输延迟、物料短缺、上游饥饿或队列积压。}
 
 \begin{table*}[t]
 \centering
@@ -1191,15 +1191,15 @@ BSTAN & 95.7\% & 95.2\% & 95.9\% & 95.1\% & 95.1\% & 93.5\% \\
 \end{tabular*}
 \end{table*}
 
-At Start$\leq5$, PHGST-DP's cause evaluation covers 579 supported windows, with a majority-class accuracy of $0.409$. Its recalls for transport delay, material shortage, upstream starvation, and queue buildup are $0.941$, $0.976$, $0.966$, and $0.984$, respectively. The consistently high class recalls indicate that the output captures several production symptoms across the supported categories. Section~\ref{sec:supervision-analysis} examines how the cause-supervision and label-construction choices support this interpretation.
+The class-level results show how this explanation covers distinct production symptoms. At Start$\leq5$, the 579 supported cause windows yield recalls of $0.941$, $0.976$, $0.966$, and $0.984$ for transport delay, material shortage, upstream starvation, and queue buildup, respectively; majority-class accuracy is $0.409$. Recall above $0.94$ in every supported class makes the process output informative across different sources of resource constraint. It supplies a basis for reviewing transport, supply, upstream feeding, and local queues when an event is forecast. Section~\ref{sec:supervision-analysis} examines the supervision components and production relevance of these targets.
 
-\zhpara{Start$\leq5$ 下，PHGST-DP 的原因评估覆盖 579 个有支持窗口，多数类准确率为 $0.409$。运输延迟、物料短缺、上游饥饿和队列积压的召回率分别为 $0.941$、$0.976$、$0.966$ 和 $0.984$。各类别均保持较高召回率，表明输出能够覆盖多种生产现象。第~\ref{sec:supervision-analysis}节进一步分析原因监督与标签构造如何支持这一解释能力。}
+\zhpara{分类别结果进一步展示这种解释如何覆盖不同生产现象。Start$\leq5$ 下，579 个有支持原因窗口中，运输延迟、物料短缺、上游饥饿和队列积压的召回率分别为 $0.941$、$0.976$、$0.966$ 和 $0.984$，多数类准确率为 $0.409$。四类召回率均超过 $0.94$，使过程输出能够为多种资源约束提供解释信息，并为预警后检查运输、供料、上游供给和局部队列提供依据。第~\ref{sec:supervision-analysis}节进一步考察相应监督组件及目标的生产意义。}
 
 \subsubsection{Order-completion remaining-time prediction}\label{sec:comparison-remain}
 
-Order-completion prediction extends the resource-level bottleneck report to the production line. PHGST-DP's final remaining-time MAE is $9.60/9.27/8.91$~min across the three onset caps (Table~\ref{tab:comparison-remain}). These values are the lowest among the evaluated neural models; XGBoost achieves $5.231$~min with its dedicated remaining-time predictor. For PHGST-DP, the order-level output supplies a completion estimate alongside the resource, timing, and cause information already available in the bottleneck report.
+Order-completion prediction connects local bottleneck forecasts to the progress of the complete order. PHGST-DP's final remaining-time MAE is $9.60/9.27/8.91$~min across the three onset caps, the lowest among the evaluated neural models (Table~\ref{tab:comparison-remain}). XGBoost achieves $5.231$~min using a dedicated regressor over explicit summaries of recent resource histories, global features, and remaining-work counts and ratios. This direct statistical representation offers a plausible explanation for its strength on the scalar completion-time target. PHGST-DP also receives work-progress information and combines it with the learned resource representation, supplying an order-level estimate in the same forecast as bottleneck location, timing, and process cause.
 
-\zhpara{订单完成预测将资源级瓶颈报告扩展到产线层面。PHGST-DP 在三个起点范围下的最终剩余时间 MAE 为 $9.60/9.27/8.91$ 分钟（表~\ref{tab:comparison-remain}），在所评估的神经模型中最低；XGBoost 的专项剩余时间预测器达到 $5.231$ 分钟。对于 PHGST-DP，订单级输出在瓶颈资源、时间和原因信息之外，进一步提供完成时间估计。}
+\zhpara{订单完成预测将局部瓶颈预警连接到整单生产进度。PHGST-DP 在三个起点范围下的最终剩余时间 MAE 为 $9.60/9.27/8.91$ 分钟，在所评估的神经模型中最低（表~\ref{tab:comparison-remain}）。XGBoost 将近期资源历史、全局特征以及剩余工件数和比例的显式统计量输入专项回归器，达到 $5.231$ 分钟。这样的直接统计表示为其在标量完成时间目标上的表现提供了一种合理解释。PHGST-DP 同样接收工件进度信息，并将其与学习到的资源表示结合，在瓶颈位置、时间和过程原因之外提供订单级完成估计。}
 
 \begin{table*}[t]
 \centering
@@ -1221,15 +1221,15 @@ BSTAN & 14.704 & 13.850 & 13.557 \\
 \end{tabular*}
 \end{table*}
 
-Table~\ref{tab:comparison-remain} places the five order-level predictors alongside one another for each onset cap. Together with the event and cause outputs, this estimate connects the affected resource and its recovery interval to the time remaining for the complete order. Section~\ref{sec:decoder-training} examines the contribution of remaining-time head specialization.
+The existing head-specific fine-tuning further establishes how completion-time estimation can be improved while the event and cause outputs remain fixed. Relative to the stage-1 reference, MAE decreases by approximately $12\%/17\%/8\%$ to the values in Table~\ref{tab:comparison-remain}; the largest absolute gains occur in early production (Section~\ref{sec:decoder-training}). The order-level head therefore adds progress information to the resource-level warning and can be specialized without changing the bottleneck report's event and explanatory outputs.
 
-\zhpara{表~\ref{tab:comparison-remain}在各起点范围下并列展示五种模型的订单级预测。该估计与事件及原因输出结合，将受影响资源及其恢复区间关联到整单尚需的完成时间。第~\ref{sec:decoder-training}节进一步分析剩余时间头专项训练的作用。}
+\zhpara{已有的剩余时间头专项微调进一步展示了在保持事件与原因输出固定时改善完成时间估计的途径。相对于第一阶段模型，MAE 下降约 $12\%/17\%/8\%$，达到表~\ref{tab:comparison-remain}所示结果，最大的绝对收益出现在生产早期（第~\ref{sec:decoder-training}节）。因此，订单级预测头在资源级预警之外补充进度信息，并能够在保持瓶颈事件及解释输出的同时进行专项优化。}
 
 \subsection{Ablation study}
 
-The ablation study links predictive performance to three design choices: heterogeneous process--logistics information, process-informed supervision, and delay-pattern conditioning. Nine configurations also examine the decoder and training choices that support advance warning (Table~\ref{tab:ablation-arms}). Dataset, target resources, label rules, and validation-based threshold selection follow the main experiment; the selected threshold is $0.94$ except for NoFarBoost ($0.90/0.88/0.94$). Initialization and training budgets are listed for each arm: the structural variants use up to 50 epochs, while PHGST-DP uses warm-start curriculum training with a 100-epoch budget. These comparisons assess the resulting model configurations; the matched-budget Cause$\times$State experiment separately isolates auxiliary-supervision effects. Remaining-time comparisons use the stage-1 reference, before head-specific fine-tuning.
+The ablation study connects advance warning and interpretable reporting to three design choices: heterogeneous process--logistics information, process-informed supervision, and delay-pattern conditioning. Decoder and training comparisons examine how these representations support event reporting and order completion. Table~\ref{tab:ablation-arms} defines the nine configurations and their training schedules. Dataset, target resources, label rules, and validation-based threshold selection follow the main experiment; the selected threshold is $0.94$ except for NoFarBoost ($0.90/0.88/0.94$). Structural variants use up to 50 epochs, while PHGST-DP uses warm-start curriculum training with a 100-epoch budget. These are configuration-level comparisons, with event-pool differences for NoInfo and MachineOnly; the matched-budget Cause$\times$State study isolates auxiliary-supervision effects. Remaining-time comparisons use the stage-1 reference before head-specific fine-tuning.
 
-\zhpara{消融实验将预测表现与三项设计联系起来：异构过程—物流信息、过程启发式监督以及延迟模式条件化。九种配置同时考察支持提前预警的解码与训练设计（表~\ref{tab:ablation-arms}）。数据集、目标资源、标签规则和验证集阈值选择沿用主实验；除 NoFarBoost（$0.90/0.88/0.94$）外，各配置的选定阈值均为 $0.94$。表中逐项列出初始化方式与训练预算：结构变体最多训练五十个 epoch，PHGST-DP 采用热启动课程训练和一百个 epoch 的预算。这些比较评价各完整配置的表现，统一预算的 Cause$\times$State 实验进一步分离辅助监督的作用。剩余时间比较采用专项微调前的第一阶段模型作为参照。}
+\zhpara{消融实验将提前预警和可解释报告与三项设计联系起来：异构过程—物流信息、过程启发式监督和延迟模式条件化。解码与训练比较进一步考察这些表示如何支持事件报告和订单完成估计。表~\ref{tab:ablation-arms}定义九种配置及其训练安排。数据集、目标资源、标签规则和验证集阈值选择沿用主实验；除 NoFarBoost（$0.90/0.88/0.94$）外，各配置的选定阈值均为 $0.94$。结构变体最多训练五十个 epoch，PHGST-DP 采用热启动课程训练和一百个 epoch 的预算。这些实验进行配置级比较，NoInfo 和 MachineOnly 的事件池亦有差异；统一预算的 Cause$\times$State 实验进一步分离辅助监督的作用。剩余时间比较采用专项微调前的第一阶段模型作为参照。}
 
 \begin{table*}[t]
 \centering
@@ -1257,7 +1257,7 @@ NoFarBoost & Training & Far-onset weighting removed; earlier false-alarm penalty
 
 \begin{table*}[t]
 \centering
-\caption{Grouped ablation results on the shared 5,354-window test split. Absolute Report F1, Upcoming recall, and union duration MAE (min) are reported. Full rows use a light steel background; bold is best and underline is second-best within each Start cap. Training budgets and, for NoInfo and MachineOnly, event pools differ, so the table is a configuration-level comparison rather than a single-factor causal estimate.}
+\caption{Grouped ablation results on the shared 5,354-window test split. Absolute Report F1, Upcoming recall, and union duration MAE (min) are reported. Full rows use a light steel background; bold is best and underline is second-best within each Start cap. Configuration-level comparison with training schedules in Table~\ref{tab:ablation-arms} and event-pool differences for NoInfo and MachineOnly.}
 \label{tab:ablation-grouped}
 \scriptsize
 \setlength{\tabcolsep}{3.0pt}
@@ -1291,9 +1291,9 @@ NoFarBoost & \textbf{81.9\%} & \textbf{54.5\%} & \textbf{4.03} & \underline{75.2
 \label{fig:ablation-overview}
 \end{figure*}
 
-PHGST-DP preserves event accuracy as the onset range expands (Table~\ref{tab:ablation-grouped} and Figure~\ref{fig:ablation-overview}). Most removed components lower Report F1 and Upcoming recall and raise union duration error, while NoFarBoost is slightly better at Start$\leq5$ under its own threshold. From Start$\leq5$ to Start$\leq15$, Full Will15 F1 changes from $0.805$ to $0.772$, and union duration MAE from $4.17$ to $4.43$~min. The structural and entity variants exhibit larger changes, with F1 reductions of $0.08$--$0.16$ and MAE increases of $0.8$--$1.5$~min under their listed training configurations. Figure~\ref{fig:ablation-overview} isolates the delay-pattern question: Upcoming recall holds with Full across caps, whereas NoPattern and NoSplit degrade more sharply, and the $>10$~min strict-report bin rises from $0.240$ (NoFarBoost) to $0.433$ (Full).
+The complete configuration maintains Report F1 of $0.804/0.778/0.768$, Upcoming recall of $0.542/0.535/0.537$, and union duration MAE of $4.17/4.38/4.43$~min across the three onset caps (Table~\ref{tab:ablation-grouped}). Figure~\ref{fig:ablation-overview} highlights the temporal contribution: NoPattern has Upcoming recall $0.167/0.278/0.427$, and NoSplit has $0.190/0.247/0.353$, both below Full at every cap. Their recalls increase across cap settings, while Full retains a consistently high level. At Start$\leq15$, the strict-report recall for events beyond 10~min is $0.433$ for Full and $0.240$ for NoFarBoost. The following analyses connect these warning and tracking results to resource context, supervision, and temporal conditioning.
 
-\zhpara{PHGST-DP 在扩大事件起点范围时保持了事件识别精度（表~\ref{tab:ablation-grouped}、图~\ref{fig:ablation-overview}）。去掉大多数组件后，Report F1 与 Upcoming 召回率下降、union 持续时间误差上升；NoFarBoost 在其自身阈值下于 Start$\leq5$ 略优于 Full。从 Start$\leq5$ 到 Start$\leq15$，Full 的 Will15 F1 从 $0.805$ 变为 $0.772$，union 持续时间 MAE 从 $4.17$ 分钟变为 $4.43$ 分钟。结构与实体变体在各自训练配置下的变化幅度更大，F1 下降 $0.08$--$0.16$，MAE 上升 $0.8$--$1.5$ 分钟。图~\ref{fig:ablation-overview}进一步回答延迟模式问题：Full 的 Upcoming 召回率随范围保持稳定，NoPattern 与 NoSplit 退化更明显，且 $>10$ 分钟严格报告召回率由 NoFarBoost 的 $0.240$ 提高到 Full 的 $0.433$。}
+\zhpara{完整配置在三个起点范围下保持 $0.804/0.778/0.768$ 的 Report F1、$0.542/0.535/0.537$ 的 Upcoming 召回率，以及 $4.17/4.38/4.43$ 分钟的 union 持续时间 MAE（表~\ref{tab:ablation-grouped}）。图~\ref{fig:ablation-overview}突出时间建模的作用：NoPattern 的 Upcoming 召回率为 $0.167/0.278/0.427$，NoSplit 为 $0.190/0.247/0.353$，在各范围均低于 Full。两种变体的召回率随起点范围扩大而上升，Full 则保持在一致的较高水平。Start$\leq15$ 下，十分钟以后事件的严格报告召回率为 Full 的 $0.433$ 和 NoFarBoost 的 $0.240$。以下分析将这些预警与跟踪结果分别联系到资源上下文、监督和时间条件化。}
 
 
 
@@ -1351,14 +1351,14 @@ Cross-resource information is most closely associated with advance warning. PHGS
 
 \subsubsection{Process-informed supervision analysis}\label{sec:supervision-analysis}
 
-Process-informed supervision connects the event representation to production meaning. The analysis focuses on event and state reporting under the complete supervision configuration, cause accuracy under a matched training budget, and alignment between process-informed label rankings and intervention-sensitive resources. These experiments answer different questions and are therefore interpreted separately.
+Process-informed supervision gives the forecast both predictive and operational meaning. The complete supervision configuration is evaluated through event and state reporting, a matched-budget component study measures the contribution to cause recognition, and label validation examines alignment with intervention-sensitive resources. Together, the three analyses link the supervision design to warning quality, process interpretation, and resource-prioritization evidence.
 
-\zhpara{过程启发式监督将事件表示与生产意义联系起来。本节从三个层面展开：完整监督配置下的事件与状态报告、统一训练预算下的原因准确率，以及过程启发式标签排序与干预敏感资源之间的对齐。三组实验回答不同问题，因此分别解释。}
+\zhpara{过程启发式监督使预测同时具有事件识别能力和生产解释意义。完整监督配置通过事件与状态报告进行评价，统一预算的组件实验衡量原因识别收益，标签验证则考察与干预敏感资源的对齐。三个层面的分析共同将监督设计联系到预警质量、过程解释和资源优先级判断依据。}
 
 \paragraph*{(1) Effects of supervision components.}
-The full configuration combines event recognition with process-cause and deterministic regime information. The legacy-named NoCluster comparison retains Ops event labels and jointly removes cause supervision, history-regime fusion into the event head, and supervised contrastive regularization (Table~\ref{tab:group-ablation}). It does not isolate a k-means component. Across the three onset caps, PHGST-DP records higher event F1, upcoming-event recall, and next-window state F1, together with lower union and detected-event duration errors. This is a configuration-level comparison under the schedules in Table~\ref{tab:ablation-arms}, rather than a single-factor causal estimate; the matched-budget experiment below isolates the explanatory benefit of cause supervision.
+The complete supervision configuration combines event recognition with process-cause targets, deterministic history-regime information, and supervised contrastive regularization. NoCluster retains the Ops event labels and jointly removes these three components (Table~\ref{tab:group-ablation}). Under the training schedules in Table~\ref{tab:ablation-arms}, the full configuration achieves higher event F1, Upcoming recall, and next-window State F1, together with lower union and detected-event duration errors across the three caps. These results associate the complete supervision configuration with broader warning coverage and more accurate temporal reports. The matched-budget comparison below identifies the contribution of cause supervision to the explanatory output.
 
-\zhpara{\textbf{（1）监督组件的作用。}完整配置将事件识别与过程原因、确定性工况信息结合起来。沿用历史命名的 NoCluster 保留 Ops 事件标签，同时移除原因监督、历史工况向事件头的融合以及监督对比正则（表~\ref{tab:group-ablation}），因此该配置并未单独隔离某个 k-means 组件。在三个起点范围下，PHGST-DP 的事件 F1、upcoming 召回率和下一窗口状态 F1 更高，union 持续时间误差与正确检出事件的持续时间误差更低。由于两种配置采用表~\ref{tab:ablation-arms}中的不同训练安排，该结果是配置级比较，而不是单因素因果估计；下述统一预算实验进一步分离原因监督对解释输出的作用。}
+\zhpara{完整监督配置将事件识别与过程原因目标、确定性历史工况信息和监督对比正则结合起来。NoCluster 保留 Ops 事件标签，联合移除这三个组件（表~\ref{tab:group-ablation}）。在表~\ref{tab:ablation-arms}列出的训练安排下，完整配置在三个范围均取得更高的事件 F1、Upcoming 召回率和下一窗口 State F1，同时降低 union 与正确检出事件的持续时间误差。这些结果将完整监督配置与更广的预警覆盖及更准确的时间报告联系起来。下述统一预算比较进一步确定原因监督对解释性输出的作用。}
 
 \begin{table*}[t]
 \centering
@@ -1383,9 +1383,9 @@ NoCluster & & 57.7\% & 37.3\% & 81.9\% & 6.65 & 2.30 \\
 \end{tabular*}
 \end{table*}
 
-Cause supervision provides a direct gain in process interpretation under matched training conditions (Table~\ref{tab:matched-cause-state}). With Ops labels, a common data split, Start$\leq5$, seed 42, random initialization, and a 50-epoch budget, the cause-enabled configurations attain the highest cause accuracy. The corresponding training logs show that station identification remains at a similar level, so the measured benefit is localized to the explanatory output. Cause accuracy is retained as the direct measure of this explanatory benefit; State denotes the historical regime-state embedding and its representation objective.
+Cause supervision gives the shared representation a direct process-interpretation objective (Table~\ref{tab:matched-cause-state}). At Start$\leq5$, adding Cause raises cause accuracy from $0.195$ to $0.895$; adding Cause to the State-enabled configuration raises it from $0.185$ to $0.895$. These runs share Ops labels, the data split, seed 42, random initialization, and a 50-epoch budget. Station identification remains at a similar level in the corresponding logs, locating the measured contribution in the explanatory output. State denotes the historical regime-state embedding and its representation objective. The controlled comparison thus supports using explicit cause supervision to make the event representation informative about process conditions.
 
-\zhpara{统一训练条件下，原因监督直接提升了过程解释能力（表~\ref{tab:matched-cause-state}）。固定 Ops 标签、数据划分、Start$\leq5$、seed 42、随机初始化和五十个 epoch 的预算后，包含原因监督的配置取得最高原因准确率；相应训练日志中的工位识别水平保持接近，因此实测收益主要位于解释输出。原因准确率作为这一解释性收益的直接评价指标予以保留；State 表示历史工况状态嵌入及其表征目标。}
+\zhpara{原因监督为共享表示提供直接的过程解释目标（表~\ref{tab:matched-cause-state}）。Start$\leq5$ 下，加入 Cause 后原因准确率从 $0.195$ 提升到 $0.895$；在包含 State 的配置上加入 Cause 后，则从 $0.185$ 提升到 $0.895$。这些运行共享 Ops 标签、数据划分、seed 42、随机初始化和五十个 epoch 的预算。相应日志中的工位识别水平保持接近，实测收益集中在解释性输出。State 表示历史工况状态嵌入及其表征目标。该受控比较支持通过显式原因监督，使事件表示包含可用于识别过程条件的信息。}
 
 \begin{table}[t]
 \centering
@@ -1444,16 +1444,21 @@ Utilization & .183 & .222 & .204 & .230 & .222 \\
 Queue-Wait & .495 & .444 & .556 & .585 & .611 \\
 \bottomrule
 \end{tabular*}
+\par\vspace{3pt}
+\begin{minipage}{\FullWidth}
+\scriptsize
+Exploratory scope: three disturbance-free episodes. The metric set was finalized after pilot inspection; Holm-adjusted paired comparisons do not reject the null hypotheses. An independent full-Oracle evaluation remains pending. Point estimates describe this pilot and do not establish superiority across operating conditions.
+\end{minipage}
 \end{table*}
 
-The same development export separates representation separability from cause identification (Figures~\ref{fig:label-validity}--\ref{fig:cause-recall} and Table~\ref{tab:label-boundary}). On a shared raw-last representation, Active Period records the highest macro-F1 ($0.628$), balanced accuracy ($0.904$) and AUROC ($0.963$); Ops is highest only on station macro-F1 ($0.619$). Queue-Wait records the highest cause macro-F1 ($0.940$), against $0.885$ for Active Period, on 3,245 test windows. These comparisons use one seed and are not ablations of the retained checkpoint, which is trained with the Ops persistence rule. A label that aligns with the pilot's intervention ranking therefore need not be the most separable state, and the most separable state need not be the best cause target.
+The label comparison reveals complementary strengths in resource localization, state separability, and cause recognition (Figures~\ref{fig:label-validity}--\ref{fig:cause-recall} and Table~\ref{tab:label-boundary}). Ops attains the highest station macro-F1 ($0.619$), alongside its leading sensitivity-alignment point estimates in the pilot. On the shared raw-last representation, Active Period attains macro-F1 $0.628$, balanced accuracy $0.904$, and AUROC $0.963$, the highest values for these separability measures. Queue-Wait attains the highest cause macro-F1 ($0.940$), compared with $0.885$ for Active Period on 3,245 test windows. These distinct profiles explain the value of evaluating labels through both predictive discrimination and production relevance. The development comparison uses seed 42; the retained PHGST-DP configuration uses the Ops persistence rule.
 
-\zhpara{同一开发导出把表示可分性与原因识别分开呈现（图~\ref{fig:label-validity}--\ref{fig:cause-recall}、表~\ref{tab:label-boundary}）。在共享的 raw-last 表示上，Active Period 的宏 F1（$0.628$）、平衡准确率（$0.904$）和 AUROC（$0.963$）最高；Ops 仅在站点宏 F1（$0.619$）上最高。Queue-Wait 的原因宏 F1 为 $0.940$，高于 Active Period 的 $0.885$，对应 3,245 个测试窗口。该比较只有一个随机种子，也不是保留 checkpoint 的消融；保留模型使用 Ops 持续性规则训练。因此，与先导实验干预排序对齐的标签不必是最可分的状态，最可分的状态也不必是最好的原因目标。}
+\zhpara{标签比较呈现出资源定位、状态可分性与原因识别方面的互补特征（图~\ref{fig:label-validity}--\ref{fig:cause-recall}、表~\ref{tab:label-boundary}）。Ops 的站点宏 F1 最高，为 $0.619$，同时在先导实验中取得最高的敏感度对齐点估计。在共享 raw-last 表示上，Active Period 的宏 F1 为 $0.628$、平衡准确率为 $0.904$、AUROC 为 $0.963$，在这些可分性指标上最高。Queue-Wait 在 3,245 个测试窗口上的原因宏 F1 为 $0.940$，Active Period 为 $0.885$，其中 Queue-Wait 最高。不同的表现特征体现了同时从预测区分能力与生产意义评价标签的价值。该开发比较使用 seed 42，最终 PHGST-DP 配置采用 Ops 持续性规则。}
 
 \begin{figure*}[t]
 \centering
 \includegraphics[width=0.96\textwidth]{figures/fig_label_dots.pdf}
-\caption{Separability Cleveland plot for five label methods (development export, seed 42). Filled steel markers denote the best value in each panel; open markers are the remaining methods. Davies--Bouldin is lower-better. This is not an ablation of PHGST-DP.}
+\caption{Separability Cleveland plot for five label methods (development export, seed 42). Filled steel markers denote the best value in each panel; open markers are the remaining methods. Davies--Bouldin is lower-better. The comparison evaluates alternative label definitions.}
 \label{fig:label-validity}
 \end{figure*}
 
@@ -1466,27 +1471,27 @@ The same development export separates representation separability from cause ide
 
 \begin{table*}[t]
 \centering
-\caption{Recorded advantages and limits of the five label methods in the development export. Bold marks the highest point estimate in a column. The retained PHGST-DP runs use the Ops persistence rule; this table does not reselect that rule.}
+\caption{Predictive and operational profiles of the five label methods in the development comparison. Bold marks the highest point estimate in a column. The retained PHGST-DP configuration uses the Ops persistence rule.}
 \label{tab:label-boundary}
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
 \renewcommand{\arraystretch}{1.08}
 \begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}lrrrrrp{0.28\FullWidth}@{}}
 \toprule
-Label method & Macro-F1 & Bal.\ acc. & AUROC & Station F1 & Cause macro-F1 & Main limit in this export \\
+Label method & Macro-F1 & Bal.\ acc. & AUROC & Station F1 & Cause macro-F1 & Evaluation profile \\
 \midrule
-Ops & .581 & .849 & .908 & \textbf{.619} & .839 & Lowest positive rate (.015); separability below Active Period \\
-Active Period & \textbf{.628} & \textbf{.904} & \textbf{.963} & .590 & .885 & Weaker pilot alignment (NDCG@3 .382) \\
-Queue-Wait & .542 & .788 & .846 & .614 & \textbf{.940} & Highest positive rate (.087) \\
-Utilization & .600 & .853 & .921 & .556 & .883 & Weakest pilot alignment (NDCG@3 .183) \\
-TPM & .512 & .841 & .920 & .534 & .799 & Lowest separability macro-F1 \\
+Ops & .581 & .849 & .908 & \textbf{.619} & .839 & Station F1 .619; positive rate .015 \\
+Active Period & \textbf{.628} & \textbf{.904} & \textbf{.963} & .590 & .885 & State separability; pilot NDCG@3 .382 \\
+Queue-Wait & .542 & .788 & .846 & .614 & \textbf{.940} & Cause macro-F1 .940; positive rate .087 \\
+Utilization & .600 & .853 & .921 & .556 & .883 & AUROC .921; pilot NDCG@3 .183 \\
+TPM & .512 & .841 & .920 & .534 & .799 & AUROC .920; pilot NDCG@3 .372 \\
 \bottomrule
 \end{tabular*}
 \end{table*}
 
-These exploratory estimates support production sensitivity as a distinct dimension of supervision quality. All five retained soft-alignment metrics favour Ops in this pilot, but the metric set was finalized after inspecting the pilot and Holm-adjusted paired comparisons do not reject the null hypotheses. The independent full-Oracle evaluation has not been run; the numerical ordering is therefore interpreted only as a development result for disturbance-free episodes, not as proof of general superiority across operating conditions.
+Taken together, the label analyses connect predictive targets to the resources that matter for production progress. Ops combines the highest station macro-F1 in the development comparison with top-three candidates covering $71.6\%$ of positive intervention sensitivity on average in the exploratory pilot. State separability and cause recognition provide complementary descriptions of what each label exposes to the predictor. This evidence supports evaluating process-informed supervision through resource identification and its operational relevance, with the pilot's statistical scope stated in Table~\ref{tab:label-oracle-pilot}.
 
-\zhpara{这些探索性估计支持将生产敏感度作为监督质量的独立评价维度。五项保留的软对齐指标在该先导实验中均由 Ops 取得最高点估计，但指标集合是在查看先导结果后确定的，经 Holm 校正的配对比较也未拒绝零假设。独立 full-Oracle 评价尚未运行，因此当前数值排序只能解释为无扰动 episode 上的开发结果，不能作为跨工况普遍最优的证据。}
+\zhpara{综合这些标签分析，可以将预测目标联系到影响生产进度的资源。Ops 在开发比较中取得最高站点宏 F1，其前三候选在探索性先导实验中平均覆盖 $71.6\%$ 的正干预敏感度。状态可分性与原因识别则从互补角度描述各类标签向预测器提供的信息。这些证据支持从资源识别及其生产关联两个方面评价过程启发式监督；先导实验的统计范围在表~\ref{tab:label-oracle-pilot}中集中说明。}
 
 \subsubsection{Delay-pattern conditioning}
 
@@ -1549,13 +1554,13 @@ NoSplit & & 94.0\% & 55.9\% & 60.7\% & 35.3\% & 12.5\% & \textbf{95.1\%} & 6.36 
 \end{tabular*}
 \end{table*}
 
-Separating onset and continuation decisions gives PHGST-DP Upcoming recall of $0.542/0.535/0.537$, compared with $0.190/0.247/0.353$ for the shared head; NoSplit's Ongoing recall remains $0.935$--$0.951$. The contrast localizes the value of separate decisions to emerging events. Far-onset enhancement concentrates its benefit at the 10- and 15-min caps, where PHGST-DP records Will15 F1 $0.783/0.772$ and union duration MAE $4.38/4.43$~min, compared with $0.757/0.743$ and $4.66/4.87$~min for NoFarBoost. Strict report recall for events beyond 10~min rises from $0.240$ to $0.433$. At the 5-min cap, NoFarBoost records F1 $0.820$ and union MAE $4.03$~min, at threshold $0.90$ versus $0.94$ for PHGST-DP. This range-dependent pattern motivates the enhancement for longer warning distances. On the key-device trace (Figures~\ref{fig:key-device-struct-graph} and \ref{fig:key-device-struct-mech}), PHGST-DP reaches 15--17~min during the 20-min target segment and follows its decay; the structural variants peak at 12--14.5~min and show post-event spikes.
+Separate onset and continuation decisions concentrate the warning benefit on emerging events: PHGST-DP achieves Upcoming recall $0.542/0.535/0.537$, compared with $0.190/0.247/0.353$ for NoSplit, whose Ongoing recall remains $0.935$--$0.951$. Far-onset enhancement is most informative at the 10- and 15-min caps. PHGST-DP records Will15 F1 $0.783/0.772$ and union duration MAE $4.38/4.43$~min, compared with $0.757/0.743$ and $4.66/4.87$~min for NoFarBoost; strict report recall beyond 10~min is $0.433$ versus $0.240$. At the 5-min cap, the configurations exhibit different operating points: NoFarBoost has F1 $0.820$ and union MAE $4.03$~min at threshold $0.90$, while PHGST-DP uses threshold $0.94$. The advantage at longer caps supports the role of far-onset enhancement in extending useful warning distance. The key-device traces (Figures~\ref{fig:key-device-struct-graph} and \ref{fig:key-device-struct-mech}) complement the aggregate results: PHGST-DP reaches 15--17~min during the 20-min target segment and follows its decay, while the structural variants peak at 12--14.5~min and show post-event spikes.
 
-\zhpara{分离起点与持续判定后，PHGST-DP 的 Upcoming 召回率为 $0.542/0.535/0.537$，共享头为 $0.190/0.247/0.353$，而 NoSplit 的 Ongoing 召回率保持在 $0.935$--$0.951$。这一对照将分离判定的价值定位到正在形成的事件。远期增强的收益集中在十分钟和十五分钟范围：PHGST-DP 的 Will15 F1 为 $0.783/0.772$，union 持续时间 MAE 为 $4.38/4.43$ 分钟，NoFarBoost 对应为 $0.757/0.743$ 和 $4.66/4.87$ 分钟；对十分钟以后事件的严格报告召回率从 $0.240$ 提高到 $0.433$。五分钟范围下，NoFarBoost 的 F1 为 $0.820$、union MAE 为 $4.03$ 分钟，其阈值为 $0.90$，PHGST-DP 为 $0.94$。这种随范围变化的结果支持将远期增强用于更长预警距离。关键设备轨迹（图~\ref{fig:key-device-struct-graph}和图~\ref{fig:key-device-struct-mech}）中，PHGST-DP 在二十分钟目标区间内达到 15--17 分钟并跟随其下降，结构变体的峰值为 12--14.5 分钟，并出现事件结束后的尖峰。}
+\zhpara{起点与持续判定的分离将预警收益集中到新形成事件：PHGST-DP 的 Upcoming 召回率为 $0.542/0.535/0.537$，NoSplit 为 $0.190/0.247/0.353$，后者的 Ongoing 召回率仍为 $0.935$--$0.951$。远期增强在十分钟和十五分钟范围下的作用最为明确：PHGST-DP 的 Will15 F1 为 $0.783/0.772$、union 持续时间 MAE 为 $4.38/4.43$ 分钟，NoFarBoost 对应为 $0.757/0.743$ 和 $4.66/4.87$ 分钟；十分钟以后事件的严格报告召回率为 $0.433$ 对 $0.240$。五分钟范围下，两种配置呈现不同的报警工作点：NoFarBoost 在阈值 $0.90$ 下取得 F1 $0.820$ 和 union MAE $4.03$ 分钟，PHGST-DP 使用阈值 $0.94$。较长范围下的优势支持远期增强在扩展有效预警距离中的作用。关键设备轨迹（图~\ref{fig:key-device-struct-graph}和图~\ref{fig:key-device-struct-mech}）补充了整体结果：PHGST-DP 在二十分钟目标区间内达到 15--17 分钟并跟随其下降，结构变体的峰值为 12--14.5 分钟，并出现事件结束后的尖峰。}
 
-Head-specific fine-tuning strengthens the order-completion output while preserving the event and cause predictions. As shown in Table~\ref{tab:remain-stage} and Figure~\ref{fig:remain-bars}, test MAE decreases from $10.93/11.21/9.72$ to $9.60/9.27/8.91$~min, reductions of approximately $12\%/17\%/8\%$. The largest absolute gains occur in early production: MAE decreases from $16.84/17.27/14.72$ to $14.14/13.78/13.08$~min over 2,330 test windows. Late-phase MAE reaches $3.96/3.80/3.61$~min. This specialization improves completion-time estimation at the stage when substantial work remains, while the shared bottleneck forecast continues to identify local production constraints.
+Head-specific fine-tuning improves order-completion estimation while keeping the event and cause outputs fixed. Table~\ref{tab:remain-stage} and Figure~\ref{fig:remain-bars} show MAE decreasing from $10.93/11.21/9.72$ to $9.60/9.27/8.91$~min, reductions of approximately $12\%/17\%/8\%$; these are the final values compared in Table~\ref{tab:comparison-remain}. The largest absolute gains occur in early production: over 2,330 test windows, MAE decreases from $16.84/17.27/14.72$ to $14.14/13.78/13.08$~min. Late-phase MAE is $3.96/3.80/3.61$~min. The gain is concentrated where substantial work remains, allowing the order-level head to improve completion estimates while the established bottleneck forecast continues to supply local event and process information.
 
-\zhpara{专项微调在保持事件与原因预测的同时，提高订单剩余时间估计精度。如表~\ref{tab:remain-stage}与图~\ref{fig:remain-bars}所示，测试 MAE 从 $10.93/11.21/9.72$ 分钟下降至 $9.60/9.27/8.91$ 分钟，降幅约为 $12\%/17\%/8\%$。最大的绝对收益来自生产早期：在 2,330 个测试窗口上，MAE 从 $16.84/17.27/14.72$ 分钟下降至 $14.14/13.78/13.08$ 分钟；生产后期 MAE 为 $3.96/3.80/3.61$ 分钟。该专项优化改善了尚有较多工件待完成时的完成时间估计，同时保留共享瓶颈预测对局部生产约束的识别能力。}
+\zhpara{剩余时间头专项微调在固定事件与原因输出的同时改善订单完成估计。表~\ref{tab:remain-stage}和图~\ref{fig:remain-bars}显示，MAE 从 $10.93/11.21/9.72$ 分钟下降至 $9.60/9.27/8.91$ 分钟，降幅约为 $12\%/17\%/8\%$，对应表~\ref{tab:comparison-remain}参与比较的最终结果。最大的绝对收益来自生产早期：在 2,330 个测试窗口上，MAE 从 $16.84/17.27/14.72$ 分钟下降至 $14.14/13.78/13.08$ 分钟；生产后期 MAE 为 $3.96/3.80/3.61$ 分钟。收益集中在尚有较多工件待完成的阶段，使订单级预测头能够改善完成时间估计，同时保留既有瓶颈预测提供的局部事件与过程信息。}
 
 \begin{table}[t]
 \centering
@@ -1601,20 +1606,20 @@ $\leq15$ & 1 & 9.72 & 14.72 & 7.51 & \textbf{3.60} \\
 
 \subsection{Case study and process traceability}
 
-The case study shows how an event report follows bottleneck onset, persistence, and recovery on a production resource. The selected roller-bed CNC pipe-intersection cutting machine (\texttt{num02}) contributes 301 event-positive window--resource pairs in the test set. Device and episode selection follows a fixed rule: among devices with at least the median event count, select the device with the most events in one episode (ties resolved by PHGST-DP one-step F1), then select its episode with the most and longest bottleneck segments. The resulting episode, \texttt{n10\_human1.0\_\_episode\_03}, contains an approximately 8-min bottleneck and a 49-min bottleneck, with the duration target capped at the 20-min prediction horizon. PHGST-DP detects both intervals and tracks their recovery (Figure~\ref{fig:key-device-main}). The short event is reported about 1~min in advance with a 10--11~min duration estimate; the long event's onset is aligned, and its declining duration is followed. The capped portion is predicted at 13--17~min, and state mismatches occur at onset and recovery boundaries (1--2 windows each). The trace illustrates how the report combines event notification with a continuously updated duration estimate.
+PHGST-DP tracks both a short and a sustained bottleneck on the roller-bed CNC pipe-intersection cutting machine (\texttt{num02}), linking early notification to the evolution of the constrained state. Episode \texttt{n10\_human1.0\_\_episode\_03} contains an approximately 8-min event and a 49-min event, with the duration target capped at the 20-min prediction horizon (Figure~\ref{fig:key-device-main}). The short event is reported about 1~min in advance with a 10--11~min duration estimate. The long event's onset is aligned, its capped portion is predicted at 13--17~min, and the duration decline follows recovery; state mismatches are located at onset and recovery boundaries, at 1--2 windows each. The complete trajectory shows how the event report updates from initial warning through persistence to recovery. The device has 301 event-positive window--resource pairs in the test set, and the selection rule is stated in the figure caption.
 
-\zhpara{案例展示事件报告如何跟踪生产资源上瓶颈的发生、持续与恢复。所选滚床数控相贯线切割机（\texttt{num02}）在测试集中贡献 301 个事件阳性窗口—资源对。设备与 episode 依据固定规则选择：在事件数不低于中位数的设备中，选取单个 episode 内事件数最多的设备，并列时依据 PHGST-DP 单步 F1 确定；再选择该设备瓶颈段数最多、持续时间最长的 episode。得到的 \texttt{n10\_human1.0\_\_episode\_03} 包含约八分钟和四十九分钟的两个瓶颈，持续时间目标受二十分钟预测范围约束。PHGST-DP 识别出两个区间并跟踪其恢复过程（图~\ref{fig:key-device-main}）：短事件提前约一分钟报告，持续时间估计为 10--11 分钟；长事件的起点对齐，持续时间下降段得到跟踪。封顶区间的预测为 13--17 分钟，状态错分发生在起点与恢复边界，各为 1--2 个窗口。该轨迹展示了事件通知与持续更新的时间估计如何共同组成预测报告。}
+\zhpara{PHGST-DP 在滚床数控相贯线切割机（\texttt{num02}）上跟踪短时与持续瓶颈，将提前通知与受限状态的演化联系起来。Episode \texttt{n10\_human1.0\_\_episode\_03} 包含约八分钟和四十九分钟的两个事件，持续时间目标受二十分钟预测范围约束（图~\ref{fig:key-device-main}）。短事件提前约一分钟报告，持续时间估计为 10--11 分钟。长事件的起点对齐，封顶区间的预测为 13--17 分钟，持续时间下降段跟随恢复过程；状态错分位于起点和恢复边界，各为 1--2 个窗口。完整轨迹展示了事件报告如何从初始预警持续更新至受限维持与恢复阶段。该设备在测试集中有 301 个事件阳性窗口—资源对，案例选择规则见图注。}
 
 \begin{figure*}[t]
 \centering
 \includegraphics[width=0.96\textwidth]{figures/fig_key_device_timeline.pdf}
-\caption{PHGST-DP state and duration on \texttt{num02}, episode \texttt{n10\_human1.0\_\_episode\_03}, Start$\leq5$. Black solid lines are the targets; coral dashed lines are the predictions. The local export does not include disturbance intervals or cause marks, so those bands are not drawn.}
+\caption{PHGST-DP state and duration on \texttt{num02}, episode \texttt{n10\_human1.0\_\_episode\_03}, Start$\leq5$. Black solid lines are the targets; coral dashed lines are the predictions. Case selection: among devices with at least the median event count, choose the device with the most events in one episode (ties resolved by PHGST-DP one-step F1), then its episode with the most and longest bottleneck segments.}
 \label{fig:key-device-main}
 \end{figure*}
 
-Figure~\ref{fig:key-device-baselines} places PHGST-DP at the upper left and the four baselines below, with an independent state--duration pair for each model on the same device and episode. The upper-right pair enlarges windows 20--115, shaded in the full trajectory, to show the short and long bottleneck intervals and their recovery boundaries. Both views retain the same vertical scales and window indices. Black solid lines show the targets and dashed lines show predictions; all panels count windows from the same first forecast window after the 30-window history. PHGST-DP maintains continuous state coverage over both bottleneck intervals and follows the duration decline towards recovery. The baseline panels make differences in state continuity and duration tracking visible on the same trajectory. The aggregate event and temporal results are reported in Table~\ref{tab:comparison-main}.
+The aligned model comparison highlights state continuity and recovery tracking on this same device and episode (Figure~\ref{fig:key-device-baselines}). PHGST-DP maintains continuous state coverage over both bottleneck intervals and follows the decline in remaining duration. The enlarged event view shows how these predictions align with onset and recovery boundaries, while the four baseline panels expose differences in fragmentation and duration profiles under the same axes and forecast-window indexing. This visual evidence complements the aggregate event and temporal results in Table~\ref{tab:comparison-main} by showing how a sequence of predictions forms a coherent resource-level report.
 
-\zhpara{图~\ref{fig:key-device-baselines}将 PHGST-DP 放在左上方，四个基线排列在下方，在同一设备与 episode 上为各模型独立展示一组状态—持续时间子图。右上方放大完整轨迹中以灰色标出的第 20--115 个窗口，展示短、长瓶颈区间及其恢复边界；两种视图保持相同的纵轴尺度与窗口编号。黑色实线表示真实值，虚线表示预测值；全部子图均从三十窗口历史之后的首个预测窗口开始计数。PHGST-DP 在两个瓶颈区间内保持连续的状态覆盖，并跟踪持续时间向恢复阶段的下降。基线子图使同一轨迹上的状态连续性与持续时间跟踪差异得到直观呈现。整体事件与时间指标见表~\ref{tab:comparison-main}。}
+\zhpara{同一设备与 episode 上的模型对照突出状态连续性与恢复跟踪（图~\ref{fig:key-device-baselines}）。PHGST-DP 在两个瓶颈区间内保持连续的状态覆盖，并跟踪剩余持续时间的下降。局部放大视图展示预测与发生、恢复边界的对应关系，四个基线子图则在相同坐标尺度和预测窗口编号下呈现状态片段化与持续时间曲线的差异。这些直观证据与表~\ref{tab:comparison-main}的整体事件及时间结果互补，展示连续预测如何形成资源级过程报告。}
 
 \begin{figure*}[p]
 \centering
@@ -1630,13 +1635,13 @@ The all-resource view connects these local traces to coordinated production-stat
 \begin{figure*}[t]
 \centering
 \includegraphics[width=0.96\textwidth]{figures/all_devices_state_main.pdf}
-\caption{All-device next-window state map for the retained PHGST-DP on the representative episode (olive: true positive; coral: false positive and false negative). The source render does not separate false positives from false negatives, so both are shown in coral.}
+\caption{All-device next-window state map for the retained PHGST-DP on the representative episode (olive: true positive; coral: false positive and false negative). Coral pools false-positive and false-negative cells.}
 \label{fig:all-devices-main}
 \end{figure*}
 
-On the full Start$\leq5$ test split, support is uneven across the 15 targets (Figure~\ref{fig:per-device}). The cutting machine contributes 301 true events, while robot~2 and robot~3 contribute none and are excluded from the box statistics. F1 on the supported devices ranges from $0.535$ on the welding robot to $0.964$ on bench~ws1. This split is a coverage check for one checkpoint, not a claim that every resource family is equally predictable.
+The resource-resolved evaluation extends the case to the complete Start$\leq5$ test split (Figure~\ref{fig:per-device}). Report F1 on supported devices spans $0.535$ for the welding robot to $0.964$ for bench~ws1, showing the prediction profile across machines, gantries, and transport robots. The cutting machine contributes 301 event-positive window--resource pairs; robot~2 and robot~3 have no true events and are excluded from the box statistics. Together with union duration error, the grouped view connects event identification to temporal tracking across the resources represented in the test set.
 
-\zhpara{在完整的 Start$\leq5$ 测试划分上，十五个目标的支持量并不均匀（图~\ref{fig:per-device}）。切割机有 301 个真实事件，而 robot~2 与 robot~3 没有真实事件，不进入箱线统计。有支持设备的 F1 从焊接机器人的 $0.535$ 到 bench~ws1 的 $0.964$。该图只检查一个 checkpoint 的覆盖情况，不能据此认为每一类资源都同样可预测。}
+\zhpara{分资源评价将案例扩展到完整的 Start$\leq5$ 测试划分（图~\ref{fig:per-device}）。有支持设备的 Report F1 从焊接机器人的 $0.535$ 到 bench~ws1 的 $0.964$，展示模型在机器、龙门和运输机器人上的预测特征。切割机贡献 301 个事件阳性窗口—资源对；robot~2 与 robot~3 没有真实事件，不进入箱线统计。结合 union 持续时间误差，分组视图将事件识别与时间跟踪对应到测试集中具有支持的各类资源。}
 
 \begin{figure*}[t]
 \centering
@@ -1645,15 +1650,15 @@ On the full Start$\leq5$ test split, support is uneven across the 15 targets (Fi
 \label{fig:per-device}
 \end{figure*}
 
-Process-cause outputs link a predicted event to interpretable production symptoms: transport delay, material shortage, upstream starvation, and queue buildup. The labels encode process-rule evidence, so the explanation is an association with observed operating conditions. Quantitative evaluation covers these four supported classes (Section~\ref{sec:comparison-cause}); blocked-downstream and high-utilization classes have zero test support. Together with the event and state traces, these outputs provide a resource, a time interval, and a process context for reviewing a predicted constraint.
+Process-cause outputs complete the report with interpretable production context. Transport delay, material shortage, upstream starvation, and queue buildup are rule-derived descriptions of observed operating conditions and constitute the four supported test classes (Section~\ref{sec:comparison-cause}); blocked-downstream and high-utilization categories have zero test support. Combining these descriptions with the resource and event interval provides a focused basis for reviewing the transport, supply, and processing conditions associated with a forecast constraint.
 
-\zhpara{过程原因输出将预测事件关联到可解释的生产现象：运输延迟、物料短缺、上游饥饿和队列积压。标签编码过程规则证据，因此解释表达的是事件与观测运行条件之间的关联。量化评价覆盖这四个有支持类别（第~\ref{sec:comparison-cause}节），下游阻塞和高利用率类别的测试支持为零。结合事件与状态轨迹，这些输出为审视预测约束提供了资源、时间区间和过程上下文。}
+\zhpara{过程原因输出为报告补充可解释的生产上下文。运输延迟、物料短缺、上游饥饿和队列积压是依据规则生成的运行条件描述，构成测试集的四个有支持类别（第~\ref{sec:comparison-cause}节）；下游阻塞和高利用率类别的测试支持为零。将这些描述与资源及事件区间结合，可以为检查预测约束关联的运输、供给和加工条件提供明确依据。}
 
 \subsection{Prediction quality and computational cost}\label{sec:efficiency}
 
-This experiment evaluates the computation required to deliver the predictive quality reported in Section~\ref{sec:comparison-event}. All five models perform inference on an NVIDIA GeForce RTX~5090. The environment uses Python~3.11.15 and CUDA~12.8, with PyTorch~2.11.0 for the neural models and XGBoost~3.2.0 with CuPy~14.2.0 for the seven tree-based prediction heads. Throughput is measured over five complete test passes at batch size 16 after 50 warm-up batches. Forward and report latency use batch size 1 and 5,000 timed calls, with CUDA synchronization before and after each measurement. Forward timing covers prediction with inputs or prepared features resident on the GPU. Report timing includes input transfer, model-specific feature processing, prediction, and event-report generation; for XGBoost, this includes CPU history-feature construction, host-to-device transfer, seven CUDA prediction heads, and device-to-host output transfer. Batched test passes also include data loading. Table~\ref{tab:efficiency} summarizes the three onset caps, and Figure~\ref{fig:quality-cost} relates report latency to the Report F1 values in Table~\ref{tab:comparison-main}.
+This experiment evaluates the computation required to deliver the predictive quality reported in Section~\ref{sec:comparison-event}. All five models perform inference on an NVIDIA GeForce RTX~5090. The environment uses Python~3.11.15 and CUDA~12.8, with PyTorch~2.11.0 for the neural models and XGBoost~3.2.0 with CuPy~14.2.0 for the seven tree-based prediction heads. Throughput is measured over five complete test passes at batch size 16 after 50 warm-up batches. Forward and report latency use batch size 1 and 5,000 timed calls, with CUDA synchronization before and after each measurement. The timing boundary covers model-side reporting. Forward timing covers prediction with inputs or prepared features resident on the GPU. Report timing includes input transfer, model-specific feature processing, prediction, and event-report generation; for XGBoost, this includes CPU history-feature construction, host-to-device transfer, seven CUDA prediction heads, and device-to-host output transfer. Batched test passes also include data loading. Table~\ref{tab:efficiency} summarizes the three onset caps, and Figure~\ref{fig:quality-cost} relates report latency to the Report F1 values in Table~\ref{tab:comparison-main}.
 
-\zhpara{本实验考察实现第~\ref{sec:comparison-event}节预测质量所需的计算成本。五种模型均在 NVIDIA GeForce RTX~5090 上执行推理。软件环境采用 Python~3.11.15 和 CUDA~12.8，神经模型使用 PyTorch~2.11.0，七个树模型预测头使用 XGBoost~3.2.0 与 CuPy~14.2.0。吞吐量采用 batch size 16，在五十个预热 batch 后完成五次完整测试。纯前向与报告延迟采用 batch size 1，统计 5,000 次调用，并在每次计时前后执行 CUDA 同步。纯前向计时覆盖输入或已构造特征驻留 GPU 时的模型预测。报告计时包含输入传输、模型对应的特征处理、预测及事件报告生成；其中，XGBoost 包含 CPU 端历史特征构造、主机到设备的传输、七个 CUDA 预测头以及输出回传。批量测试还包含数据加载。表~\ref{tab:efficiency}汇总三个起点范围的开销，图~\ref{fig:quality-cost}将报告延迟与表~\ref{tab:comparison-main}中的 Report F1 对应展示。}
+\zhpara{本实验考察实现第~\ref{sec:comparison-event}节预测质量所需的计算成本。五种模型均在 NVIDIA GeForce RTX~5090 上执行推理。软件环境采用 Python~3.11.15 和 CUDA~12.8，神经模型使用 PyTorch~2.11.0，七个树模型预测头使用 XGBoost~3.2.0 与 CuPy~14.2.0。吞吐量采用 batch size 16，在五十个预热 batch 后完成五次完整测试。纯前向与报告延迟采用 batch size 1，统计 5,000 次调用，并在每次计时前后执行 CUDA 同步。计时边界覆盖模型侧报告生成。纯前向计时覆盖输入或已构造特征驻留 GPU 时的模型预测。报告计时包含输入传输、模型对应的特征处理、预测及事件报告生成；其中，XGBoost 包含 CPU 端历史特征构造、主机到设备的传输、七个 CUDA 预测头以及输出回传。批量测试还包含数据加载。表~\ref{tab:efficiency}汇总三个起点范围的开销，图~\ref{fig:quality-cost}将报告延迟与表~\ref{tab:comparison-main}中的 Report F1 对应展示。}
 
 % All 15 GPU timing rows are verified against isaac_factory@a5b6c92,
 % including the original PHGST-DP report snapshots. B2 uses the 2026-10-24 CUDA run.
@@ -1690,13 +1695,13 @@ Timing runs use the source-recorded workloads on a shared server; the common-sam
 \label{fig:quality-cost}
 \end{figure*}
 
-PHGST-DP combines Report F1 of $0.804/0.778/0.768$ with median report latency of 4.72--4.77~ms and p99 latency of 5.51--5.60~ms. Figure~\ref{fig:quality-cost} places PHGST-DP at the highest Report F1 for each onset cap while retaining millisecond-scale report generation. The measured CUDA implementation of XGBoost has median report latency of 39.29--58.55~ms and p99 latency of 52.81--72.66~ms; LSTM, BTGCN, and BSTAN provide sub-1.1-ms median report latency. These results characterize the quality--cost choices among the evaluated implementations. PHGST-DP incorporates heterogeneous resource interactions and delay-pattern conditioning within a report-generation budget well below the 60-s observation interval. Within this update cycle, event identification and advance warning provide the principal basis for selecting PHGST-DP. The timings cover model-side reporting; acquisition, network communication, and downstream production actions form the subsequent end-to-end deployment assessment.
+PHGST-DP combines Report F1 of $0.804/0.778/0.768$ with median report latency of 4.72--4.77~ms and p99 latency of 5.51--5.60~ms. Figure~\ref{fig:quality-cost} places it at the highest Report F1 for each onset cap with millisecond-scale reporting. XGBoost's measured CUDA implementation has report p50 of 39.29--58.55~ms and p99 of 52.81--72.66~ms; LSTM, BTGCN, and BSTAN have median report latency below 1.1~ms. These operating points expose the predictive-quality and runtime choices among the measured implementations. PHGST-DP's heterogeneous resource interactions and delay-pattern conditioning fit within a model-side reporting budget far shorter than the 60-s observation interval, making its event coverage and advance warning usable within the studied update cycle.
 
-\zhpara{PHGST-DP 在三个起点范围下的 Report F1 为 $0.804/0.778/0.768$，完整报告中位延迟为 4.72--4.77~ms，p99 延迟为 5.51--5.60~ms。图~\ref{fig:quality-cost}中，PHGST-DP 在各起点范围保持最高的已报告 Report F1，同时维持毫秒级报告生成。被测 XGBoost CUDA 实现的报告中位延迟为 39.29--58.55~ms，p99 延迟为 52.81--72.66~ms；LSTM、BTGCN 和 BSTAN 的报告中位延迟均低于 1.1~ms。这些结果展示了各被测实现的预测质量与计算成本组合。PHGST-DP 将异构资源交互和延迟模式条件化纳入预测，同时将报告生成开销保持在远低于六十秒观测间隔的范围内。在这一更新周期下，事件识别质量与提前预警能力构成选择 PHGST-DP 的主要依据。上述计时覆盖模型侧报告生成，数据采集、网络通信及后续生产动作共同构成进一步的端到端部署评价。}
+\zhpara{PHGST-DP 将 $0.804/0.778/0.768$ 的 Report F1 与 4.72--4.77~ms 的报告中位延迟、5.51--5.60~ms 的 p99 延迟结合起来。图~\ref{fig:quality-cost}中，模型在各起点范围保持最高的已报告 Report F1，同时实现毫秒级报告生成。XGBoost CUDA 实现的实测报告 p50 为 39.29--58.55~ms、p99 为 52.81--72.66~ms；LSTM、BTGCN 和 BSTAN 的报告中位延迟低于 1.1~ms。这些工作点呈现被测实现的预测质量与运行成本选择。PHGST-DP 将异构资源交互和延迟模式条件化纳入远短于六十秒观测间隔的模型侧报告预算，使事件覆盖与提前预警能够用于所研究的更新周期。}
 
-PHGST-DP processes 1,946--1,987 samples/s across the three onset caps, with a 0.05-ms spread in median report latency. Its 713,984 parameters occupy a 2.91-MiB checkpoint, and peak GPU allocation is approximately 175.8~MiB. This allocation is about 27\% below BTGCN and BSTAN under the measured configurations; LSTM uses 83.8~MiB. The three PHGST-DP checkpoints share the same architecture and input shape, giving consistent resource requirements across the evaluated onset ranges. Together, the prediction and cost measurements characterize a compact model whose event-report quality can be used within the studied production update cycle.
+The resource requirements remain stable across onset caps. PHGST-DP processes 1,946--1,987 samples/s, with a 0.05-ms spread in median report latency. Its 713,984 parameters occupy a 2.91-MiB checkpoint, and peak GPU allocation is approximately 175.8~MiB, about 27\% below BTGCN and BSTAN under the measured configurations; LSTM uses 83.8~MiB. The three checkpoints share the same architecture and input shape. This combination of a compact parameter set, stable inference cost, and detailed event predictions supports frequent report updates on the tested platform.
 
-\zhpara{PHGST-DP 在三个起点范围下的吞吐量为每秒 1,946--1,987 个样本，完整报告中位延迟的极差为 0.05~ms。模型包含 713,984 个参数，checkpoint 大小为 2.91~MiB，峰值 GPU allocated memory 约为 175.8~MiB；在被测配置下，该显存占用比 BTGCN 和 BSTAN 低约 $27\%$，LSTM 的相应占用为 83.8~MiB。三个 PHGST-DP checkpoint 共享相同的架构和输入形状，因此在所评估的起点范围内保持一致的资源需求。预测结果与计算成本共同表明，该紧凑模型能够在所研究的生产更新周期内提供高质量事件报告。}
+\zhpara{模型的资源需求在不同起点范围下保持稳定。PHGST-DP 的吞吐量为每秒 1,946--1,987 个样本，报告中位延迟的极差为 0.05~ms。模型包含 713,984 个参数，checkpoint 为 2.91~MiB，峰值 GPU allocated memory 约为 175.8~MiB，在被测配置下比 BTGCN 和 BSTAN 低约 $27\%$；LSTM 的相应占用为 83.8~MiB。三个 checkpoint 共享相同的架构和输入形状。紧凑的参数规模、稳定的推理成本与详细的事件预测共同支持在测试平台上频繁更新瓶颈报告。}
 
 \section{Discussion}\label{sec:discussion}
 
