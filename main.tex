@@ -1616,44 +1616,53 @@ Process-cause outputs link a predicted event to interpretable production symptom
 
 \zhpara{过程原因输出将预测事件关联到可解释的生产现象：运输延迟、物料短缺、上游饥饿和队列积压。标签编码过程规则证据，因此解释表达的是事件与观测运行条件之间的关联。量化评价覆盖这四个有支持类别（第~\ref{sec:comparison-cause}节），下游阻塞和高利用率类别的测试支持为零。结合事件与状态轨迹，这些输出为审视预测约束提供了资源、时间区间和过程上下文。}
 
-\subsection{Computational efficiency}\label{sec:efficiency}
+\subsection{Prediction quality and computational cost}\label{sec:efficiency}
 
-Computational efficiency was measured for the three retained PHGST-DP checkpoints without retraining, threshold adjustment, or test-set model selection. All measurements used the same NVIDIA GeForce RTX~5090 under Python~3.11.15, PyTorch~2.11.0, and CUDA~12.8. Each checkpoint contains 713,984 trainable parameters and occupies 2.91~MiB. The common test split contains 5,354 windows. A complete test pass used batch size 16 and was repeated five times after 50 warm-up batches. Batch-one forward and report latency were each measured over 5,000 synchronized calls. Forward latency covers the model computation on a GPU-resident batch; report latency additionally includes CPU-to-GPU transfer, prediction, and materialization of the event fields. The test-pass timing further includes DataLoader iteration.
+This experiment evaluates the computation required to deliver the predictive quality reported in Section~\ref{sec:comparison-event}. PHGST-DP, LSTM, BTGCN, and BSTAN use the NVIDIA GeForce RTX~5090, while XGBoost~3.2.0 runs on the CPU of the same host with four threads. The neural models use Python~3.11.15, PyTorch~2.11.0, and CUDA~12.8. Throughput is measured over five complete test passes at batch size 16 after 50 warm-up batches; forward and report latency use batch size 1 and 5,000 timed calls, with GPU synchronization for neural inference. Forward timing covers model prediction, while report timing additionally includes input transfer or model-specific feature processing and event-report generation. Batched test passes also include data loading. Table~\ref{tab:efficiency} summarizes the three onset caps, and Figure~\ref{fig:quality-cost} relates report latency to the Report F1 values in Table~\ref{tab:comparison-main}.
 
-\zhpara{本文在不重新训练、不调整阈值且不利用测试集选择模型的条件下，对三个保留的 PHGST-DP checkpoint 进行计算效率测量。所有实验均在同一块 NVIDIA GeForce RTX~5090 上完成，软件环境为 Python~3.11.15、PyTorch~2.11.0 和 CUDA~12.8。每个 checkpoint 均包含 713,984 个可训练参数，文件大小为 2.91~MiB。统一测试集含 5,354 个窗口；完整测试采用 batch size 16，在五十个预热 batch 后重复五次。batch 为一的纯前向延迟与完整报告延迟均基于 5,000 次同步调用统计。纯前向延迟仅包含 GPU 上的模型计算；完整报告延迟还包含 CPU 到 GPU 的数据传输、预测以及事件字段实例化；完整测试集耗时进一步包含 DataLoader 迭代。}
+\zhpara{本实验考察实现第~\ref{sec:comparison-event}节预测质量所需的计算成本。PHGST-DP、LSTM、BTGCN 和 BSTAN 使用 NVIDIA GeForce RTX~5090，XGBoost~3.2.0 在同一主机的 CPU 上使用四线程运行；神经网络的软件环境为 Python~3.11.15、PyTorch~2.11.0 和 CUDA~12.8。吞吐量采用 batch size 16，在五十个预热 batch 后完成五次完整测试；纯前向与报告延迟采用 batch size 1，统计 5,000 次调用，并对神经网络推理执行 GPU 同步计时。纯前向计时覆盖模型预测，报告计时进一步包含输入传输或模型对应的特征处理以及事件报告生成；批量测试还包含数据加载。表~\ref{tab:efficiency}汇总三个起点范围的开销，图~\ref{fig:quality-cost}将报告延迟与表~\ref{tab:comparison-main}中的 Report F1 对应展示。}
 
+% Baseline efficiency is verified against isaac_factory@2cfa562; main values are author-supplied.
+% See experiments/efficiency_comparison_2026-10-24.md for provenance and checks.
 \begin{table*}[t]
 \centering
-\caption{PHGST-DP inference efficiency on the retained checkpoints. Build time includes test-set construction and is not a weight-loading-only measurement. Test-pass time uses batch size 16; forward and report latency use batch size 1. Latencies are reported as p50/p95/p99.}
+\caption{Inference cost of the five evaluated implementations. Ranges give the minimum and maximum across Start $\leq5$, $\leq10$, and $\leq15$ min. Latencies are in ms; throughput uses batch size 16 and report latency uses batch size 1. GPU memory is peak allocated memory.}
 \label{tab:efficiency}
-\scriptsize
+\footnotesize
 \setlength{\tabcolsep}{3.3pt}
-\renewcommand{\arraystretch}{1.08}
-\begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}lrrrrrrr@{}}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}lrrrrrr@{}}
 \toprule
-Start cap & \makecell{Checkpoint\\epoch} & \makecell{Build\\(s)} & \makecell{Test pass\\(s)} & \makecell{Throughput\\(samples/s)} & \makecell{Forward p50/p95/p99\\(ms)} & \makecell{Report p50/p95/p99\\(ms)} & \makecell{Peak GPU\\(MiB)} \\
+Model / device & Parameters & \makecell{Peak GPU\\(MiB)} & \makecell{Throughput $\uparrow$\\(samples/s)} & \makecell{Report p50 $\downarrow$\\(ms)} & \makecell{Report p95 $\downarrow$\\(ms)} & \makecell{Report p99 $\downarrow$\\(ms)} \\
 \midrule
-$\leq5$  & 16 & 9.70 & 2.695 & 1,987 & 3.52/4.09/4.24 & 4.75/5.38/5.53 & 175.8 \\
-$\leq10$ & 9  & 8.21 & 2.751 & 1,946 & 3.53/4.08/4.21 & 4.77/5.41/5.60 & 175.8 \\
-$\leq15$ & 12 & 8.10 & 2.703 & 1,981 & 3.49/4.06/4.16 & 4.72/5.32/5.51 & 175.8 \\
+\textbf{PHGST-DP} / GPU & 713,984 & 175.8 & 1,946\textendash{}1,987 & 4.72\textendash{}4.77 & 5.32\textendash{}5.41 & 5.51\textendash{}5.60 \\
+XGBoost / CPU & \na & \na & 593\textendash{}672 & 4.46\textendash{}5.46 & 7.26\textendash{}9.39 & 24.32\textendash{}25.81 \\
+LSTM / GPU & 752,867 & 83.8 & 8,547\textendash{}8,740 & 0.64\textendash{}0.65 & 1.14\textendash{}1.15 & 1.33\textendash{}1.35 \\
+BTGCN / GPU & 274,339 & 240.3 & 6,881\textendash{}7,274 & 0.92\textendash{}0.95 & 1.48\textendash{}1.51 & 1.62\textendash{}1.66 \\
+BSTAN / GPU & 287,267 & 239.7 & 6,584\textendash{}6,667 & 1.00\textendash{}1.03 & 1.54\textendash{}1.58 & 1.64\textendash{}1.68 \\
 \bottomrule
 \end{tabular*}
+\par\vspace{3pt}
+\begin{minipage}{\FullWidth}
+\scriptsize
+Measurements use 5,354 PHGST-DP test windows and 6,886 baseline test windows on a shared server. GPU allocation includes resident inference inputs; values describe the measured implementations and workloads.
+\end{minipage}
 \end{table*}
 
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=\columnwidth]{figures/fig_latency_stack.pdf}
-\caption{Batch-1 median latency composition for the three retained PHGST-DP checkpoints. The steel segment is GPU forward p50; the light segment is report p50 minus forward p50 (transfer, decode, and materialization). Totals are annotated; the three caps are not claimed to differ meaningfully.}
-\label{fig:latency-stack}
-\end{figure}
+\includegraphics[width=0.96\textwidth]{figures/fig_quality_cost.pdf}
+\caption{Reported event-identification quality versus median report latency for each onset cap. Report F1 is taken from Table~\ref{tab:comparison-main}; latency is measured for the corresponding model and onset setting. XGBoost uses CPU inference and the other methods use GPU inference.}
+\label{fig:quality-cost}
+\end{figure*}
 
-Table~\ref{tab:efficiency} and Figure~\ref{fig:latency-stack} show that the three onset settings have nearly identical inference cost. A complete pass over 5,354 windows takes 2.695--2.751~s, corresponding to 1,946--1,987 samples/s; the throughput spread is only about $2.1\%$. For online batch-one use, the median complete-report latency is 4.72--4.77~ms and the p95 latency is 5.32--5.41~ms. Event decoding and data transfer add approximately 1.2--1.3~ms beyond the pure forward pass. The small variation is expected because changing the onset cap changes the learned checkpoint and decision task but not the PHGST-DP architecture or input shape. The constant 175.8~MiB peak allocated GPU memory and compact checkpoint further indicate that the three forecasting ranges do not introduce additional inference resources.
+PHGST-DP combines Report F1 of $0.804/0.778/0.768$ with median report latency of 4.72--4.77~ms and p99 latency of 5.51--5.60~ms. Figure~\ref{fig:quality-cost} presents the resulting quality--cost trade-off: LSTM, BTGCN, and BSTAN provide shorter inference times, while PHGST-DP occupies the highest Report F1 position at each onset cap. Its heterogeneous resource interactions and delay-pattern conditioning provide the predictive context examined in the ablation study, with complete reports generated within a millisecond-scale budget. All evaluated implementations have report p99 values well below the 60-s observation interval; within this operating regime, event identification and advance warning provide the principal basis for selecting PHGST-DP. These timings establish model-side update capacity on the tested platform; acquisition, network communication, and downstream production actions remain separate deployment stages.
 
-\zhpara{表~\ref{tab:efficiency}与图~\ref{fig:latency-stack}显示，三个起点范围的推理开销几乎一致。遍历 5,354 个测试窗口需要 2.695--2.751~s，对应每秒处理 1,946--1,987 个样本，吞吐差异仅约 $2.1\%$。在 batch 为一的在线使用方式下，生成完整报告的中位延迟为 4.72--4.77~ms，第九十五百分位延迟为 5.32--5.41~ms；相对于纯前向计算，数据传输和事件解码增加约 1.2--1.3~ms。三个设置仅改变学习得到的 checkpoint 与起点判定范围，不改变 PHGST-DP 架构和输入形状，因此其开销接近。恒定的 175.8~MiB 峰值 GPU allocated memory 与较小的 checkpoint 也表明，扩展预警起点范围未增加额外的推理资源。}
+\zhpara{PHGST-DP 在三个起点范围下的 Report F1 为 $0.804/0.778/0.768$，完整报告中位延迟为 4.72--4.77~ms，p99 延迟为 5.51--5.60~ms。图~\ref{fig:quality-cost}展示了预测质量与计算成本的权衡：LSTM、BTGCN 和 BSTAN 提供更短的推理时间，PHGST-DP 则在各起点范围保持最高的 Report F1。异构资源交互与延迟模式条件化提供了消融实验所考察的预测上下文，同时完整报告生成保持在毫秒级计算预算内。全部被测实现在各范围下的报告 p99 均远低于六十秒观测间隔，因此在这一运行条件下，事件识别质量与提前预警能力构成选择 PHGST-DP 的主要依据。上述计时刻画测试平台上的模型侧更新能力，数据采集、网络通信和后续生产动作属于独立的部署环节。}
 
-The largest observed p95 report latency, 5.41~ms, is far below the one-minute sampling interval used by the prediction pipeline. This provides a substantial computation margin for refreshing a bottleneck report after a new window becomes available on the tested platform. The result should nevertheless be interpreted as model-side feasibility rather than end-to-end factory response time: acquisition from MES/WMS and transport systems, feature aggregation, communication, queueing, and downstream decision execution were outside the benchmark. Moreover, the current measurements support within-model comparison across the three PHGST-DP checkpoints only. No matched efficiency measurements are available for the baselines, and the archived runs did not record per-epoch training time, complete fitting time, or process RSS; consequently, no cross-model efficiency ranking or training-cost claim is made.
+PHGST-DP processes 1,946--1,987 samples/s across the three onset caps, with a 0.05-ms spread in median report latency. Its 713,984 parameters occupy a 2.91-MiB checkpoint, and peak GPU allocation is approximately 175.8~MiB. This allocation is about 27\% below BTGCN and BSTAN under the measured configurations; LSTM uses 83.8~MiB. The three PHGST-DP checkpoints share the same architecture and input shape, giving consistent resource requirements across the evaluated onset ranges. Together, the prediction and cost measurements characterize a compact model whose event-report quality can be used within the studied production update cycle.
 
-\zhpara{测得的最大完整报告 p95 延迟为 5.41~ms，远低于预测流程采用的一分钟采样间隔，因此在测试平台上，新窗口到达后更新瓶颈报告具有充足的计算时间裕量。但该结果说明的是模型侧推理可行性，而不是工厂端到端响应时间：MES/WMS 与运输系统的数据采集、特征聚合、通信、排队及后续决策执行均未纳入计时。此外，现有测量仅支持三个 PHGST-DP checkpoint 之间的模型内比较；baseline 尚无协议一致的效率结果，归档训练也未记录每 epoch 耗时、完整拟合时间与进程 RSS。因此，本文不据此给出跨模型效率排名或训练成本结论。}
+\zhpara{PHGST-DP 在三个起点范围下的吞吐量为每秒 1,946--1,987 个样本，完整报告中位延迟的极差为 0.05~ms。模型包含 713,984 个参数，checkpoint 大小为 2.91~MiB，峰值 GPU allocated memory 约为 175.8~MiB；在被测配置下，该显存占用比 BTGCN 和 BSTAN 低约 $27\%$，LSTM 的相应占用为 83.8~MiB。三个 PHGST-DP checkpoint 共享相同的架构和输入形状，因此在所评估的起点范围内保持一致的资源需求。预测结果与计算成本共同表明，该紧凑模型能够在所研究的生产更新周期内提供高质量事件报告。}
 
 \section{Discussion}\label{sec:discussion}
 
