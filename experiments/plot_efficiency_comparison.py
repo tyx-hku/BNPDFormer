@@ -45,12 +45,12 @@ def read_manuscript_f1() -> dict[tuple[int, str], float]:
         if match:
             cap = int(match.group(1))
         fields = line.split("&")
-        if len(fields) < 3 or fields[1].strip() not in MODELS:
+        if len(fields) < 5 or fields[0].strip() not in MODELS:
             continue
-        match = re.search(r"(\d+(?:\.\d+)?)\\%", fields[2])
+        match = re.search(r"(\d+(?:\.\d+)?)\\%", fields[4])
         if cap is None or not match:
             raise ValueError(f"Cannot parse Report F1: {line}")
-        values[(cap, fields[1].strip())] = float(match.group(1)) / 100
+        values[(cap, fields[0].strip())] = float(match.group(1)) / 100
     expected = {(cap, model) for cap in (5, 10, 15) for model in MODELS}
     if set(values) != expected:
         raise ValueError("Expected exactly five Report F1 values per onset cap")

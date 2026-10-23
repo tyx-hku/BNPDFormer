@@ -60,7 +60,8 @@ MODEL_STYLE = {
     "BSTAN": dict(color="#C4A35A", marker="v", lw=1.2, ms=5.5),
 }
 
-# Published common-manifest values (author-confirmed final; Table comparison).
+# Reported manuscript values; archived baseline sample alignment is pending.
+# The 2026-10-24 comparison protocol targets the main 5,354-window manifest.
 # Duration MAE = detected-event duration MAE (min); Remain MAE from regression table.
 MAIN = {
     "PHGST-DP": {
@@ -153,7 +154,7 @@ def _write_csv(path: Path, rows: list[dict]) -> None:
                 seen.add(key)
                 fields.append(key)
     with path.open("w", encoding="utf-8", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=fields, extrasaction="ignore")
+        writer = csv.DictWriter(fh, fieldnames=fields, extrasaction="ignore", lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 
@@ -278,44 +279,56 @@ def plot_dataset_composition() -> None:
 
 
 def plot_range_response() -> None:
-    """Fig 5-3: Report F1 / Upcoming recall / Duration MAE vs Start cap."""
-    rows = []
-    for model, by_start in MAIN.items():
-        for start, m in by_start.items():
-            rows.append({"model": model, "start_cap": start, **m})
+    """Compare three discrete onset-cap settings without connecting them."""
+    from matplotlib.lines import Line2D
+    from matplotlib.ticker import PercentFormatter
+    from matplotlib import font_manager
+    for path in Path("/System/Library/Fonts/Supplemental").glob("Times New Roman*.ttf"):
+        font_manager.fontManager.addfont(str(path))
+    _style()
+    rows = _read_csv(DATA / "comparison_by_output_2026-10-24.csv")
+    values = {(r["model"], int(r["start_cap"])): r for r in rows}
     _write_csv(PLOT_DATA / "range_response.csv", rows)
-
+    models = ("PHGST-DP", "XGBoost", "LSTM", "BTGCN", "BSTAN")
     metrics = (
-        ("report_f1", "Report F1", False, (0.40, 0.86)),
-        ("upcoming", "Upcoming recall", False, (0.0, 0.62)),
-        ("dur_mae", "Duration MAE (min)\nlower is better", True, (1.4, 4.2)),
+        ("report_f1", "(a) Report F1", "Higher is better", (0.40, 0.86)),
+        ("upcoming", "(b) Upcoming recall", "Higher is better", (0.0, 0.62)),
+        ("dur_mae", "(c) Duration MAE", "Minutes · lower is better", (1.4, 4.2)),
     )
-    fig, axes = plt.subplots(1, 3, figsize=(7.45, 2.65))
-    xs = np.array(STARTS, dtype=float)
-    for ax, (key, ylabel, _lower, ylim) in zip(axes, metrics):
-        for model in ("PHGST-DP", "XGBoost", "LSTM", "BTGCN", "BSTAN"):
-            ys = [MAIN[model][s][key] for s in STARTS]
-            st = MODEL_STYLE[model]
-            ax.plot(xs, ys, color=st["color"], marker=st["marker"], lw=st["lw"],
-                    ms=st["ms"], label=model, zorder=3 if model == "PHGST-DP" else 2)
-            if key == "report_f1":
-                ax.annotate(model, (xs[-1] + 0.35, ys[-1]), fontsize=7,
-                            color=st["color"], va="center")
-        ax.set_xticks(STARTS)
-        ax.set_xticklabels(["≤5", "≤10", "≤15"])
-        ax.set_xlabel("Start cap (min)")
-        ax.set_ylabel(ylabel)
-        ax.set_ylim(*ylim)
-        ax.set_xlim(3.5, 16.8 if key == "report_f1" else 16.2)
-        ax.grid(color="#E6E1D8", lw=0.5)
+    colors, markers = (STEEL, CORAL, OLIVE), ("o", "s", "^")
+    fig, axes = plt.subplots(1, 3, figsize=(7.5, 3.2), sharey=True)
+    y = np.arange(len(models))
+    for ax, (key, title, xlabel, limits) in zip(axes, metrics):
+        ax.axhspan(-0.43, 0.43, color="#E9F0F3", zorder=0)
+        for row in range(1, len(models)):
+            ax.axhline(row, color="#E9E9E9", lw=0.55, zorder=0)
+        for j, cap in enumerate(STARTS):
+            ys = y + (j-1)*0.20
+            xs = [float(values[(m, cap)][key]) for m in models]
+            ax.scatter(xs, ys, s=33, marker=markers[j], color=colors[j],
+                       edgecolors="white", linewidths=0.45, zorder=3)
+        ax.set_xlim(limits)
+        ax.set_ylim(len(models)-0.5, -0.55)
+        ax.set_yticks(y)
+        ax.set_yticklabels(models, fontsize=10)
+        ax.tick_params(axis="y", length=0, pad=6)
+        ax.set_title(title, loc="left", fontsize=11, pad=9)
+        ax.set_xlabel(xlabel, fontsize=9, labelpad=8)
+        ax.spines["left"].set_visible(False)
+        if key != "dur_mae":
+            ax.xaxis.set_major_formatter(PercentFormatter(xmax=1, decimals=0))
+        ax.grid(axis="x", color="#E3E5E5", lw=0.5)
         ax.set_axisbelow(True)
-    axes[0].set_title("(a)", loc="left")
-    axes[1].set_title("(b)", loc="left")
-    axes[2].set_title("(c)", loc="left")
-    # Compact legend only on middle panel (names also on panel a).
-    axes[1].legend(frameon=False, fontsize=7, loc="upper right", ncol=1)
-    fig.tight_layout()
+    axes[0].get_yticklabels()[0].set_fontweight("bold")
+    handles = [Line2D([], [], color=c, marker=m, ls="none", markersize=5.5,
+                      label=f"Start ≤ {cap} min")
+               for cap, c, m in zip(STARTS, colors, markers)]
+    fig.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.55, 1.0),
+               ncol=3, frameon=False, fontsize=10, handletextpad=0.4)
+    fig.subplots_adjust(left=0.13, right=0.99, bottom=0.19, top=0.79, wspace=0.20)
     _save(fig, "fig_range_response")
+    svg = FIG / "fig_range_response.svg"
+    svg.write_text("\n".join(line.rstrip() for line in svg.read_text().splitlines()) + "\n")
 
 
 def plot_delay_distance(events: dict) -> None:
