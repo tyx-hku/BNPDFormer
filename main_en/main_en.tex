@@ -811,7 +811,37 @@ PHGST-DP is evaluated for a central production objective: identifying emerging b
 
 \subsubsection{Dataset and data processing}
 
-Experiments use the \texttt{dense\_i1} digital-twin production-line dataset described in Section~\ref{sec:method}. It contains 204 complete episodes and 38 simulated resources, including machines, workbenches, gantries, transport robots, workers, and buffers. An episode-level split assigns 140/28/36 episodes to training, validation, and testing, yielding 20,826/4,331/5,354 one-minute windows. Each input contains 30 historical windows (30 min), and the target grid spans 20 future windows (20 min). Predictions are evaluated over 15 resources: seven machines or workbenches, four gantries, and four transport robots. Worker and buffer states provide contextual observations for these resource-level predictions.
+Experiments use the \texttt{dense\_i1} digital-twin production-line dataset described in Section~\ref{sec:method}. Figure~\ref{fig:experiment} summarizes the simulated line, the six-step manufacturing route with shared handling subtasks, and the multi-entity structural graph. The dataset contains 204 complete episodes and 38 simulated resources, including machines, workbenches, gantries, transport robots, workers, and buffers. An episode-level split assigns 140/28/36 episodes to training, validation, and testing, yielding 20,826/4,331/5,354 one-minute windows. Each input contains 30 historical windows (30 min), and the target grid spans 20 future windows (20 min). Predictions are evaluated over 15 resources: seven machines or workbenches, four gantries, and four transport robots. Worker and buffer states provide contextual observations for these resource-level predictions.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{../figures/fig_experiment.pdf}
+\caption{Experimental digital-twin production environment. (a)~Resource entities on the simulated line. (b)~Six manufacturing stages and shared material-handling subtasks. (c)~Multi-entity structural graph of the 38 simulated resources.}
+\label{fig:experiment}
+\end{figure*}
+
+The data-generation environment exposes four disturbance dimensions and applies each dimension at three intervention levels (Table~\ref{tab:disturbance-design}). Level~0 changes episode-wide resource capacity before simulation, Level~1 perturbs sampled processing or service behaviour, and Level~2 injects temporary events during production. The platform supports intensity $I\in\{1,2,3\}$; slash-separated values in the table follow this order. The formal \texttt{dense\_i1} collection activates one dimension at a time at $I=1$, while nominal runs keep all dimensions inactive. Mixed two-, three-, and four-dimensional episodes are stored separately and are not merged into the main dataset. This separation makes the injected condition traceable without treating the disturbance dimension itself as the bottleneck or process-cause label.
+
+\begin{table*}[t]
+\centering
+\caption{Four disturbance dimensions and their three intervention levels. Values separated by slashes correspond to $I=1/2/3$. One simulation step equals one logical second.}
+\label{tab:disturbance-design}
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
+\renewcommand{\arraystretch}{1.12}
+\begin{tabularx}{\FullWidth}{@{}lXXX@{}}
+\toprule
+Dimension & L0: episode configuration & L1: sampled process variation & L2: temporary runtime events \\
+\midrule
+Machine / workstation & Disable workbench ws1 and rotary-welding ws1 & Processing-time noise $5/10/15$ steps; success rate $0.88/0.76/0.64$; tool wear $15/30/45$ steps per 1,000 steps & $2/(2$--$3)/(3$--$4)$ idle-station failures; additional $1$--$2/2$--$3/3$--$4$ weld or kitting quality-hold windows \\
+Human & Reduce workers from 5 to $3/2/1$ & Service-time scale $1.55/2.10/2.65$; worker-specific skill range $0.8$--$1.4/0.7$--$1.6/0.6$--$1.8$; time noise $12/22/32$ steps & $2/(2$--$3)/(3$--$4)$ temporary absences, applied only when the selected worker is idle \\
+Logistics & Reduce AGVs from 4 to $2/1/1$; retain all four zone gantries & Gantry-time scale $1.65/2.30/2.95$ with motion noise $10/18/26$ steps; weak background process variation & $2/(2$--$3)/(3$--$4)$ gantry or AGV freezes; at least one pulse targets an AGV while other vehicles remain active \\
+Material & Keep the nominal inventory of ten pipes, flanges, and elbows; no permanent deletion & At steps 400--1,000, temporarily hide $6$--$7/7$--$8/7$--$8$ idle flanges or elbows for $1{,}400$--$2{,}200/2{,}000$--$2{,}700/2{,}500$--$3{,}200$ steps & After the opening shortage, inject $1$--$2/2$--$3/3$--$4$ complementary flange/elbow shortage pulses; pipe blanks are never hidden \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+For machine, human, and logistics disturbances, every Level~2 pulse lasts at least 600 steps and the intensity-specific upper bounds are 900/1,300/1,400 steps. Event targets, start times, counts, and durations are resampled for each episode using a deterministic seed. Adjacent pulses are separated by at least 360 steps, and an event waits for an eligible idle target rather than interrupting an active operation. These controls make the injected condition long enough to survive the eight-window persistence filter while avoiding a deterministic one-to-one mapping between an injection and a labelled bottleneck.
 
 
 Process-informed labels apply an eight-window persistence rule (Min8) to newly forming bottlenecks. An event already active at the last historical window is retained when at least one labelled future window remains. We evaluate three onset-cap settings, Start$\leq5$, Start$\leq10$, and Start$\leq15$, which define the admissible distance between the current window and a future event onset. The future grid and the onset cap are kept fixed within each task. A three-window start tolerance is used for strict report matching, and every window corresponds to 60~s; duration, start, and remaining-time errors are consequently reported in minutes.
@@ -840,12 +870,12 @@ Report matching & Three-window onset tolerance \\
 
 \subsubsection{Baseline methods}
 
-Four baselines cover the model families used in the matched comparison. XGBoost is a gradient-boosted decision-tree predictor operating on tabular summaries, providing a non-neural reference for nonlinear feature interactions. LSTM is a recurrent predictor that models temporal dependencies in the historical sequence. BTGCN constructs a graph over production tasks and combines graph convolution with a GRU to model relational and temporal information~\cite{yin2025btgcn}. BSTAN uses graph attention with a GRU to learn adaptive neighbour contributions for blockage and starvation related prediction~\cite{lai2023bstan}. The common comparison specifies the same history length, future grid, target resources, and event-label definition for all five models. Each baseline uses its corresponding input representation and training procedure.
+Four baselines cover the model families used in the archived comparison. XGBoost is a gradient-boosted decision-tree predictor operating on tabular summaries, providing a non-neural reference for nonlinear feature interactions. LSTM is a recurrent predictor that models temporal dependencies in the historical sequence. BTGCN constructs a graph over production tasks and combines graph convolution with a GRU to model relational and temporal information~\cite{yin2025btgcn}. BSTAN uses graph attention with a GRU to learn adaptive neighbour contributions for blockage and starvation related prediction~\cite{lai2023bstan}. The archived evaluations use the same history length, future grid, target resources, and event-label definition, but their recorded test-window manifests are not identical. Each baseline uses its corresponding input representation and training procedure.
 
 
 \begin{table}[t]
 \centering
-\caption{Baseline families in the matched comparison.}
+\caption{Baseline families represented in the archived comparison.}
 \label{tab:exp-baselines}
 \scriptsize
 \setlength{\tabcolsep}{4pt}
@@ -898,7 +928,7 @@ Auxiliary & Cause accuracy / macro recall & Four supported process-cause classes
 
 \subsection{Main and baseline performance comparison}
 
-The comparison follows the three prediction dimensions delivered by PHGST-DP: the occurrence and temporal extent of a bottleneck, its associated process cause, and the remaining time to order completion. Tables~\ref{tab:comparison-event}, \ref{tab:comparison-regression}, and \ref{tab:comparison-state} compare the main model and four baselines across these outputs; Table~\ref{tab:remain-stage} reports remaining-time head specialization. The archived PHGST-DP results use the test split in Table~\ref{tab:exp-dataset}; baseline results use their recorded sample manifest, with common-manifest reevaluation pending. Cross-model differences below describe these recorded evaluations.
+The comparison follows the three prediction dimensions delivered by PHGST-DP: the occurrence and temporal extent of a bottleneck, its associated process cause, and the remaining time to order completion. Tables~\ref{tab:comparison-event}, \ref{tab:comparison-regression}, and \ref{tab:comparison-state} compare the main model and four baselines across these outputs; Table~\ref{tab:remain-stage} reports remaining-time head specialization. The archived PHGST-DP results use the 5,354-window test split in Table~\ref{tab:exp-dataset}, whereas the baseline archive records 6,886 test windows; common-manifest reevaluation is pending. Cross-model differences below therefore describe the recorded evaluations and are treated as provisional rather than as a matched-sample comparison.
 
 
 \subsubsection{Bottleneck occurrence, onset, end, and duration}\label{sec:comparison-event}
@@ -906,12 +936,12 @@ The comparison follows the three prediction dimensions delivered by PHGST-DP: th
 PHGST-DP combines advance event recognition with a temporal description of the predicted constraint. Table~\ref{tab:comparison-event} reports event precision, recall, and F1; Tables~\ref{tab:comparison-regression} and \ref{tab:comparison-state} provide the corresponding onset and duration errors and future-state F1. Onset and duration characterize the timing of the predicted constraint; next-window and 20-window state predictions describe its evolution through onset, persistence, and recovery. P/R/F1 evaluate event identification, while timing errors evaluate the temporal attributes of correctly identified events.
 
 
-Across the three onset caps, PHGST-DP achieves Will15 F1 of $0.805/0.783/0.772$ and Report F1 of $0.804/0.778/0.768$. The Report F1 differences from the strongest recorded baseline are $0.102/0.167/0.191$. Upcoming recall remains $0.542/0.535/0.537$, alongside Ongoing recall of $0.937/0.939/0.930$. This combination provides advance coverage of emerging constraints while following events that are already active. The precision--recall pairs characterize the alarm operating point: PHGST-DP attains the highest recorded recall and F1 at every cap, while the baseline precision values show their more selective reporting behaviour.
+Across the three onset caps, PHGST-DP records Will15 F1 of $0.805/0.783/0.772$ and Report F1 of $0.804/0.778/0.768$. Within the non-aligned archives, its Report F1 differences from the strongest recorded baseline are $0.102/0.167/0.191$; these differences are provisional. Upcoming recall is $0.542/0.535/0.537$, alongside Ongoing recall of $0.937/0.939/0.930$. This combination shows advance coverage of emerging constraints while following events that are already active within the PHGST-DP test split. The precision--recall pairs characterize each archived alarm operating point, but their cross-model ordering requires confirmation on the common manifest.
 
 
 \begin{table*}[t]
 \centering
-\caption{Archived event-identification and early-warning results. Upcoming and Ongoing R use station-level matching; bold marks the best recorded value within each cap.}
+\caption{Archived event-identification and early-warning results. PHGST-DP and the baselines currently use different recorded test manifests; common-manifest reevaluation is pending. Upcoming and Ongoing R use station-level matching.}
 \label{tab:comparison-event}
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
@@ -943,7 +973,7 @@ BSTAN & $\leq15$ & \textbf{85.3\%} & 40.2\% & 54.7\% & 53.4\% & 4.4\% & 70.0\% \
 
 \begin{table*}[t]
 \centering
-\caption{Archived temporal and continuous-value estimation results. Errors are in minutes; bold denotes the lowest value within each onset cap.}
+\caption{Archived temporal and continuous-value estimation results. PHGST-DP and the baselines currently use different recorded test manifests; common-manifest reevaluation is pending. Errors are in minutes.}
 \label{tab:comparison-regression}
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
@@ -973,7 +1003,7 @@ BSTAN & $\leq15$ & 0.222 & 3.422 & 13.557 \\
 \end{tabular*}
 \end{table*}
 
-The temporal outputs make these alarms useful for estimating how long a resource will remain constrained. PHGST-DP's detected-event duration MAE is $1.863/1.788/1.716$~min, corresponding to reductions of $42.9\%/44.3\%/45.0\%$ relative to the lowest recorded baseline errors. One-step State F1 reaches $0.883/0.892/0.900$, and 20-step State F1 reaches $0.525/0.589/0.610$. The latter exceeds the strongest baseline record by $0.146/0.224/0.275$, extending the advantage from identifying an event to describing its future occupancy. Figure~\ref{fig:baseline-comparison} brings together report quality, advance warning, and duration estimation across the three caps.
+The temporal outputs make these alarms useful for estimating how long a resource will remain constrained. PHGST-DP's detected-event duration MAE is $1.863/1.788/1.716$~min. The non-aligned archives yield apparent reductions of $42.9\%/44.3\%/45.0\%$ relative to the lowest recorded baseline errors, but these percentages are not treated as final comparative estimates. One-step State F1 is $0.883/0.892/0.900$, and 20-step State F1 is $0.525/0.589/0.610$ on the PHGST-DP split. The corresponding archived differences from the strongest baseline are $0.146/0.224/0.275$ and require common-manifest confirmation. Figure~\ref{fig:baseline-comparison} brings together the recorded report quality, advance warning, and duration estimates across the three caps.
 
 
 \begin{figure*}[t]
@@ -981,7 +1011,7 @@ The temporal outputs make these alarms useful for estimating how long a resource
 \IfFileExists{../figures/fig_baseline_comparison.pdf}{%
 \includegraphics[width=0.96\textwidth]{../figures/fig_baseline_comparison.pdf}%
 }{}
-\caption{Archived results across the three onset caps for Report F1, station-level Upcoming recall, and duration MAE; baseline reevaluation on the common sample manifest is pending.}
+\caption{Archived results across the three onset caps for Report F1, station-level Upcoming recall, and duration MAE. The cross-model values are provisional because common-manifest reevaluation is pending.}
 \label{fig:baseline-comparison}
 \end{figure*}
 
@@ -990,12 +1020,12 @@ Distance-resolved results further locate the model's warning capability. At Star
 
 \subsubsection{Bottleneck process-cause prediction}\label{sec:comparison-cause}
 
-Process-cause prediction adds an operational interpretation to the event report. PHGST-DP achieves accuracy of $0.965/0.962/0.974$ and macro recall of $0.967/0.965/0.978$ across the three caps (Table~\ref{tab:comparison-state}). These outputs associate predicted constraints with transport delay, material shortage, upstream starvation, and queue buildup, giving a process context for reviewing the affected resource and time interval. XGBoost records accuracy $0.990$ and macro recall $0.988$, demonstrating strong discrimination of the rule-derived cause categories; PHGST-DP integrates this explanatory output with its event and temporal forecasts.
+Process-cause prediction adds an operational interpretation to the event report. PHGST-DP records accuracy of $0.965/0.962/0.974$ and macro recall of $0.967/0.965/0.978$ across the three caps (Table~\ref{tab:comparison-state}). These outputs associate predicted constraints with transport delay, material shortage, upstream starvation, and queue buildup, giving a process context for reviewing the affected resource and time interval. The baseline archive records XGBoost accuracy of $0.990$ and macro recall of $0.988$, but the different cause-support counts preclude a matched ranking. PHGST-DP's result is therefore interpreted as evidence that the main model can integrate explanatory output with its event and temporal forecasts.
 
 
 \begin{table*}[t]
 \centering
-\caption{Archived future-state and process-cause classification results. Bold denotes the best value within each onset cap.}
+\caption{Archived future-state and process-cause classification results. Cause-support counts differ between the current PHGST-DP and baseline archives; aligned reevaluation is pending.}
 \label{tab:comparison-state}
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
@@ -1088,22 +1118,22 @@ NoFarBoost & Training & Far-onset weighting removed; earlier false-alarm penalty
 
 \begin{figure*}[t]
 \centering
-\IfFileExists{../figures/overview_bars.pdf}{%
-\includegraphics[width=0.96\textwidth]{../figures/overview_bars.pdf}%
+\IfFileExists{../figures/fig_ablation_delta.pdf}{%
+\includegraphics[width=0.96\textwidth]{../figures/fig_ablation_delta.pdf}%
 }{}
-\caption{Ablation overview across the three onset caps: Will15 F1 (left), union duration MAE (middle), and union duration RMSE (right).}
+\caption{Configuration-level change relative to PHGST-DP on the shared 5,354-window test split. Rows are grouped, from top to bottom, into heterogeneous-graph, supervision, delay-pattern, and decoder arms. For Report F1 and Upcoming recall the cell is ablation minus Full; for union duration MAE (min) it is Full minus ablation, so a positive value means the ablation scores better. Steel is positive and coral is negative. Training budgets and, for NoInfo and MachineOnly, event pools differ, so the matrix is not a single-factor causal estimate.}
 \label{fig:ablation-overview}
 \end{figure*}
 
-PHGST-DP preserves event accuracy as the onset range expands (Figure~\ref{fig:ablation-overview}). From Start$\leq5$ to Start$\leq15$, its Will15 F1 changes from $0.805$ to $0.772$, and union duration MAE from $4.17$ to $4.43$~min. The structural and entity variants exhibit larger changes, with F1 reductions of $0.08$--$0.16$ and MAE increases of $0.8$--$1.5$~min under their listed training configurations. The following analyses identify which aspects of warning, state tracking, and interpretation distinguish the full model.
+PHGST-DP preserves event accuracy as the onset range expands (Figure~\ref{fig:ablation-overview}). The heatmap gives the signed gap from Full: most removed components lower Report F1 and Upcoming recall and raise union duration error, while NoFarBoost is slightly better at Start$\leq5$ under its own threshold. From Start$\leq5$ to Start$\leq15$, Full Will15 F1 changes from $0.805$ to $0.772$, and union duration MAE from $4.17$ to $4.43$~min. The structural and entity variants exhibit larger changes, with F1 reductions of $0.08$--$0.16$ and MAE increases of $0.8$--$1.5$~min under their listed training configurations. The following analyses identify which aspects of warning, state tracking, and interpretation distinguish the full model.
 
 
 \begin{figure*}[t]
 \centering
-\IfFileExists{../figures/remain_bars.pdf}{%
-\includegraphics[width=0.96\textwidth]{../figures/remain_bars.pdf}%
+\IfFileExists{../figures/fig_remain_dumbbell.pdf}{%
+\includegraphics[width=0.82\textwidth]{../figures/fig_remain_dumbbell.pdf}%
 }{}
-\caption{Order remaining-time MAE of stage-1 PHGST-DP and the archived ablation arms: overall, early phase, and late phase. NoFarBoost was trained with an earlier logger and has no phase-level values.}
+\caption{Order remaining-time MAE of Full PHGST-DP before and after remaining-time fine-tuning. The square is stage 1 and the circle is stage 2; the label is the absolute and relative drop. Other arms are not shown, because they do not share this two-stage budget.}
 \label{fig:remain-bars}
 \end{figure*}
 
@@ -1251,6 +1281,37 @@ Queue-Wait & .495 & .444 & .556 & .585 & .611 \\
 \end{tabular*}
 \end{table*}
 
+The same development export separates representation separability from cause identification (Figure~\ref{fig:label-validity} and Table~\ref{tab:label-boundary}). On a shared raw-last representation, Active Period records the highest macro-F1 ($0.628$), balanced accuracy ($0.904$) and AUROC ($0.963$); Ops is highest only on station macro-F1 ($0.619$). Queue-Wait records the highest cause macro-F1 ($0.940$), against $0.885$ for Active Period, on 3,245 test windows. These comparisons use one seed and are not ablations of the retained checkpoint, which is trained with the Ops persistence rule. A label that aligns with the pilot's intervention ranking therefore need not be the most separable state, and the most separable state need not be the best cause target.
+
+\begin{figure*}[t]
+\centering
+\IfFileExists{../figures/fig_label_validity.pdf}{%
+\includegraphics[width=0.96\textwidth]{../figures/fig_label_validity.pdf}%
+}{}
+\caption{Label-method comparison from the fixed development export (seed 42). (a) Counterfactual alignment on three disturbance-free episodes; higher is better. (b) Representation separability; colour is scaled within each column, and Davies--Bouldin is marked as lower-better. (c) Cause-class recall, with cause macro-F1 at right. Active Period is outlined in steel blue and Queue-Wait in olive. This is not an ablation of PHGST-DP.}
+\label{fig:label-validity}
+\end{figure*}
+
+\begin{table*}[t]
+\centering
+\caption{Recorded advantages and limits of the five label methods in the development export. Bold marks the highest point estimate in a column. The retained PHGST-DP runs use the Ops persistence rule; this table does not reselect that rule.}
+\label{tab:label-boundary}
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}lrrrrrp{0.28\FullWidth}@{}}
+\toprule
+Label method & Macro-F1 & Bal.\ acc. & AUROC & Station F1 & Cause macro-F1 & Main limit in this export \\
+\midrule
+Ops & .581 & .849 & .908 & \textbf{.619} & .839 & Lowest positive rate (.015); separability below Active Period \\
+Active Period & \textbf{.628} & \textbf{.904} & \textbf{.963} & .590 & .885 & Weaker pilot alignment (NDCG@3 .382) \\
+Queue-Wait & .542 & .788 & .846 & .614 & \textbf{.940} & Highest positive rate (.087) \\
+Utilization & .600 & .853 & .921 & .556 & .883 & Weakest pilot alignment (NDCG@3 .183) \\
+TPM & .512 & .841 & .920 & .534 & .799 & Lowest separability macro-F1 \\
+\bottomrule
+\end{tabular*}
+\end{table*}
+
 These exploratory estimates support production sensitivity as a distinct dimension of supervision quality. All five retained soft-alignment metrics favour Ops in this pilot, but the metric set was finalized after inspecting the pilot and Holm-adjusted paired comparisons do not reject the null hypotheses. The independent full-Oracle evaluation has not been run; the numerical ordering is therefore interpreted only as a development result for disturbance-free episodes, not as proof of general superiority across operating conditions.
 
 
@@ -1338,19 +1399,26 @@ Separating onset and continuation decisions gives PHGST-DP Upcoming recall of $0
 
 The case study shows how an event report follows bottleneck onset, persistence, and recovery on a production resource. The selected roller-bed CNC pipe-intersection cutting machine (\texttt{num02}) contributes 301 event-positive window--resource pairs in the test set. Device and episode selection follows a fixed rule: among devices with at least the median event count, select the device with the most events in one episode (ties resolved by PHGST-DP one-step F1), then select its episode with the most and longest bottleneck segments. The resulting episode, \texttt{n10\_human1.0\_\_episode\_03}, contains an approximately 8-min bottleneck and a 49-min bottleneck, with the duration target capped at the 20-min prediction horizon. PHGST-DP detects both intervals and tracks their recovery (Figure~\ref{fig:key-device-main}). The short event is reported about 1~min in advance with a 10--11~min duration estimate; the long event's onset is aligned, and its declining duration is followed. The capped portion is predicted at 13--17~min, and state mismatches occur at onset and recovery boundaries (1--2 windows each). The trace illustrates how the report combines event notification with a continuously updated duration estimate.
 
+\begin{figure*}[t]
+\centering
+\IfFileExists{../figures/fig_key_device_timeline.pdf}{%
+\includegraphics[width=0.96\textwidth]{../figures/fig_key_device_timeline.pdf}%
+}{}
+\caption{PHGST-DP state and duration on \texttt{num02}, episode \texttt{n10\_human1.0\_\_episode\_03}, Start$\leq5$. Black solid lines are the targets; coral dashed lines are the predictions. The local export does not include disturbance intervals or cause marks, so those bands are not drawn.}
+\label{fig:key-device-main}
+\end{figure*}
 
-Figure~\ref{fig:key-device-baselines} places PHGST-DP at the upper left and the four baselines below, with an independent state--duration pair for each model on the same device and episode. The upper-right pair enlarges windows 20--115, shaded in the full trajectory, to show the short and long bottleneck intervals and their recovery boundaries. Both views retain the same vertical scales and window indices. Blue solid lines show the targets and dashed lines show predictions; all panels count windows from the same first forecast window after the 30-window history. PHGST-DP maintains continuous state coverage over both bottleneck intervals and follows the duration decline towards recovery. The baseline panels make differences in state continuity and duration tracking visible on the same trajectory. The aggregate event and temporal results are reported in Tables~\ref{tab:comparison-event} and \ref{tab:comparison-regression}.
+Figure~\ref{fig:key-device-baselines} places PHGST-DP at the upper left and the four baselines below, with an independent state--duration pair for each model on the same device and episode. The upper-right pair enlarges windows 20--115, shaded in the full trajectory, to show the short and long bottleneck intervals and their recovery boundaries. Both views retain the same vertical scales and window indices. Black solid lines show the targets and dashed lines show predictions; all panels count windows from the same first forecast window after the 30-window history. PHGST-DP maintains continuous state coverage over both bottleneck intervals and follows the duration decline towards recovery. The baseline panels make differences in state continuity and duration tracking visible on the same trajectory. The aggregate event and temporal results are reported in Tables~\ref{tab:comparison-event} and \ref{tab:comparison-regression}.
 
 
 \begin{figure*}[p]
 \centering
 \includegraphics[width=0.96\textwidth,height=0.90\textheight,keepaspectratio]{../figures/key_device_models_aligned.pdf}
-\caption{Key-device case for PHGST-DP (upper left), XGBoost, LSTM, BTGCN, and BSTAN on \texttt{num02}, episode \texttt{n10\_human1.0\_\_episode\_03}, Start$\leq5$. Each model has an independent pair: next-window state above and duration over the next 20~min below. Blue solid: true; dashed: predicted. The upper-right pair enlarges windows 20--115 (shaded at upper left), using the same vertical scales. Window zero follows the 30-window history.}
-\label{fig:key-device-main}
+\caption{Key-device case for PHGST-DP (upper left), XGBoost, LSTM, BTGCN, and BSTAN on \texttt{num02}, episode \texttt{n10\_human1.0\_\_episode\_03}, Start$\leq5$. Each model has an independent pair: next-window state above and duration over the next 20~min below. Black solid: true; dashed: predicted. The upper-right pair enlarges windows 20--115 (shaded at upper left), using the same vertical scales. Window zero follows the 30-window history.}
 \label{fig:key-device-baselines}
 \end{figure*}
 
-The all-resource view connects these local traces to coordinated production-state prediction. Figure~\ref{fig:all-devices-main} covers all 15 targets in the same episode, which contains 64 positive bottleneck cells, the highest count among test episodes. PHGST-DP recovers every positive cell of the cutting machine and second welding station (\texttt{num00\_weld\_ws1}), with episode-level State F1 $0.941$. Green, orange, and red cells denote true positives, false positives, and false negatives. The corresponding F1 values are $0.855$ for NoInfo, $0.832$ for NoCluster, and $0.901$ for NoGraph. NoInfo and NoCluster omit the welding-station interval, while NoGraph fragments it. The full model's continuous coverage across both resources illustrates the joint role of resource information, supervision, and graph structure in the production-state report.
+The all-resource view connects these local traces to coordinated production-state prediction. Figure~\ref{fig:all-devices-main} covers all 15 targets in the same episode, which contains 64 positive bottleneck cells, the highest count among test episodes. PHGST-DP recovers every positive cell of the cutting machine and second welding station (\texttt{num00\_weld\_ws1}), with episode-level State F1 $0.941$. Olive cells denote true positives; coral cells denote false positives and false negatives. The corresponding F1 values are $0.855$ for NoInfo, $0.832$ for NoCluster, and $0.901$ for NoGraph. NoInfo and NoCluster omit the welding-station interval, while NoGraph fragments it. The full model's continuous coverage across both resources illustrates the joint role of resource information, supervision, and graph structure in the production-state report.
 
 
 \begin{figure*}[t]
@@ -1358,8 +1426,19 @@ The all-resource view connects these local traces to coordinated production-stat
 \IfFileExists{../figures/all_devices_state_main.pdf}{%
 \includegraphics[width=0.96\textwidth]{../figures/all_devices_state_main.pdf}%
 }{}
-\caption{All-device next-window state map for the retained PHGST-DP on the representative episode (green: true positive, orange: false positive, red: false negative).}
+\caption{All-device next-window state map for the retained PHGST-DP on the representative episode (olive: true positive; coral: false positive and false negative). The source render does not separate false positives from false negatives, so both are shown in coral.}
 \label{fig:all-devices-main}
+\end{figure*}
+
+On the full Start$\leq5$ test split, support is uneven across the 15 targets (Figure~\ref{fig:per-device}). The cutting machine contributes 301 true events, while robot~2 and robot~3 contribute none; those two rows are left unscored rather than entered as zero. F1 on the supported devices ranges from $0.535$ on the welding robot to $0.964$ on bench~ws1. This split is a coverage check for one checkpoint, not a claim that every resource family is equally predictable.
+
+\begin{figure*}[t]
+\centering
+\IfFileExists{../figures/fig_per_device_start5.pdf}{%
+\includegraphics[width=0.96\textwidth]{../figures/fig_per_device_start5.pdf}%
+}{}
+\caption{Per-device support, F1, and union duration MAE for PHGST-DP at Start$\leq5$ (\texttt{bestmodel\_start5\_seed42}). Colour on F1 and MAE is scaled within that column; support uses one colour because the count is not a quality score. Rows with no true events are hatched and marked with a dash.}
+\label{fig:per-device}
 \end{figure*}
 
 Process-cause outputs link a predicted event to interpretable production symptoms: transport delay, material shortage, upstream starvation, and queue buildup. The labels encode process-rule evidence, so the explanation is an association with observed operating conditions. Quantitative evaluation covers these four supported classes (Section~\ref{sec:comparison-cause}); blocked-downstream and high-utilization classes have zero test support. Together with the event and state traces, these outputs provide a resource, a time interval, and a process context for reviewing a predicted constraint.

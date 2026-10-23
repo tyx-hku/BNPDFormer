@@ -1,0 +1,4 @@
+arm,start_cap,stage1_mae,stage2_mae,absolute_drop,percent_drop,source_stage1,source_stage2
+Full,5,10.925976792778325,9.601598876066781,1.3243779167115441,12.12136856804336,full_farboost_start5_seed42,bestmodel_start5_seed42
+Full,10,11.213109243704304,9.268456968835453,1.9446522748688508,17.34266769906565,full_farboost_start10_seed42,bestmodel_start10_seed42
+Full,15,9.716936303467548,8.90945713298286,0.8074791704846884,8.31001815043837,full_farboost_start15_seed42,bestmodel_start15_seed42

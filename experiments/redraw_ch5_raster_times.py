@@ -24,12 +24,31 @@ import numpy as np
 from matplotlib.colors import ListedColormap
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
+from matplotlib import patheffects as pe
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
 FIG = ROOT / "figures"
-TRUE_BLUE = "#1f77b4"
-PRED_RED = "#d34b51"
+TRUE_CSV = ROOT / "experiments/data/key_device_main_aligned.csv"
+TRUE_COLOR = "black"
+PRED_COLOR = "#E5887B"
+
+
+def load_true_duration() -> tuple[np.ndarray, np.ndarray]:
+    """Authoritative GT for the shared key-device episode; continuous, no pixel gaps.
+
+    X uses ``t_index`` (30..260), matching the archived eval PNG axes and the
+    pixel-recovered prediction traces. The CSV ``window`` column is
+    ``t_index - 30`` and must not be mixed with those series.
+    """
+    with TRUE_CSV.open(encoding="utf-8") as fh:
+        rows = list(csv.DictReader(fh))
+    window = np.array([float(r["window"]) for r in rows])
+    x = np.array([float(r["t_index"]) for r in rows])
+    y = np.array([float(r["true_dur"]) for r in rows])
+    assert len(x) == 231 and np.array_equal(window, np.arange(231))
+    assert np.array_equal(x, window + 30.0)
+    return x, y
 
 plt.rcParams.update(
     {
@@ -185,10 +204,16 @@ def calibrate_y(im: np.ndarray, box, labels_top_to_bottom: list[float]) -> tuple
 # 1. key_device_entity (duration traces, multi-entity ablations)
 # --------------------------------------------------------------------------- #
 ENTITY_SERIES = {
-    "12_3_start5": (np.array([31, 119, 180]), "#1f77b4"),
-    "entity_machineonly_start5": (np.array([242, 97, 33]), "#F26121"),
-    "entity_nocross_start5": (np.array([24, 120, 96]), "#187A60"),
-    "entity_noinfo_start5": (np.array([120, 72, 144]), "#7A5898"),
+    "12_3_start5": (np.array([31, 119, 180]), "#46788E"),
+    "entity_machineonly_start5": (np.array([242, 97, 33]), "#E5887B"),
+    "entity_nocross_start5": (np.array([24, 120, 96]), "#97B319"),
+    "entity_noinfo_start5": (np.array([120, 72, 144]), "#7BB7C9"),
+}
+ENTITY_STYLES = {
+    "12_3_start5": (0, (4, 1.6)),
+    "entity_machineonly_start5": (0, (1.2, 1.1)),
+    "entity_nocross_start5": (0, (1, 1.3)),
+    "entity_noinfo_start5": (0, (3, 1.2, 1, 1.2)),
 }
 
 
@@ -202,18 +227,30 @@ def redraw_entity() -> None:
     legend = (1250, 1970, 80, 215)
 
     fig, ax = plt.subplots(figsize=(10, 3.8))
-    x, y = pack_series(im, box, None, x_map, y_map, legend=legend, max_gap=36, min_run=4)
-    ax.plot(x, y, color="black", lw=1.8, label="True")
+    true_x, true_y = load_true_duration()
+    (true_line,) = ax.plot(
+        true_x, true_y, color=TRUE_COLOR, lw=2.0, label="True", zorder=5,
+        solid_capstyle="round", solid_joinstyle="round",
+    )
+    true_line.set_path_effects([pe.Stroke(linewidth=3.4, foreground="white"), pe.Normal()])
     all_targets = [t for t, _ in ENTITY_SERIES.values()]
     for name, (target, color) in ENTITY_SERIES.items():
         x, y = pack_series(im, box, target, x_map, y_map, legend=legend, all_targets=all_targets)
-        ax.plot(x, y, color=color, lw=1.0, ls="--", label=name)
+        ax.plot(x, y, color=color, lw=1.35 if name == "12_3_start5" else 1.15,
+                ls=ENTITY_STYLES[name], label=name, zorder=2)
     ax.set_ylabel("bottleneck duration (min)")
     ax.set_xlabel("window index (60 s)")
     ax.set_title(
         "num02_rollerbedCNCPipeIntersectionCuttingMachine_ws0 | n10_human1.0__episode_03 (entity)",
         fontsize=9,
     )
+    ax.set_xlim(20, 270)
+    ax.set_ylim(-0.8, 21)
+    ax.set_yticks([0, 5, 10, 15, 20])
+    ax.spines["bottom"].set_color("#9AA3A8")
+    ax.spines["left"].set_color("#9AA3A8")
+    ax.tick_params(colors="#333333")
+    ax.set_axisbelow(True)
     ax.grid(alpha=0.3)
     ax.legend(loc="upper right", fontsize=7, ncol=2)
     fig.tight_layout()
@@ -260,7 +297,7 @@ def redraw_state_map() -> None:
     f1 = 2 * n_tp / max(2 * n_tp + n_orange, 1)
     print(f"[redraw] state map cells TP={n_tp} FP+FN={n_orange} F1={f1:.3f}")
 
-    cmap = ListedColormap(["#f2f2f2", "#227B71", "#F26121", "#F26121"])
+    cmap = ListedColormap(["#f2f2f2", "#97B319", "#E5887B", "#E5887B"])
     fig, ax = plt.subplots(figsize=(11, 0.35 * rows + 1.6))
     ax.imshow(
         code, aspect="auto", cmap=cmap, vmin=0, vmax=3, interpolation="nearest",
@@ -271,7 +308,7 @@ def redraw_state_map() -> None:
     ax.set_xlabel("window index (60 s)")
     ax.legend(
         handles=[Patch(color=c, label=l) for c, l in
-                 zip(["#f2f2f2", "#227B71", "#F26121", "#F26121"], ["TN", "TP", "FP", "FN"])],
+                 zip(["#f2f2f2", "#97B319", "#E5887B", "#E5887B"], ["TN", "TP", "FP", "FN"])],
         loc="upper center", bbox_to_anchor=(0.5, 1.12), ncol=4, fontsize=8, frameon=False,
     )
     ax.set_title(
@@ -369,13 +406,13 @@ def redraw_models_aligned() -> None:
             ax.grid(alpha=0.22, linewidth=0.55)
             ax.set_axisbelow(True)
             ax.tick_params(labelsize=7.2)
-        state.step(x, true_s, where="post", color=TRUE_BLUE, lw=1.05)
+        state.step(x, true_s, where="post", color=TRUE_COLOR, lw=1.05)
         state.step(x, pred_s, where="post", color=pred_color, lw=0.95, ls="--")
         state.set_ylim(-0.07, 1.07)
         state.set_yticks([0, 1])
         state.set_ylabel("State", fontsize=7.5, labelpad=2)
         state.set_title(title, fontsize=8.8, pad=4)
-        dur.plot(x, true_d, color=TRUE_BLUE, lw=1.05)
+        dur.plot(x, true_d, color=TRUE_COLOR, lw=1.05)
         dur.plot(x, pred_d, color=pred_color, lw=0.95, ls="--")
         dur.set_ylim(-1, 21)
         dur.set_yticks([0, 5, 10, 15, 20])
@@ -384,18 +421,18 @@ def redraw_models_aligned() -> None:
 
     w = phgst["window"]
     draw_pair(outer[0, 0], "PHGST-DP: full trajectory",
-              phgst["true_state"], phgst["pred_state"], phgst["true_dur"], phgst["pred_dur"], PRED_RED)
+              phgst["true_state"], phgst["pred_state"], phgst["true_dur"], phgst["pred_dur"], PRED_COLOR)
     draw_pair(outer[0, 1], "PHGST-DP: event detail",
-              phgst["true_state"], phgst["pred_state"], phgst["true_dur"], phgst["pred_dur"], PRED_RED, zoom=True)
+              phgst["true_state"], phgst["pred_state"], phgst["true_dur"], phgst["pred_dur"], PRED_COLOR, zoom=True)
     cells = [(outer[1, 0], "XGBoost"), (outer[1, 1], "LSTM"),
              (outer[2, 0], "BTGCN"), (outer[2, 1], "BSTAN")]
     for cell, name in cells:
         b = baselines[name]
         draw_pair(cell, name, phgst["true_state"], b["state"][1],
-                  phgst["true_dur"], b["dur"][1], b["state"][2])
+                  phgst["true_dur"], b["dur"][1], PRED_COLOR)
     fig.legend(
-        handles=[Line2D([], [], color=TRUE_BLUE, lw=1.1, label="True"),
-                 Line2D([], [], color="0.35", lw=1.0, ls="--", label="Predicted")],
+        handles=[Line2D([], [], color=TRUE_COLOR, lw=1.1, label="True"),
+                 Line2D([], [], color=PRED_COLOR, lw=1.0, ls="--", label="Predicted")],
         loc="upper center", ncol=2, frameon=False, fontsize=7.5, bbox_to_anchor=(0.5, 1.0),
     )
     fig.savefig(FIG / "key_device_models_aligned.pdf", facecolor="white")

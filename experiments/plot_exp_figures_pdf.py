@@ -26,15 +26,14 @@ SUMMARY = Path(__file__).resolve().parent / "data" / "bottleneck_eval_summary.cs
 MAIN_EVENTS = SUMMARY.parent / "main_event_metrics_dev_tyx_29655ba.csv"
 BASELINE_EVENTS = SUMMARY.parent / "baseline_metrics_common_archived.csv"
 
-# Scientific palette: red, orange, gold, cream, light blue, blue, deep blue.
+# Qualitative scheme from the Chapter 5 palette card:
+# steel blue, light blue, pale yellow, coral, olive.
 PALETTE = {
-    "blue_main": "#3D6EB4",
-    "blue_secondary": "#5BA7D9",
-    "blue_light": "#A6DCED",
-    "gold": "#FCB84D",
-    "cream": "#FFF2C7",
-    "orange": "#F26121",
-    "red": "#CB001C",
+    "steel": "#46788E",
+    "light_blue": "#7BB7C9",
+    "yellow": "#F6E093",
+    "coral": "#E5887B",
+    "olive": "#97B319",
 }
 
 STARTS = (5, 10, 15)
@@ -51,15 +50,21 @@ ARMS = {
     "MachineOnly": "entity_machineonly_start{s}_min8_cold_ep50_seed42",
 }
 
-# Baseline lines: medium blue, muted purple, light yellow, orange, and green.
-# The palette cream #FFF2C7 disappears on white, so the yellow series uses a
-# deeper tint of that swatch. Line style remains a second cue.
+# Same order as the palette card. Pale yellow is the card swatch; markers
+# keep a darker edge so the LSTM series stays readable on white.
 BASELINE_COLORS = {
-    "PHGST-DP": "#5BA7D9",
-    "XGBoost": "#7A5898",
-    "LSTM": "#E6C200",
-    "BTGCN": "#F26121",
-    "BSTAN": "#2F9E5A",
+    "PHGST-DP": PALETTE["steel"],
+    "XGBoost": PALETTE["light_blue"],
+    "LSTM": PALETTE["yellow"],
+    "BTGCN": PALETTE["coral"],
+    "BSTAN": PALETTE["olive"],
+}
+BASELINE_EDGES = {
+    "PHGST-DP": "#46788E",
+    "XGBoost": "#5E95A6",
+    "LSTM": "#C4A15A",
+    "BTGCN": "#E5887B",
+    "BSTAN": "#97B319",
 }
 BASELINE_MARKERS = {"PHGST-DP": "o", "XGBoost": "s", "LSTM": "^", "BTGCN": "D", "BSTAN": "v"}
 BASELINE_LINESTYLES = {
@@ -139,7 +144,7 @@ def plot_baseline_comparison(out: Path) -> None:
                 linestyle=BASELINE_LINESTYLES[model],
                 lw=2.4 if model == "PHGST-DP" else 1.7,
                 ms=6.5,
-                markeredgecolor=BASELINE_COLORS[model],
+                markeredgecolor=BASELINE_EDGES[model],
                 markeredgewidth=0.6,
                 label=model,
                 zorder=3 if model == "PHGST-DP" else 2,
@@ -151,8 +156,13 @@ def plot_baseline_comparison(out: Path) -> None:
         ax.set_ylim(*ylim)
         ax.grid(axis="y", alpha=0.3, lw=0.6)
     handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="lower center", ncol=5, bbox_to_anchor=(0.5, -0.04), fontsize=9)
-    fig.tight_layout(rect=(0, 0.08, 1, 1))
+    fig.legend(handles, labels, loc="lower center", ncol=5, bbox_to_anchor=(0.5, 0.02), fontsize=9)
+    fig.text(
+        0.5, 0.005,
+        "Archived manifests differ: PHGST-DP 5,354 test windows; baselines 6,886. Not a matched-sample comparison.",
+        ha="center", va="bottom", fontsize=8, color="#333333",
+    )
+    fig.tight_layout(rect=(0, 0.10, 1, 1))
     fig.savefig(out)
     fig.savefig(out.with_suffix(".png"), dpi=250)
     plt.close(fig)
@@ -163,7 +173,7 @@ def _bars(summary: dict, panels: tuple[tuple[str, str], ...], out: Path, f1_axis
     arms = {a: p for a, p in (ARMS if arm_patterns is None else arm_patterns).items() if any(p.format(s=s) in summary for s in STARTS)}
     x = np.arange(len(arms))
     w = 0.26
-    colors = ("#5BA7D9", "#FCB84D", "#2F9E5A")
+    colors = (PALETTE["steel"], PALETTE["coral"], PALETTE["olive"])
     fig, axes = plt.subplots(1, len(panels), figsize=(7.2, 2.7))
     for ax, (key, ylab) in zip(axes, panels):
         for i, s in enumerate(STARTS):

@@ -8,10 +8,12 @@ and NoSplit are the cause, delay-pattern, and decoder arms.
 
 from __future__ import annotations
 
+import csv
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import patheffects as pe
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -19,7 +21,20 @@ SRC = Path(
     r"D:\Capstone\isaac_factory\source\isaaclab_tasks\isaaclab_tasks"
     r"\direct\hc_factory\PDFormer\libcity\cache\bottleneck_eval\figures\key_device_struct.png"
 )
+TRUE_CSV = ROOT / "experiments/data/key_device_main_aligned.csv"
 OUT = ROOT / "figures"
+
+
+def load_true_duration() -> tuple[np.ndarray, np.ndarray]:
+    """Use ``t_index`` so GT aligns with pixel-recovered ablation traces."""
+    with TRUE_CSV.open(encoding="utf-8") as fh:
+        rows = list(csv.DictReader(fh))
+    window = np.array([float(r["window"]) for r in rows])
+    x = np.array([float(r["t_index"]) for r in rows])
+    y = np.array([float(r["true_dur"]) for r in rows])
+    assert len(x) == 231 and np.array_equal(window, np.arange(231))
+    assert np.array_equal(x, window + 30.0)
+    return x, y
 
 # Spines and major ticks measured on the 2000x760 export.
 X_TICK_PX, X_TICK_VAL, X_TICK_STEP = 377.5, 50.0, 359.0
@@ -38,13 +53,14 @@ SERIES = {
 
 GRAPH = ("PHGST-DP", "NoGraph", "NoGroup")
 MECH = ("PHGST-DP", "NoCluster", "NoPattern", "NoSplit")
+# Palette card, with the ground-truth trace kept black in _draw.
 COLORS = {
-    "PHGST-DP": "#5BA7D9",
-    "NoGraph": "#2F9E5A",
-    "NoGroup": "#7A5898",
-    "NoCluster": "#7A5898",
-    "NoPattern": "#2F9E5A",
-    "NoSplit": "#FCB84D",
+    "PHGST-DP": "#46788E",
+    "NoGraph": "#97B319",
+    "NoGroup": "#E5887B",
+    "NoCluster": "#7BB7C9",
+    "NoPattern": "#97B319",
+    "NoSplit": "#E5887B",
 }
 STYLES = {
     "PHGST-DP": (0, (4, 1.6)),
@@ -126,9 +142,9 @@ def _extract(im: np.ndarray) -> dict[str, tuple[np.ndarray, np.ndarray]]:
         yy[~finite] = np.nan
         return _window(x_grid), _duration(yy)
 
-    true_x, true_y = xs[dark], ys[dark]
-    px, py = true_x, true_y
-    out["True"] = pack(np.ones(len(px), dtype=bool), max_gap=36, min_run=4)
+    # Ground truth comes from the archived per-window CSV, not from black
+    # pixels: zero-duration segments sit on the spine and leave NaN gaps.
+    out["True"] = load_true_duration()
     px_c, py_c, lab_c = xs[colored][keep], ys[colored][keep], best[keep]
     for i, name in enumerate(names):
         px, py = px_c, py_c
@@ -153,15 +169,23 @@ def _draw(series: dict[str, tuple[np.ndarray, np.ndarray]], names: tuple[str, ..
     )
     fig, ax = plt.subplots(figsize=(7.2, 3.05))
     x, y = series["True"]
-    ax.plot(x, y, color="black", lw=1.8, label="True", zorder=3)
+    (true_line,) = ax.plot(
+        x, y, color="black", lw=2.0, label="True", zorder=5,
+        solid_capstyle="round", solid_joinstyle="round",
+    )
+    true_line.set_path_effects([pe.Stroke(linewidth=3.4, foreground="white"), pe.Normal()])
     for name in names:
         xx, yy = series[name]
         ax.plot(xx, yy, color=COLORS[name], lw=1.45, ls=STYLES[name], label=name, zorder=2)
     ax.set_xlim(20, 270)
-    ax.set_ylim(-1, 21)
+    ax.set_ylim(-0.8, 21)
     ax.set_xlabel("Window index (60 s)")
     ax.set_ylabel("Bottleneck duration (min)")
     ax.set_yticks([0, 5, 10, 15, 20])
+    ax.spines["bottom"].set_color("#9AA3A8")
+    ax.spines["left"].set_color("#9AA3A8")
+    ax.tick_params(colors="#333333")
+    ax.set_axisbelow(True)
     ax.grid(alpha=0.3, lw=0.6)
     ax.legend(loc="upper right", fontsize=8, frameon=False, ncol=1)
     fig.tight_layout()
