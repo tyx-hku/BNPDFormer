@@ -1,0 +1,14 @@
+{
+  "repository": "https://github.com/jintaoXue/isaac_factory",
+  "branch": "dev_xwt",
+  "commit": "a5b6c929331a7531218372af9a7f111b6c27c35a",
+  "source_directory": "doc/experiments/efficiency_5090_20261024",
+  "sha256": {
+    "baseline_efficiency.csv": "ed19c2f306df4501bdb6828a6644a217f8d97e23597082b6b9b6afc7949329ad",
+    "baseline_efficiency.json": "0eef441ce5ec5278b78ffb275063955daa1fc4dc3e9bd484fc58428fcac064eb",
+    "baseline_efficiency.md": "529b68973be4b7d53b9cc8ff8afdfe6ae48d34d25798ff409e6d4b20e4a4e6c4",
+    "efficiency_comparison_5090.csv": "f01b9dbd756922e10f865caa884d247b720a2e282222a0db4be2dd3fbb88f368",
+    "efficiency_comparison_5090.md": "58433c39f3c9b9b602d28358ac7df979648fc9134d8f4c84f622e41ad76f1edd",
+    "main_efficiency_source_snapshot.json": "b9e74ef268486138f327ef97f650414c26e04ea3e4c66693180bdafb0515f44b"
+  }
+}

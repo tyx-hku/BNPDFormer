@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Plot reported predictive quality against measured report latency.
 
-Efficiency values: verified baseline export at isaac_factory@2cfa562,
-plus author-supplied PHGST-DP results, imported on 2026-10-24.
+Efficiency values: all-RTX-5090 export at isaac_factory@a5b6c92,
+including PHGST-DP source snapshots and the 2026-10-24 XGBoost CUDA run.
 Report F1: parsed from the current manuscript's tab:comparison-main.
 See efficiency_comparison_2026-10-24.md for provenance and open checks.
 This script never reruns or changes model experiments.
@@ -20,10 +20,10 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib import font_manager
 from matplotlib.lines import Line2D
-from matplotlib.ticker import MultipleLocator
+from matplotlib.ticker import FixedLocator, FuncFormatter, MultipleLocator, NullLocator
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA = ROOT / "experiments/data/efficiency_comparison_2026-10-24.csv"
+DATA = ROOT / "experiments/data/efficiency_comparison_5090_2026-10-24.csv"
 MODELS = ("PHGST-DP", "XGBoost", "LSTM", "BTGCN", "BSTAN")
 STYLES = {
     "PHGST-DP": ("#46788E", "o"),
@@ -110,17 +110,20 @@ def main() -> None:
                             textcoords="offset points", ha="right", va="bottom",
                             color=color, fontsize=10, fontweight="bold")
         ax.set_title(f"({chr(97 + i)}) Start $\\leq$ {cap} min", pad=9)
-        ax.set_xlim(0, 6)
+        ax.set_xscale("log")
+        ax.set_xlim(0.4, 100)
         ax.set_ylim(0.40, 0.90)
-        ax.xaxis.set_major_locator(MultipleLocator(2))
+        ax.xaxis.set_major_locator(FixedLocator([0.5, 1, 5, 10, 50]))
+        ax.xaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:g}"))
+        ax.xaxis.set_minor_locator(NullLocator())
         ax.yaxis.set_major_locator(MultipleLocator(0.1))
         ax.grid(color="#E2E4E4", lw=0.55, zorder=0)
         ax.tick_params(length=3, width=0.6)
     axes[0].set_ylabel("Report F1")
-    fig.supxlabel("Report latency p50 (ms)", y=0.06, fontsize=10)
+    fig.supxlabel("Report latency p50 (ms, log scale)", y=0.06, fontsize=10)
     handles = [Line2D([], [], color=STYLES[name][0], marker=STYLES[name][1],
                       ls="none", markersize=6,
-                      label="XGBoost (CPU)" if name == "XGBoost" else name)
+                      label=name)
                for name in MODELS]
     fig.legend(handles=handles, loc="upper center", ncol=5, frameon=False,
                bbox_to_anchor=(0.51, 1.01), handletextpad=0.35,

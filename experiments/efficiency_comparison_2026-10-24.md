@@ -1,37 +1,44 @@
-# Efficiency comparison: data and provenance
+# Efficiency comparison: RTX 5090 update and provenance
 
-## Verified sources
+## Current sources
 
-- Baseline source repository: `jintaoXue/isaac_factory`, branch `dev_xwt`, commit `2cfa56287700b08649f2b489f58a5239c426c168`.
-- Committed `baseline_efficiency.md`, `baseline_efficiency.csv`, and `baseline_efficiency.json` are archived under `data/efficiency_20261023/`. They were read with `git show`; CSV line endings are normalized to LF with all field contents preserved. The code checkout and its active branch were not modified.
-- All 12 baseline rows were checked against the author's supplied table. Every supplied latency, throughput, parameter count and GPU-memory value matches the formal CSV at the supplied display precision.
-- The combined `data/efficiency_comparison_2026-10-24.csv` retains the full precision of baseline measurements. Main-model values come from the author's efficiency table and the existing manuscript: 713,984 parameters, 2.91 MiB checkpoint, 175.8 MiB peak allocated memory; three onset caps.
-- The source JSON records unchanged checkpoint hashes, no training and no threshold selection for all 12 baseline tasks. Raw per-call latency files remain on the server under `output/baseline_efficiency/formal_20261023/`.
+- Repository: `jintaoXue/isaac_factory`, branch `dev_xwt`, commit `a5b6c929331a7531218372af9a7f111b6c27c35a`.
+- Source directory: `doc/experiments/efficiency_5090_20261024/`.
+- Six source files are archived byte-for-byte in `data/efficiency_5090_20261024/`: the combined MD/CSV, baseline MD/CSV/JSON, and `main_efficiency_source_snapshot.json`. `source_manifest.json` records the commit and SHA-256 of each file. The code checkout was read through `git show` without modifying its working files or active branch.
+- `data/efficiency_comparison_5090_2026-10-24.csv` is the current normalized 15-row input. Timing precision, source test counts, and both memory fields are retained. Model names map B2 = XGBoost, B3 = LSTM, B4 = BTGCN, and B5 = BSTAN.
+- All 15 combined timing rows were checked against the baseline CSV or original main-model report snapshots. The 12 baseline Report F1 values agree with the manuscript at its displayed precision.
+- B2 uses the new 2026-10-24 CUDA measurement. B3–B5 retain the 2026-10-23 GPU measurements; PHGST-DP retains the 2026-10-17 measurements, now verified against source JSON rather than rounded author-supplied values.
+- Historical CPU-B2 data under `data/efficiency_20261023/` and `data/efficiency_comparison_2026-10-24.csv` remain archival records. They are not read by the current plot or used in the current efficiency table.
 
 ## Measurement protocol
 
-- Author instruction on 2026-10-24: describe the experiments using the main model's measurement configuration. The baseline export confirms the same RTX 5090 server, Python 3.11.15, PyTorch 2.11.0+cu128, CUDA 12.8, batch 16, five complete test passes, 50 warm-up calls, and 5,000 batch-one calls per latency metric (five repetitions of 1,000 over a 256-sample pool).
-- XGBoost 3.2.0 uses CPU with four threads. The benchmark's `TreeAdapter` explicitly calls `head.model.set_params(n_jobs=self.threads, device='cpu')`; this preserves the saved baseline CPU implementation. This is not a limitation of XGBoost's GPU support.
-- Forward timing covers the full neural forward pass on a resident GPU input, or all seven XGBoost heads on prepared CPU features. Report timing adds transfer or history-feature construction, prediction decoding, and event materialization. Test-pass throughput includes DataLoader iteration. File writing, loss and metric computation are excluded.
-- Throughput and batch-one report latency use different batching settings and are not reciprocals.
-- GPU allocation is the PyTorch allocator peak for the process, including the model and prepared 256-sample pool; it is not total board memory. Model-file sizes describe saved artifacts, which may include training metadata. They do not measure identical pure-parameter serialization.
+- All five models execute prediction on RTX 5090 CUDA. Environment: Python 3.11.15, PyTorch 2.11.0+cu128, CUDA 12.8; B2 uses XGBoost 3.2.0 with CuPy 14.2.0.
+- Throughput: batch 16, five complete test passes after 50 warm-up batches. Batch-one forward/report latency: 5,000 calls, five repetitions of 1,000 over a fixed 256-sample pool, with CUDA synchronization around each timed call.
+- Forward: neural input or XGBoost prepared features already reside on the GPU. All seven XGBoost prediction heads execute CUDA `inplace_predict`, with CPU fallback prohibited.
+- Report: includes transfer, model-specific feature processing, prediction, decoding, and event materialization. XGBoost includes CPU history-feature construction, H2D features, all seven CUDA heads, and D2H outputs. Batch test passes additionally include DataLoader iteration. File writing, loss, and evaluation-metric computation are excluded.
+- Throughput and batch-one latency use different batching settings and are not reciprocals.
+- Neural GPU memory is the PyTorch allocator peak, including the model and resident inference sample pool. XGBoost's native CUDA allocations are not captured by that allocator: its corresponding table entry is unavailable, and its 662–670 MiB NVML process peak is separately described. NVML samples include CUDA context, libraries, and caches; these two metrics are not ranked together.
+- Checkpoint sizes describe saved artifacts, which may contain training metadata; they do not measure equivalent pure-parameter serialization. Training time was not measured by this experiment.
+- The source validates B2 CPU/GPU output agreement over all 6,886 baseline samples: cause/onset/threshold decisions agree, with maximum regression-output absolute difference 0.00061035. No new training or threshold selection was performed.
 
-## Presentation and reproducibility
+## Presentation and reproduction
 
-- Section 5.5 contains one compact table and three Report F1 versus report-p50 panels, one for each onset cap. The bilingual and existing English-only sections are synchronized; each uses its edition's event-results table label.
-- Table ranges are the minimum and maximum across Start <= 5, 10 and 15, not confidence intervals or repeated-run uncertainty. Complete forward/report latency values and individual checkpoint sizes are retained in the combined CSV and original source files.
-- `plot_efficiency_comparison.py` reads Report F1 from the current `main.tex` table `tab:comparison-main`, joins by model and onset cap, and exports `data/plot_data/quality_cost_comparison.csv`. Baseline Report F1 in the source efficiency CSV agrees with the manuscript after rounding to its three-decimal precision.
-- Names are mapped as B2 = XGBoost, B3 = LSTM, B4 / GCN-GRU = BTGCN, and B5 / GAT-GRU = BSTAN. XGBoost is explicitly marked CPU.
-- The old median-difference latency stack is removed from the manuscript; a difference of separately measured medians is not treated as a measured component latency.
+- Section 5.5 in both manuscript editions uses the new CUDA results and a five-model table. Table ranges are minima/maxima across the three onset caps, not confidence intervals.
+- XGBoost: throughput 236–323 samples/s; report p50 39.29–58.55 ms, p95 41.73–60.86 ms, p99 52.81–72.66 ms. PHGST-DP: throughput 1,946–1,987 samples/s; report p50 4.72–4.77 ms and p99 5.51–5.60 ms.
+- `plot_efficiency_comparison.py` reads the current normalized GPU CSV, joins Report F1 from `main.tex` (`tab:comparison-main`) by model/onset cap, and exports `data/plot_data/quality_cost_comparison.csv` and `figures/fig_quality_cost.pdf/.svg/.png`.
+- The three quality–cost panels use a shared, explicitly labelled logarithmic latency axis to accommodate the new XGBoost measurements. Fonts, colors, and model markers retain the existing figure style.
+- The section emphasizes reported event-identification quality, millisecond-scale report generation, and stable PHGST-DP resource requirements. It does not infer architecture-only speedup ratios from these deployment measurements.
 
 ```sh
 python experiments/plot_efficiency_comparison.py
 latexmk -xelatex main.tex
 ```
 
-## Evaluation scope retained from the source
+## Source scope and raw records
 
-- The baseline timing export uses 6,886 windows / 40 episodes; the main-model reference uses 5,354 windows / 36 episodes. The table note points to the draft evaluation note, which distinguishes the specified 5,354-window protocol from the archived baseline workload. Total test-pass times are not used to compute speedup ratios.
-- Main-model timings were collected on 2026-10-17 and baseline timings on 2026-10-23. The baseline record reports another user's Isaac Sim GPU workload during measurement and records GPU utilization before and after each run. The table note identifies the shared server; the text describes measured implementation costs without claiming an isolated architecture-only speed ranking.
-- Existing `data/comparison_sources_2026-10-10.json` already records the 6,886-versus-5,354 comparison issue. The 2026-10-24 chapter revision specifies the main 5,354-window manifest for all five models and marks archived baseline comparisons as provisional. Baseline Report F1 in the efficiency CSV still originates from the 6,886-window export. No new evaluation was run, and source sample counts were not changed.
-- The quality/cost chart shows existing reported quality and measured runtime. It does not claim matched-sample Pareto optimality, statistical significance, new training-cost data, energy efficiency, or deployment performance on different hardware.
+- Baseline timing uses 6,886 windows / 40 episodes; the main-model snapshot uses 5,354 windows / 36 episodes. The section's existing table note points to the draft evaluation note distinguishing the specified common 5,354-window protocol from archived workloads. Updating B2's inference device does not establish that the sample manifests were aligned. Source counts are unchanged.
+- Measurements were collected on different dates on a shared GPU server. The baseline JSON records GPU load before/after each run, including another user's Isaac Sim workload. They characterize measured implementations and workloads; no exclusive-device benchmark is claimed.
+- The quality/cost chart pairs existing reported quality with measured runtime. It does not establish matched-sample Pareto optimality, statistical significance, energy efficiency, or performance on other hardware.
+- B2 raw records: `/home/sci/work/BSTAN_isaac_factory/output/baseline_efficiency/formal_5090_20261024/B2_cap{5,10,15}/`.
+- B3–B5 raw records: `/home/sci/work/BSTAN_isaac_factory/output/baseline_efficiency/formal_20261023/B{3,4,5}_cap{5,10,15}/`.
+- Each directory contains `baseline_efficiency.json`, `forward_latency_raw.csv`, and `report_latency_raw.csv`. Main-model report paths and original report SHA-256 values are preserved in `main_efficiency_source_snapshot.json`.
