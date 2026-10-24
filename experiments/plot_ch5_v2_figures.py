@@ -292,7 +292,7 @@ def plot_range_response() -> None:
     _write_csv(PLOT_DATA / "range_response.csv", rows)
     models = ("PHGST-DP", "XGBoost", "LSTM", "BTGCN", "BSTAN")
     metrics = (
-        ("report_f1", "(a) Report F1", "Higher is better", (0.0, 0.90)),
+        ("report_f1", "(a) F1-score", "Higher is better", (0.0, 0.90)),
         ("upcoming", "(b) Upcoming recall", "Higher is better", (0.0, 0.65)),
         ("dur_mae", "(c) Duration MAE", "Minutes · lower is better", (0.0, 4.4)),
     )
@@ -605,7 +605,7 @@ def plot_cause_recall(labels: dict) -> None:
 
 
 def plot_per_device_box() -> None:
-    """Fig 5-10: per-device Report F1 and Duration MAE by resource type."""
+    """Fig 5-10: per-device F1-score and Duration MAE by resource type."""
     raw = _read_csv(PER_DEVICE)
     short = {
         "num00_rotaryPipeAutomaticWeldingMachine_ws0": "weld0",
@@ -654,7 +654,7 @@ def plot_per_device_box() -> None:
     fig, axes = plt.subplots(1, 2, figsize=(7.35, 3.55))
     fill = {"Machine": STEEL, "Gantry": LIGHT, "AGV": OLIVE}
     for ax, metric, ylabel, lower in (
-        (axes[0], "f1", "Report F1", False),
+        (axes[0], "f1", "F1-score", False),
         (axes[1], "mae", "Union duration MAE (min)\nlower is better", True),
     ):
         data = [[d[metric] for d in by_group[g]] for g in groups]

@@ -3,7 +3,7 @@
 
 Efficiency values: all-RTX-5090 export at isaac_factory@a5b6c92,
 including PHGST-DP source snapshots and the 2026-10-24 XGBoost CUDA run.
-Report F1: parsed from the current manuscript's tab:comparison-main.
+F1-score: parsed from the current manuscript's tab:comparison-main.
 See efficiency_comparison_2026-10-24.md for provenance and open checks.
 This script never reruns or changes model experiments.
 """
@@ -47,13 +47,13 @@ def read_manuscript_f1() -> dict[tuple[int, str], float]:
         fields = line.split("&")
         if len(fields) < 5 or fields[0].strip() not in MODELS:
             continue
-        match = re.search(r"(\d+(?:\.\d+)?)\\%", fields[4])
+        match = re.search(r"(\d+(?:\.\d+)?)\\%", fields[1])
         if cap is None or not match:
-            raise ValueError(f"Cannot parse Report F1: {line}")
+            raise ValueError(f"Cannot parse F1-score: {line}")
         values[(cap, fields[0].strip())] = float(match.group(1)) / 100
     expected = {(cap, model) for cap in (5, 10, 15) for model in MODELS}
     if set(values) != expected:
-        raise ValueError("Expected exactly five Report F1 values per onset cap")
+        raise ValueError("Expected exactly five F1-score values per onset cap")
     return values
 
 
@@ -119,7 +119,7 @@ def main() -> None:
         ax.yaxis.set_major_locator(MultipleLocator(0.1))
         ax.grid(color="#E2E4E4", lw=0.55, zorder=0)
         ax.tick_params(length=3, width=0.6)
-    axes[0].set_ylabel("Report F1")
+    axes[0].set_ylabel("F1-score")
     fig.supxlabel("Report latency p50 (ms, log scale)", y=0.06, fontsize=10)
     handles = [Line2D([], [], color=STYLES[name][0], marker=STYLES[name][1],
                       ls="none", markersize=6,
@@ -132,7 +132,10 @@ def main() -> None:
     for ext in ("pdf", "svg", "png"):
         fig.savefig(out.with_suffix(f".{ext}"), dpi=300, facecolor="white")
     svg = out.with_suffix(".svg")
-    svg.write_text("\n".join(line.rstrip() for line in svg.read_text().splitlines()) + "\n")
+    svg.write_text(
+        "\n".join(line.rstrip() for line in svg.read_text(encoding="utf-8").splitlines()) + "\n",
+        encoding="utf-8",
+    )
     plt.close(fig)
     print(f"Wrote {out}.pdf/.svg/.png and {joined}")
 

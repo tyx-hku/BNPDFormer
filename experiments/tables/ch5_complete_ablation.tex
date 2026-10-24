@@ -3,63 +3,11 @@
 \scriptsize
 \setlength{\tabcolsep}{3pt}
 \renewcommand{\arraystretch}{1.12}
-\caption{Event identification and onset tolerance (metric group 1). Proportions are percentages; timing errors are in minutes. PHGST-DP and Full-S1 share frozen event/cause heads. Training schedules and event pools follow Table~\ref{tab:ablation-arms}. The pretraining row is a historical reference, not a matched comparator. Upcoming/Ongoing and onset-bin recalls use strict report matching; tolerance is 3 min unless stated. Delta F1 is in percentage points.}
-\label{tab:complete-1-1}
-\begin{tabularx}{\textwidth}{@{}lXXXXXX@{}}
-\toprule
-Arm & Start & Thr & $P$ & $R$ & \textbf{F1} & $\Delta$F1 \\
-\midrule
-PHGST-DP & $\le 5$ & 0.94 & 79.4\% & 81.7\% & 80.5\% & 0.0 pp \\
-Full-S1 & $\le 5$ & 0.94 & 79.4\% & 81.7\% & 80.5\% & 0.0 pp \\
-NoFarBoost & $\le 5$ & 0.90 & 83.2\% & 80.8\% & 82.0\% & 1.5 pp \\
-NoCluster & $\le 5$ & 0.94 & 81.2\% & 67.1\% & 73.5\% & -7.0 pp \\
-NoGraph & $\le 5$ & 0.94 & 83.2\% & 67.8\% & 74.7\% & -5.8 pp \\
-NoGroup & $\le 5$ & 0.94 & 76.6\% & 75.6\% & 76.1\% & -4.4 pp \\
-NoPattern & $\le 5$ & 0.94 & 80.2\% & 70.1\% & 74.8\% & -5.7 pp \\
-NoSplit & $\le 5$ & 0.94 & 75.2\% & 70.8\% & 72.9\% & -7.6 pp \\
-NoCross & $\le 5$ & 0.94 & 75.0\% & 69.8\% & 72.3\% & -8.2 pp \\
-NoInfo & $\le 5$ & 0.94 & 77.0\% & 55.3\% & 64.4\% & -16.1 pp \\
-MachineOnly & $\le 5$ & 0.94 & 79.8\% & 54.9\% & 65.0\% & -15.5 pp \\
-\midrule
-PHGST-DP & $\le 10$ & 0.94 & 80.6\% & 76.1\% & 78.3\% & 0.0 pp \\
-Full-S1 & $\le 10$ & 0.94 & 80.6\% & 76.1\% & 78.3\% & 0.0 pp \\
-NoFarBoost & $\le 10$ & 0.88 & 75.0\% & 76.3\% & 75.7\% & -2.6 pp \\
-NoCluster & $\le 10$ & 0.94 & 54.2\% & 67.7\% & 60.2\% & -18.1 pp \\
-NoGraph & $\le 10$ & 0.94 & 82.1\% & 53.9\% & 65.1\% & -13.2 pp \\
-NoGroup & $\le 10$ & 0.94 & 60.5\% & 74.5\% & 66.8\% & -11.5 pp \\
-NoPattern & $\le 10$ & 0.94 & 57.3\% & 64.5\% & 60.7\% & -17.6 pp \\
-NoSplit & $\le 10$ & 0.94 & 56.4\% & 63.8\% & 59.9\% & -18.4 pp \\
-NoCross & $\le 10$ & 0.94 & 59.6\% & 59.3\% & 59.5\% & -18.8 pp \\
-NoInfo & $\le 10$ & 0.94 & 75.9\% & 42.5\% & 54.5\% & -23.8 pp \\
-MachineOnly & $\le 10$ & 0.94 & 82.0\% & 42.4\% & 55.9\% & -22.4 pp \\
-\midrule
-PHGST-DP & $\le 15$ & 0.94 & 80.6\% & 74.2\% & 77.2\% & 0.0 pp \\
-Full-S1 & $\le 15$ & 0.94 & 80.6\% & 74.2\% & 77.2\% & 0.0 pp \\
-NoFarBoost & $\le 15$ & 0.94 & 77.2\% & 71.6\% & 74.3\% & -2.9 pp \\
-NoCluster & $\le 15$ & 0.94 & 51.0\% & 66.4\% & 57.7\% & -19.6 pp \\
-NoGraph & $\le 15$ & 0.94 & 85.1\% & 48.2\% & 61.6\% & -15.7 pp \\
-NoGroup & $\le 15$ & 0.94 & 56.7\% & 69.0\% & 62.3\% & -15.0 pp \\
-NoPattern & $\le 15$ & 0.94 & 55.2\% & 69.8\% & 61.6\% & -15.6 pp \\
-NoSplit & $\le 15$ & 0.94 & 55.9\% & 66.4\% & 60.7\% & -16.5 pp \\
-NoCross & $\le 15$ & 0.94 & 51.8\% & 61.6\% & 56.3\% & -20.9 pp \\
-NoInfo & $\le 15$ & 0.94 & 46.6\% & 51.8\% & 49.0\% & -28.2 pp \\
-MachineOnly & $\le 15$ & 0.94 & 80.2\% & 40.0\% & 53.4\% & -23.9 pp \\
-\midrule
-pretrain\_init$^\dagger$ & $\le 2$ & 0.98 & 85.2\% & 85.6\% & 85.4\% & --- \\
-\bottomrule
-\end{tabularx}
-\end{table*}
-
-\begin{table*}[p]
-\centering
-\scriptsize
-\setlength{\tabcolsep}{3pt}
-\renewcommand{\arraystretch}{1.12}
-\caption{Event identification and onset tolerance (metric group 2). Proportions are percentages; timing errors are in minutes. PHGST-DP and Full-S1 share frozen event/cause heads. Training schedules and event pools follow Table~\ref{tab:ablation-arms}. The pretraining row is a historical reference, not a matched comparator. Upcoming/Ongoing and onset-bin recalls use strict report matching; tolerance is 3 min unless stated. Delta F1 is in percentage points.}
+\caption{Event F1-score and onset-tolerance sensitivity. Proportions are percentages; timing errors are in minutes. PHGST-DP and Full-S1 share frozen event/cause heads. Training schedules and event pools follow Table~\ref{tab:ablation-arms}. The pretraining row is a historical reference, not a matched comparator. Upcoming/Ongoing and onset-bin recalls use the same strict matching rule; tolerance is 3 min unless stated. Delta F1 is in percentage points.}
 \label{tab:complete-1-2}
 \begin{tabularx}{\textwidth}{@{}lXXXXXX@{}}
 \toprule
-Arm & Start & Report F1 & F1@1min & F1@2min & $R_{\mathrm{up}}$ & $R_{\mathrm{on}}$ \\
+Arm & Start & F1-score & F1@1min & F1@2min & $R_{\mathrm{up}}$ & $R_{\mathrm{on}}$ \\
 \midrule
 PHGST-DP & $\le 5$ & 80.4\% & 79.2\% & 80.1\% & 53.9\% & 93.7\% \\
 Full-S1 & $\le 5$ & 80.4\% & 79.2\% & 80.1\% & 53.9\% & 93.7\% \\
