@@ -1,0 +1,266 @@
+[
+  {
+    "path": "/home/sci/work/isaac_factory/output/phgst_efficiency/start5/phgst_efficiency.json",
+    "sha256": "abda5599696788063d163605052d539364f67a6928158815e6f4ec6de5de2518",
+    "report": {
+      "schema_version": 1,
+      "model": "PHGST-DP",
+      "run_dir": "/home/sci/work/isaac_factory/source/isaaclab_tasks/isaaclab_tasks/direct/hc_factory/PDFormer/libcity/cache/model_cache/bestmodel_start5_seed42",
+      "checkpoint": "/home/sci/work/isaac_factory/source/isaaclab_tasks/isaaclab_tasks/direct/hc_factory/PDFormer/libcity/cache/model_cache/bestmodel_start5_seed42/BNPDFormer_best.pt",
+      "checkpoint_epoch": 16,
+      "checkpoint_load_seconds": 9.702601653058082,
+      "checkpoint_size_mib": 2.9110097885131836,
+      "report_threshold": 0.94,
+      "parameters": {
+        "total": 713984,
+        "trainable": 713984
+      },
+      "test_pass": {
+        "batch_size": 16,
+        "repeats": 5,
+        "n_batches": 335,
+        "n_samples": 5354,
+        "seconds": [
+          2.719864521175623,
+          2.6806509259622544,
+          2.683851865818724,
+          2.699150061002001,
+          2.689189659897238
+        ],
+        "mean_seconds": 2.694541406771168,
+        "samples_per_second": 1986.9800428918347
+      },
+      "forward_latency_batch1": {
+        "n": 5000,
+        "mean_ms": 3.5942096451763064,
+        "p50_ms": 3.516143304295838,
+        "p95_ms": 4.086829232983291,
+        "p99_ms": 4.2433327878825375,
+        "min_ms": 3.299772972241044,
+        "max_ms": 9.240610059350729
+      },
+      "report_latency_batch1": {
+        "n": 5000,
+        "mean_ms": 4.830298532405868,
+        "p50_ms": 4.750246065668762,
+        "p95_ms": 5.379715363960713,
+        "p99_ms": 5.53138819988817,
+        "min_ms": 4.439173964783549,
+        "max_ms": 5.850882967934012
+      },
+      "memory": {
+        "peak_gpu_allocated_mib": 175.78173828125,
+        "process_rss_mib": null
+      },
+      "training": {
+        "available": true,
+        "epochs_executed": 20,
+        "epoch_seconds_3_to_7_mean": null,
+        "all_epoch_seconds": [],
+        "complete_fit_seconds": null,
+        "note": "complete_fit_seconds is available only when training was launched by the timed efficiency runner"
+      },
+      "protocol": {
+        "warmup_batches": 50,
+        "latency_repeats": 5,
+        "latency_calls_per_repeat": 1000,
+        "sample_pool": 256,
+        "report_latency_includes": [
+          "CPU-to-device transfer",
+          "predict",
+          "event materialization"
+        ],
+        "test_pass_includes": [
+          "DataLoader",
+          "CPU-to-device transfer",
+          "predict",
+          "event materialization"
+        ]
+      },
+      "environment": {
+        "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+        "python": "3.11.15",
+        "torch": "2.11.0+cu128",
+        "device": "cuda",
+        "cuda_version": "12.8",
+        "gpu": "NVIDIA GeForce RTX 5090"
+      }
+    }
+  },
+  {
+    "path": "/home/sci/work/isaac_factory/output/phgst_efficiency/start10/phgst_efficiency.json",
+    "sha256": "d9444363aefa49b8799ed1902deb7753b71e8ac1f07eeda2e562c036a631daff",
+    "report": {
+      "schema_version": 1,
+      "model": "PHGST-DP",
+      "run_dir": "/home/sci/work/isaac_factory/source/isaaclab_tasks/isaaclab_tasks/direct/hc_factory/PDFormer/libcity/cache/model_cache/bestmodel_start10_seed42",
+      "checkpoint": "/home/sci/work/isaac_factory/source/isaaclab_tasks/isaaclab_tasks/direct/hc_factory/PDFormer/libcity/cache/model_cache/bestmodel_start10_seed42/BNPDFormer_best.pt",
+      "checkpoint_epoch": 9,
+      "checkpoint_load_seconds": 8.213001064024866,
+      "checkpoint_size_mib": 2.9110097885131836,
+      "report_threshold": 0.94,
+      "parameters": {
+        "total": 713984,
+        "trainable": 713984
+      },
+      "test_pass": {
+        "batch_size": 16,
+        "repeats": 5,
+        "n_batches": 335,
+        "n_samples": 5354,
+        "seconds": [
+          2.80209963908419,
+          2.7439682721160352,
+          2.7470484701916575,
+          2.749412870965898,
+          2.710434147156775
+        ],
+        "mean_seconds": 2.750592679902911,
+        "samples_per_second": 1946.4895835427667
+      },
+      "forward_latency_batch1": {
+        "n": 5000,
+        "mean_ms": 3.6048705596476793,
+        "p50_ms": 3.526497515849769,
+        "p95_ms": 4.0802364819683135,
+        "p99_ms": 4.208756291773171,
+        "min_ms": 3.311272943392396,
+        "max_ms": 11.285447049885988
+      },
+      "report_latency_batch1": {
+        "n": 5000,
+        "mean_ms": 4.857676293514669,
+        "p50_ms": 4.765449441038072,
+        "p95_ms": 5.414256174117327,
+        "p99_ms": 5.59565368341282,
+        "min_ms": 4.430441884323955,
+        "max_ms": 13.279553968459368
+      },
+      "memory": {
+        "peak_gpu_allocated_mib": 175.78173828125,
+        "process_rss_mib": null
+      },
+      "training": {
+        "available": true,
+        "epochs_executed": 20,
+        "epoch_seconds_3_to_7_mean": null,
+        "all_epoch_seconds": [],
+        "complete_fit_seconds": null,
+        "note": "complete_fit_seconds is available only when training was launched by the timed efficiency runner"
+      },
+      "protocol": {
+        "warmup_batches": 50,
+        "latency_repeats": 5,
+        "latency_calls_per_repeat": 1000,
+        "sample_pool": 256,
+        "report_latency_includes": [
+          "CPU-to-device transfer",
+          "predict",
+          "event materialization"
+        ],
+        "test_pass_includes": [
+          "DataLoader",
+          "CPU-to-device transfer",
+          "predict",
+          "event materialization"
+        ]
+      },
+      "environment": {
+        "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+        "python": "3.11.15",
+        "torch": "2.11.0+cu128",
+        "device": "cuda",
+        "cuda_version": "12.8",
+        "gpu": "NVIDIA GeForce RTX 5090"
+      }
+    }
+  },
+  {
+    "path": "/home/sci/work/isaac_factory/output/phgst_efficiency/start15/phgst_efficiency.json",
+    "sha256": "d708961fd48cc61c4aaf27efd1c8494de0f779288df39939580a82631f35112f",
+    "report": {
+      "schema_version": 1,
+      "model": "PHGST-DP",
+      "run_dir": "/home/sci/work/isaac_factory/source/isaaclab_tasks/isaaclab_tasks/direct/hc_factory/PDFormer/libcity/cache/model_cache/bestmodel_start15_seed42",
+      "checkpoint": "/home/sci/work/isaac_factory/source/isaaclab_tasks/isaaclab_tasks/direct/hc_factory/PDFormer/libcity/cache/model_cache/bestmodel_start15_seed42/BNPDFormer_best.pt",
+      "checkpoint_epoch": 12,
+      "checkpoint_load_seconds": 8.102659875992686,
+      "checkpoint_size_mib": 2.9110097885131836,
+      "report_threshold": 0.94,
+      "parameters": {
+        "total": 713984,
+        "trainable": 713984
+      },
+      "test_pass": {
+        "batch_size": 16,
+        "repeats": 5,
+        "n_batches": 335,
+        "n_samples": 5354,
+        "seconds": [
+          2.712430690182373,
+          2.6976319269742817,
+          2.6916538970544934,
+          2.723471170058474,
+          2.6912989241536707
+        ],
+        "mean_seconds": 2.7032973216846585,
+        "samples_per_second": 1980.544262391182
+      },
+      "forward_latency_batch1": {
+        "n": 5000,
+        "mean_ms": 3.5554725841153414,
+        "p50_ms": 3.4907208755612373,
+        "p95_ms": 4.05509261181578,
+        "p99_ms": 4.162292254623026,
+        "min_ms": 3.2636290416121483,
+        "max_ms": 4.427426960319281
+      },
+      "report_latency_batch1": {
+        "n": 5000,
+        "mean_ms": 4.790262674447149,
+        "p50_ms": 4.715979564934969,
+        "p95_ms": 5.323632247745991,
+        "p99_ms": 5.509785492904484,
+        "min_ms": 4.390989197418094,
+        "max_ms": 8.685600012540817
+      },
+      "memory": {
+        "peak_gpu_allocated_mib": 175.78173828125,
+        "process_rss_mib": null
+      },
+      "training": {
+        "available": true,
+        "epochs_executed": 20,
+        "epoch_seconds_3_to_7_mean": null,
+        "all_epoch_seconds": [],
+        "complete_fit_seconds": null,
+        "note": "complete_fit_seconds is available only when training was launched by the timed efficiency runner"
+      },
+      "protocol": {
+        "warmup_batches": 50,
+        "latency_repeats": 5,
+        "latency_calls_per_repeat": 1000,
+        "sample_pool": 256,
+        "report_latency_includes": [
+          "CPU-to-device transfer",
+          "predict",
+          "event materialization"
+        ],
+        "test_pass_includes": [
+          "DataLoader",
+          "CPU-to-device transfer",
+          "predict",
+          "event materialization"
+        ]
+      },
+      "environment": {
+        "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+        "python": "3.11.15",
+        "torch": "2.11.0+cu128",
+        "device": "cuda",
+        "cuda_version": "12.8",
+        "gpu": "NVIDIA GeForce RTX 5090"
+      }
+    }
+  }
+]

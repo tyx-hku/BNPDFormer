@@ -811,7 +811,7 @@ PHGST-DP is evaluated for a central production objective: identifying emerging b
 
 \subsubsection{Dataset and data processing}
 
-Experiments use the \texttt{dense\_i1} digital-twin production-line dataset described in Section~\ref{sec:method}. Figure~\ref{fig:experiment} summarizes the simulated line, the six-step manufacturing route with shared handling subtasks, and the multi-entity structural graph. The dataset contains 204 complete episodes and 38 simulated resources, including machines, workbenches, gantries, transport robots, workers, and buffers. An episode-level split assigns 140/28/36 episodes to training, validation, and testing, yielding 20,826/4,331/5,354 one-minute windows. Each input contains 30 historical windows (30 min), and the target grid spans 20 future windows (20 min). Predictions are evaluated over 15 resources: seven machines or workbenches, four gantries, and four transport robots. Worker and buffer states provide contextual observations for these resource-level predictions.
+Experiments use \texttt{dense\_i1}, a digital-twin dataset collected from an Isaac Sim pipe-production line. Each episode produces one order of ten workpieces through six operations: cutting, grooving, spot welding, root welding, surface welding, and finishing. Gantries handle local loading and unloading, transport robots connect processing areas, and workers and buffers support shared operations and intermediate storage (Figure~\ref{fig:experiment}). The resource graph contains 38 nodes: seven machines or workbenches, four gantries, four transport robots, five workers, and eighteen buffers. The first three groups form the 15 prediction targets; worker and buffer observations supply process context. Material availability is represented by inventory, shortage, and inbound-waiting features associated with the consuming resources.
 
 \begin{figure*}[t]
 \centering
@@ -843,9 +843,13 @@ Material & Keep the nominal inventory of ten pipes, flanges, and elbows; no perm
 
 For machine, human, and logistics disturbances, every Level~2 pulse lasts at least 600 steps and the intensity-specific upper bounds are 900/1,300/1,400 steps. Event targets, start times, counts, and durations are resampled for each episode using a deterministic seed. Adjacent pulses are separated by at least 360 steps, and an event waits for an eligible idle target rather than interrupting an active operation. These controls make the injected condition long enough to survive the eight-window persistence filter while avoiding a deterministic one-to-one mapping between an injection and a labelled bottleneck.
 
+Raw records use logical simulation time at one-second resolution and include resource-state transitions, workpiece routes and completion times, buffer changes, transport tasks, material inventories, and disturbance logs. The aggregation pipeline reconstructs resource-state intervals and aligns them into non-overlapping 60-s windows. Processing, blockage, starvation, and stoppage durations are accumulated over their overlap with each window; active and unavailable ratios divide the corresponding durations by the window length. Queue features count waiting jobs and summarize their waiting times, while buffer occupancy is averaged over recorded values in the window (carrying forward the preceding value when no update is recorded) and its growth is computed from the difference between the window-end and window-start counts. Process and transport relations supply upstream/downstream state ratios, route delay, inbound waiting, and material-shortage propagation.
+
+All windows share a fixed resource ordering. Each node has 21 operational channels, a five-dimensional resource-type encoding, and one labour-saturation channel, forming a $38\times27$ feature matrix per window. The export routine fills absent numeric entries with zero and recomputes labour saturation from worker activity. Episodes are retained after all ten workpieces have completed; runs containing a deadlock reset are excluded. A run-stratified, episode-level split gives 140/28/36 training/validation/test episodes out of 204 complete episodes. Sliding samples use 30 historical windows and a 20-window future grid, with a one-window stride and no crossing of episode boundaries. The resulting splits contain 20,826/4,331/5,354 forecast windows (Figure~\ref{fig:dataset-composition}); feature standardization is fitted on the training histories and applied to validation and test inputs. The comparison protocol specifies these same 5,354 test-window identities for all five models.
+
+Operational-state rules combine processing activity, queue buildup, starvation, and resource-coupling indicators into resource-level bottleneck labels. Process-cause targets are derived from the corresponding operating evidence; the test set supports transport delay, material shortage, upstream starvation, and queue buildup. Workpiece completion records provide the order-level target: the time from the forecast origin until all ten workpieces have finished.
 
 Process-informed labels apply an eight-window persistence rule (Min8) to newly forming bottlenecks. An event already active at the last historical window is retained when at least one labelled future window remains. We evaluate three onset-cap settings, Start$\leq5$, Start$\leq10$, and Start$\leq15$, which define the admissible distance between the current window and a future event onset. The future grid and the onset cap are kept fixed within each task. A three-window start tolerance is used for strict report matching, and every window corresponds to 60~s; duration, start, and remaining-time errors are consequently reported in minutes.
-
 
 \begin{table}[t]
 \centering
@@ -868,14 +872,21 @@ Report matching & Three-window onset tolerance \\
 \end{tabularx}
 \end{table}
 
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.96\textwidth]{../figures/fig_dataset_composition.pdf}
+\caption{Dataset composition. (a)--(a$^\prime$) Episode and window counts for the train/validation/test split. (b)~Share of Upcoming, Ongoing, and no-event window--resource pairs on the 5,354-window test split under each Start cap (absolute support annotated).}
+\label{fig:dataset-composition}
+\end{figure*}
+
 \subsubsection{Baseline methods}
 
-Four baselines cover the model families used in the common-manifest comparison. XGBoost is a gradient-boosted decision-tree predictor operating on tabular summaries, providing a non-neural reference for nonlinear feature interactions. LSTM is a recurrent predictor that models temporal dependencies in the historical sequence. BTGCN constructs a graph over production tasks and combines graph convolution with a GRU to model relational and temporal information~\cite{yin2025btgcn}. BSTAN uses graph attention with a GRU to learn adaptive neighbour contributions for blockage and starvation related prediction~\cite{lai2023bstan}. All five models use the same test-sample identities, history length, future grid, target resources, and event-label definition. Each baseline retains its corresponding input representation and training procedure.
+Four baselines represent complementary modelling families. XGBoost is a gradient-boosted decision-tree predictor operating on tabular summaries, providing a non-neural reference for nonlinear feature interactions. LSTM is a recurrent predictor that models temporal dependencies in the historical sequence. BTGCN constructs a graph over production tasks and combines graph convolution with a GRU to model relational and temporal information~\cite{yin2025btgcn}. BSTAN uses graph attention with a GRU to learn adaptive neighbour contributions for blockage and starvation related prediction~\cite{lai2023bstan}. The comparison protocol specifies the same test-sample identities, history length, future grid, target resources, and event-label definition for all five models. Each baseline retains its corresponding input representation and training procedure.
 
 
 \begin{table}[t]
 \centering
-\caption{Baseline families in the common-manifest comparison.}
+\caption{Baseline models and their roles in the comparison.}
 \label{tab:exp-baselines}
 \scriptsize
 \setlength{\tabcolsep}{4pt}
@@ -926,166 +937,119 @@ Auxiliary & Cause accuracy / macro recall & Four supported process-cause classes
 \end{tabular*}
 \end{table*}
 
-\subsection{Main and baseline performance comparison}
+\subsection{Main and baseline performance comparison}\label{sec:comparison-overview}
 
-The comparison follows the three prediction dimensions delivered by PHGST-DP: the occurrence and temporal extent of a bottleneck, its associated process cause, and the remaining time to order completion. Tables~\ref{tab:comparison-event}, \ref{tab:comparison-regression}, and \ref{tab:comparison-state} compare the main model and four baselines across these outputs; Table~\ref{tab:remain-stage} reports remaining-time head specialization. The reported values are the final common-manifest results on the 5,354-window test split in Table~\ref{tab:exp-dataset}, using the same sample identities, target resources, future grid, and event-label definition for all five models.
+The comparison evaluates three complementary capabilities of the production forecast. Bottleneck event and temporal prediction identifies the affected resource and describes when its constraint begins, persists, and ends (Table~\ref{tab:comparison-main}). Process-cause prediction supplies an operational interpretation of that constraint (Table~\ref{tab:comparison-state}), and remaining-time prediction places it in the context of order completion (Table~\ref{tab:comparison-remain}). Together, these outputs provide resource-level warning and order-level progress information. The common evaluation protocol specifies the main experiment's 5,354 test windows, with shared sample identities, target resources, future grid, and label definitions for PHGST-DP and the four baselines.
 
+\textit{Evaluation note for this draft.} The 5,354-window protocol is the specified comparison setting. The baseline numbers currently available are archived exports from 6,886 windows; their tables, plots, and numerical comparisons remain provisional until reevaluation on the shared sample manifest.
 
 \subsubsection{Bottleneck occurrence, onset, end, and duration}\label{sec:comparison-event}
 
-PHGST-DP combines advance event recognition with a temporal description of the predicted constraint. Table~\ref{tab:comparison-event} reports event precision, recall, and F1; Tables~\ref{tab:comparison-regression} and \ref{tab:comparison-state} provide the corresponding onset and duration errors and future-state F1. Onset and duration characterize the timing of the predicted constraint; next-window and 20-window state predictions describe its evolution through onset, persistence, and recovery. P/R/F1 evaluate event identification, while timing errors evaluate the temporal attributes of correctly identified events.
+PHGST-DP couples resource identification with the expected bottleneck interval and its evolving occupancy. Table~\ref{tab:comparison-main} evaluates this capability through event P/R/F1, Upcoming/Ongoing recall, onset and duration MAE, and one-step/20-step State F1. Onset and duration jointly specify the reported interval within the 20-min horizon, while the future state sequence describes persistence and recovery. Temporal MAE is evaluated on correctly detected events and is read alongside event recall to characterize both coverage and localization.
 
-
-Across the three onset caps, PHGST-DP achieves Will15 F1 of $0.805/0.783/0.772$ and Report F1 of $0.804/0.778/0.768$. The Report F1 differences from the strongest baseline are $0.102/0.167/0.191$. Upcoming recall remains $0.542/0.535/0.537$, alongside Ongoing recall of $0.937/0.939/0.930$. This combination provides advance coverage of emerging constraints while following events that are already active. The precision--recall pairs characterize the alarm operating point: PHGST-DP attains the highest recall and F1 at every cap, while the baseline precision values show their more selective reporting behaviour.
-
+PHGST-DP combines broad event coverage with early warning across the three onset caps. Will15 F1 reaches $0.805/0.783/0.772$ and Report F1 reaches $0.804/0.778/0.768$; the reported Report F1 differences from the strongest baseline are $10.2/16.7/19.1$ percentage points. Upcoming recall remains $0.542/0.535/0.537$, alongside Ongoing recall of $0.937/0.939/0.930$. Precision of $0.794/0.806/0.806$ accompanies the highest reported recall and F1 at each cap. The resulting operating points combine advance coverage of emerging constraints with sustained tracking of active events, supplying warning information before the affected resource is already constrained.
 
 \begin{table*}[t]
 \centering
-\caption{Common-manifest event-identification and early-warning results. Upcoming and Ongoing R use station-level matching; bold marks the best value within each cap.}
-\label{tab:comparison-event}
+\caption{Bottleneck event and temporal prediction. Classification scores are percentages; timing MAE is in minutes. Within each Start cap, bold and shading mark the best value (steel: PHGST-DP; olive: baseline), and underline marks second-best. Baseline entries are provisional; see the evaluation note in Section~\ref{sec:comparison-overview}.}
+\label{tab:comparison-main}
 \scriptsize
-\setlength{\tabcolsep}{3.5pt}
-\renewcommand{\arraystretch}{1.08}
-\begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}llrrrrrr@{}}
+\setlength{\tabcolsep}{3.2pt}
+\renewcommand{\arraystretch}{1.12}
+\begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}lrrrrrrrrrr@{}}
 \toprule
-Model & Start cap & P & R & Will15 F1 & Report F1 & Upcoming R & Ongoing R \\
+Model & \multicolumn{4}{c}{Event identification $\uparrow$} & \multicolumn{2}{c}{Event recall $\uparrow$} & \multicolumn{2}{c}{Timing MAE $\downarrow$} & \multicolumn{2}{c}{State F1 $\uparrow$} \\
+\cmidrule(lr){2-5}\cmidrule(lr){6-7}\cmidrule(lr){8-9}\cmidrule(l){10-11}
+ & P & R & Will15 F1 & Report F1 & Upcoming & Ongoing & Start & Duration & 1 step & 20 steps \\
 \midrule
-PHGST-DP & $\leq5$  & 79.4\% & \textbf{81.7\%} & \textbf{80.5\%} & \textbf{80.4\%} & \textbf{54.2\%} & \textbf{93.7\%} \\
-XGBoost & $\leq5$  & \textbf{85.9\%} & 59.8\% & 70.5\% & 70.2\% & 6.0\% & 81.9\% \\
-LSTM & $\leq5$  & 68.0\% & 51.5\% & 58.6\% & 58.3\% & 9.9\% & 68.7\% \\
-BTGCN & $\leq5$  & 81.6\% & 57.0\% & 67.1\% & 66.9\% & 4.6\% & 78.6\% \\
-BSTAN & $\leq5$  & 82.9\% & 59.0\% & 69.0\% & 68.7\% & 9.5\% & 79.4\% \\
+\multicolumn{11}{l}{\textit{Start $\leq5$}} \\
+PHGST-DP & 79.4\% & \cellcolor{phgstbest}\textbf{81.7\%} & \cellcolor{phgstbest}\textbf{80.5\%} & \cellcolor{phgstbest}\textbf{80.4\%} & \cellcolor{phgstbest}\textbf{54.2\%} & \cellcolor{phgstbest}\textbf{93.7\%} & 0.127 & \cellcolor{phgstbest}\textbf{1.863} & \cellcolor{phgstbest}\textbf{88.3\%} & \cellcolor{phgstbest}\textbf{52.5\%} \\
+XGBoost & \cellcolor{altbest}\textbf{85.9\%} & \underline{59.8\%} & \underline{70.5\%} & \underline{70.2\%} & 6.0\% & \underline{81.9\%} & \underline{0.030} & \underline{3.264} & 61.1\% & 37.3\% \\
+LSTM & 68.0\% & 51.5\% & 58.6\% & 58.3\% & \underline{9.9\%} & 68.7\% & 0.056 & 3.855 & 29.5\% & 29.5\% \\
+BTGCN & 81.6\% & 57.0\% & 67.1\% & 66.9\% & 4.6\% & 78.6\% & \cellcolor{altbest}\textbf{0.020} & 3.322 & 64.3\% & 37.2\% \\
+BSTAN & \underline{82.9\%} & 59.0\% & 69.0\% & 68.7\% & 9.5\% & 79.4\% & 0.043 & 3.565 & \underline{71.9\%} & \underline{37.9\%} \\
 \midrule
-PHGST-DP & $\leq10$ & 80.6\% & \textbf{76.1\%} & \textbf{78.3\%} & \textbf{77.8\%} & \textbf{53.5\%} & \textbf{93.9\%} \\
-XGBoost & $\leq10$ & 85.8\% & 48.7\% & 62.1\% & 61.1\% & 4.1\% & 80.5\% \\
-LSTM & $\leq10$ & 56.1\% & 45.1\% & 50.0\% & 47.7\% & 11.2\% & 69.3\% \\
-BTGCN & $\leq10$ & \textbf{88.1\%} & 44.0\% & 58.7\% & 57.9\% & 4.5\% & 72.2\% \\
-BSTAN & $\leq10$ & 84.9\% & 48.8\% & 62.0\% & 60.9\% & 5.7\% & 79.6\% \\
+\multicolumn{11}{l}{\textit{Start $\leq10$}} \\
+PHGST-DP & 80.6\% & \cellcolor{phgstbest}\textbf{76.1\%} & \cellcolor{phgstbest}\textbf{78.3\%} & \cellcolor{phgstbest}\textbf{77.8\%} & \cellcolor{phgstbest}\textbf{53.5\%} & \cellcolor{phgstbest}\textbf{93.9\%} & 0.227 & \cellcolor{phgstbest}\textbf{1.788} & \cellcolor{phgstbest}\textbf{89.2\%} & \cellcolor{phgstbest}\textbf{58.9\%} \\
+XGBoost & \underline{85.8\%} & 48.7\% & \underline{62.1\%} & \underline{61.1\%} & 4.1\% & \underline{80.5\%} & \underline{0.122} & \underline{3.210} & 59.5\% & 33.7\% \\
+LSTM & 56.1\% & 45.1\% & 50.0\% & 47.7\% & \underline{11.2\%} & 69.3\% & 0.388 & 3.768 & 27.5\% & 26.2\% \\
+BTGCN & \cellcolor{altbest}\textbf{88.1\%} & 44.0\% & 58.7\% & 57.9\% & 4.5\% & 72.2\% & \cellcolor{altbest}\textbf{0.117} & 3.238 & 56.6\% & 35.9\% \\
+BSTAN & 84.9\% & \underline{48.8\%} & 62.0\% & 60.9\% & 5.7\% & 79.6\% & 0.153 & 3.533 & \underline{63.2\%} & \underline{36.5\%} \\
 \midrule
-PHGST-DP & $\leq15$ & 80.6\% & \textbf{74.2\%} & \textbf{77.2\%} & \textbf{76.8\%} & \textbf{53.7\%} & \textbf{93.0\%} \\
-XGBoost & $\leq15$ & 84.5\% & 45.3\% & 59.0\% & 57.7\% & 3.9\% & 79.6\% \\
-LSTM & $\leq15$ & 62.4\% & 39.8\% & 48.6\% & 46.1\% & 10.2\% & 64.3\% \\
-BTGCN & $\leq15$ & 78.8\% & 40.7\% & 53.6\% & 51.8\% & 5.4\% & 69.9\% \\
-BSTAN & $\leq15$ & \textbf{85.3\%} & 40.2\% & 54.7\% & 53.4\% & 4.4\% & 70.0\% \\
+\multicolumn{11}{l}{\textit{Start $\leq15$}} \\
+PHGST-DP & 80.6\% & \cellcolor{phgstbest}\textbf{74.2\%} & \cellcolor{phgstbest}\textbf{77.2\%} & \cellcolor{phgstbest}\textbf{76.8\%} & \cellcolor{phgstbest}\textbf{53.7\%} & \cellcolor{phgstbest}\textbf{93.0\%} & 0.227 & \cellcolor{phgstbest}\textbf{1.716} & \cellcolor{phgstbest}\textbf{90.0\%} & \cellcolor{phgstbest}\textbf{61.0\%} \\
+XGBoost & \underline{84.5\%} & \underline{45.3\%} & \underline{59.0\%} & \underline{57.7\%} & 3.9\% & \underline{79.6\%} & \cellcolor{altbest}\textbf{0.167} & 3.170 & 58.2\% & 32.2\% \\
+LSTM & 62.4\% & 39.8\% & 48.6\% & 46.1\% & \underline{10.2\%} & 64.3\% & 0.453 & 3.615 & 26.8\% & 26.0\% \\
+BTGCN & 78.8\% & 40.7\% & 53.6\% & 51.8\% & 5.4\% & 69.9\% & 0.302 & \underline{3.121} & 46.1\% & 32.3\% \\
+BSTAN & \cellcolor{altbest}\textbf{85.3\%} & 40.2\% & 54.7\% & 53.4\% & 4.4\% & 70.0\% & \underline{0.222} & 3.422 & \underline{59.3\%} & \underline{33.5\%} \\
 \bottomrule
 \end{tabular*}
 \end{table*}
 
-\begin{table*}[t]
-\centering
-\caption{Common-manifest temporal and continuous-value estimation results. Errors are in minutes; bold denotes the lowest value within each onset cap.}
-\label{tab:comparison-regression}
-\scriptsize
-\setlength{\tabcolsep}{3.5pt}
-\renewcommand{\arraystretch}{1.08}
-\begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}llrrr@{}}
-\toprule
-Model & Start cap & Start MAE & Duration MAE & Remain MAE \\
-\midrule
-PHGST-DP & $\leq5$  & 0.127 & \textbf{1.863} & 9.600 \\
-XGBoost & $\leq5$  & 0.030 & 3.264 & \textbf{5.231} \\
-LSTM & $\leq5$  & 0.056 & 3.855 & 10.593 \\
-BTGCN & $\leq5$  & \textbf{0.020} & 3.322 & 19.343 \\
-BSTAN & $\leq5$  & 0.043 & 3.565 & 14.704 \\
-\midrule
-PHGST-DP & $\leq10$ & 0.227 & \textbf{1.788} & 9.270 \\
-XGBoost & $\leq10$ & 0.122 & 3.210 & \textbf{5.231} \\
-LSTM & $\leq10$ & 0.388 & 3.768 & 10.607 \\
-BTGCN & $\leq10$ & \textbf{0.117} & 3.238 & 18.102 \\
-BSTAN & $\leq10$ & 0.153 & 3.533 & 13.850 \\
-\midrule
-PHGST-DP & $\leq15$ & 0.227 & \textbf{1.716} & 8.910 \\
-XGBoost & $\leq15$ & \textbf{0.167} & 3.170 & \textbf{5.231} \\
-LSTM & $\leq15$ & 0.453 & 3.615 & 9.009 \\
-BTGCN & $\leq15$ & 0.302 & 3.121 & 12.829 \\
-BSTAN & $\leq15$ & 0.222 & 3.422 & 13.557 \\
-\bottomrule
-\end{tabular*}
-\end{table*}
-
-The temporal outputs make these alarms useful for estimating how long a resource will remain constrained. PHGST-DP's detected-event duration MAE is $1.863/1.788/1.716$~min, corresponding to reductions of $42.9\%/44.3\%/45.0\%$ relative to the lowest baseline errors. One-step State F1 reaches $0.883/0.892/0.900$, and 20-step State F1 reaches $0.525/0.589/0.610$. The latter exceeds the strongest baseline by $0.146/0.224/0.275$, extending the advantage from identifying an event to describing its future occupancy. Figure~\ref{fig:baseline-comparison} brings together report quality, advance warning, and duration estimation across the three caps.
-
+The temporal outputs extend event identification into a forecast of how long a resource will remain constrained. PHGST-DP's onset MAE is $0.127/0.227/0.227$~min, and detected-event duration MAE is $1.863/1.788/1.716$~min. The latter corresponds to reductions of $42.9\%/44.3\%/45.0\%$ relative to the lowest reported baseline errors. One-step State F1 reaches $0.883/0.892/0.900$, and 20-step State F1 reaches $0.525/0.589/0.610$, exceeding the strongest reported baseline by $14.6/22.4/27.5$ percentage points at the full horizon. Together, onset localization, duration estimation, and occupancy prediction describe the interval available for planning resource attention and recovery. Figure~\ref{fig:baseline-comparison} summarizes Report F1, Upcoming recall, and duration MAE: PHGST-DP maintains Upcoming recall near $0.54$ and duration MAE below 2~min across all three cap settings.
 
 \begin{figure*}[t]
 \centering
-\IfFileExists{../figures/fig_baseline_comparison.pdf}{%
-\includegraphics[width=0.96\textwidth]{../figures/fig_baseline_comparison.pdf}%
-}{}
-\caption{Common-manifest results across the three onset caps for Report F1, station-level Upcoming recall, and duration MAE.}
+\includegraphics[width=0.96\textwidth]{../figures/fig_range_response.pdf}
+\caption{Grouped comparison of (a)~Report F1, (b)~station-level Upcoming recall, and (c)~detected-event duration MAE. Each model row contains three distinct onset-cap settings; the shaded row identifies PHGST-DP. Baseline values have the provisional status stated in Section~\ref{sec:comparison-overview}.}
 \label{fig:baseline-comparison}
 \end{figure*}
 
-Distance-resolved results further locate the model's warning capability. At Start$\leq15$, strict report recall is $0.574$, $0.522$, and $0.433$ for true onsets within 5, 6--10, and more than 10~min, respectively. Among station-matched true positives, exact-onset accuracy is $0.896/0.844/0.831$ across the three caps, and onset-bucket accuracy is $0.921/0.918/0.920$. The forecasts also cover material-handling assets: machine/gantry/robot F1 is $0.805/0.811/0.771$ at Start$\leq5$ and $0.751/0.840/0.639$ at Start$\leq15$. These results connect temporal warning to the different resources through which production constraints develop.
-
+Within the Start$\leq15$ task, grouping events by their true onset distance shows how warning extends into the future: strict report recall is $0.574$, $0.522$, and $0.433$ for onsets within 5, 6--10, and more than 10~min, respectively. The last group directly demonstrates warning coverage beyond 10~min. Across the three separately configured cap tasks, exact-onset accuracy among station-matched true positives is $0.896/0.844/0.831$, and onset-bucket accuracy is $0.921/0.918/0.920$. Warning also spans processing and material handling: machine/gantry/robot F1 is $0.805/0.811/0.771$ at Start$\leq5$ and $0.751/0.840/0.639$ at Start$\leq15$. These results place the temporal forecast across the resource types through which production constraints emerge.
 
 \subsubsection{Bottleneck process-cause prediction}\label{sec:comparison-cause}
 
-Process-cause prediction adds an operational interpretation to the event report. PHGST-DP achieves accuracy of $0.965/0.962/0.974$ and macro recall of $0.967/0.965/0.978$ across the three caps (Table~\ref{tab:comparison-state}). These outputs associate predicted constraints with transport delay, material shortage, upstream starvation, and queue buildup, giving a process context for reviewing the affected resource and time interval. XGBoost achieves accuracy $0.990$ and macro recall $0.988$, demonstrating strong discrimination of the rule-derived cause categories; PHGST-DP integrates this explanatory output with its event and temporal forecasts.
-
+PHGST-DP provides process explanations alongside its event and temporal forecasts, with cause accuracy of $0.965/0.962/0.974$ and macro recall of $0.967/0.965/0.978$ across the three caps (Table~\ref{tab:comparison-state}). The close agreement between accuracy and macro recall indicates strong recognition across the supported categories. XGBoost achieves accuracy $0.990$ and macro recall $0.988$ using a classifier over explicit history statistics. Its partition-based representation may be well suited to the boundaries of rule-derived cause categories. PHGST-DP's high cause recognition complements its event coverage by associating the predicted resource and interval with transport delay, material shortage, upstream starvation, or queue buildup.
 
 \begin{table*}[t]
 \centering
-\caption{Common-manifest future-state and process-cause classification results. Bold denotes the best value within each onset cap.}
+\caption{Bottleneck process-cause prediction (\%). Each Start-cap group reports accuracy and macro recall. Best/second-best styling and provisional baseline status follow Table~\ref{tab:comparison-main}.}
 \label{tab:comparison-state}
 \scriptsize
-\setlength{\tabcolsep}{3.5pt}
-\renewcommand{\arraystretch}{1.08}
-\begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}llrrrr@{}}
+\setlength{\tabcolsep}{3.2pt}
+\renewcommand{\arraystretch}{1.12}
+\begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}lrrrrrr@{}}
 \toprule
-Model & Start cap & State F1 (1-step) & State F1 (20-step) & Cause acc. & Cause macro R \\
+Model & \multicolumn{2}{c}{Start $\leq5$} & \multicolumn{2}{c}{Start $\leq10$} & \multicolumn{2}{c}{Start $\leq15$} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(l){6-7}
+ & Accuracy $\uparrow$ & Macro R $\uparrow$ & Accuracy $\uparrow$ & Macro R $\uparrow$ & Accuracy $\uparrow$ & Macro R $\uparrow$ \\
 \midrule
-PHGST-DP & $\leq5$  & \textbf{88.3\%} & \textbf{52.5\%} & 96.5\% & 96.7\% \\
-XGBoost & $\leq5$  & 61.1\% & 37.3\% & \textbf{99.0\%} & \textbf{98.8\%} \\
-LSTM & $\leq5$  & 29.5\% & 29.5\% & 93.8\% & 92.0\% \\
-BTGCN & $\leq5$  & 64.3\% & 37.2\% & 90.0\% & 88.2\% \\
-BSTAN & $\leq5$  & 71.9\% & 37.9\% & 95.7\% & 95.2\% \\
-\midrule
-PHGST-DP & $\leq10$ & \textbf{89.2\%} & \textbf{58.9\%} & 96.2\% & 96.5\% \\
-XGBoost & $\leq10$ & 59.5\% & 33.7\% & \textbf{99.0\%} & \textbf{98.8\%} \\
-LSTM & $\leq10$ & 27.5\% & 26.2\% & 93.6\% & 93.0\% \\
-BTGCN & $\leq10$ & 56.6\% & 35.9\% & 90.7\% & 90.0\% \\
-BSTAN & $\leq10$ & 63.2\% & 36.5\% & 95.9\% & 95.1\% \\
-\midrule
-PHGST-DP & $\leq15$ & \textbf{90.0\%} & \textbf{61.0\%} & 97.4\% & 97.8\% \\
-XGBoost & $\leq15$ & 58.2\% & 32.2\% & \textbf{99.0\%} & \textbf{98.8\%} \\
-LSTM & $\leq15$ & 26.8\% & 26.0\% & 94.4\% & 92.2\% \\
-BTGCN & $\leq15$ & 46.1\% & 32.3\% & 90.7\% & 90.0\% \\
-BSTAN & $\leq15$ & 59.3\% & 33.5\% & 95.1\% & 93.5\% \\
+PHGST-DP & \underline{96.5\%} & \underline{96.7\%} & \underline{96.2\%} & \underline{96.5\%} & \underline{97.4\%} & \underline{97.8\%} \\
+XGBoost & \cellcolor{altbest}\textbf{99.0\%} & \cellcolor{altbest}\textbf{98.8\%} & \cellcolor{altbest}\textbf{99.0\%} & \cellcolor{altbest}\textbf{98.8\%} & \cellcolor{altbest}\textbf{99.0\%} & \cellcolor{altbest}\textbf{98.8\%} \\
+LSTM & 93.8\% & 92.0\% & 93.6\% & 93.0\% & 94.4\% & 92.2\% \\
+BTGCN & 90.0\% & 88.2\% & 90.7\% & 90.0\% & 90.7\% & 90.0\% \\
+BSTAN & 95.7\% & 95.2\% & 95.9\% & 95.1\% & 95.1\% & 93.5\% \\
 \bottomrule
 \end{tabular*}
 \end{table*}
 
-At Start$\leq5$, PHGST-DP's cause evaluation covers 579 supported windows, with a majority-class accuracy of $0.409$. Its recalls for transport delay, material shortage, upstream starvation, and queue buildup are $0.941$, $0.976$, $0.966$, and $0.984$, respectively. The consistently high class recalls indicate that the output captures several production symptoms across the supported categories. Section~\ref{sec:supervision-analysis} examines how the cause-supervision and label-construction choices support this interpretation.
-
+The class-level results show how this explanation covers distinct production symptoms. At Start$\leq5$, the 579 supported cause windows yield recalls of $0.941$, $0.976$, $0.966$, and $0.984$ for transport delay, material shortage, upstream starvation, and queue buildup, respectively; majority-class accuracy is $0.409$. Recall above $0.94$ in every supported class makes the process output informative across different sources of resource constraint. It supplies a basis for reviewing transport, supply, upstream feeding, and local queues when an event is forecast. Section~\ref{sec:supervision-analysis} examines the supervision components and production relevance of these targets.
 
 \subsubsection{Order-completion remaining-time prediction}\label{sec:comparison-remain}
 
-Order-completion prediction extends the resource-level bottleneck report to the production line. PHGST-DP's final remaining-time MAE is $9.60/9.27/8.91$~min across the three onset caps (Table~\ref{tab:comparison-regression}). These values are the lowest among the evaluated neural models; XGBoost records $5.231$~min for its dedicated remaining-time predictor. For PHGST-DP, the order-level output supplies a completion estimate alongside the resource, timing, and cause information already available in the bottleneck report.
+Order-completion prediction connects local bottleneck forecasts to the progress of the complete order. PHGST-DP's final remaining-time MAE is $9.60/9.27/8.91$~min across the three onset caps, the lowest among the evaluated neural models (Table~\ref{tab:comparison-remain}). XGBoost achieves $5.231$~min using a dedicated regressor over explicit summaries of recent resource histories, global features, and remaining-work counts and ratios. This direct statistical representation offers a plausible explanation for its strength on the scalar completion-time target. PHGST-DP also receives work-progress information and combines it with the learned resource representation, supplying an order-level estimate in the same forecast as bottleneck location, timing, and process cause.
 
-
-\begin{table}[t]
+\begin{table*}[t]
 \centering
-\caption{Order remaining-time MAE (min) before (stage~1) and after (stage~2) remaining-time fine-tuning. Early/middle/late windows: 2,330/1,750/1,274.}
-\label{tab:remain-stage}
+\caption{Order-completion remaining-time MAE (min, lower is better). PHGST-DP uses its final remaining-time head. Best/second-best styling and provisional baseline status follow Table~\ref{tab:comparison-main}.}
+\label{tab:comparison-remain}
 \scriptsize
-\setlength{\tabcolsep}{3.5pt}
-\renewcommand{\arraystretch}{1.08}
-\begin{tabular}{llrrrr}
+\setlength{\tabcolsep}{3.2pt}
+\renewcommand{\arraystretch}{1.12}
+\begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}lrrr@{}}
 \toprule
-Start cap & Stage & Test MAE & Early & Middle & Late \\
+Model & Start $\leq5$ & Start $\leq10$ & Start $\leq15$ \\
 \midrule
-$\leq5$  & 1 & 10.93 & 16.84 & 8.18 & \textbf{3.87} \\
-         & 2 & \textbf{9.60} & \textbf{14.14} & \textbf{7.66} & 3.96 \\
-$\leq10$ & 1 & 11.21 & 17.27 & 8.45 & 3.94 \\
-         & 2 & \textbf{9.27} & \textbf{13.78} & \textbf{7.24} & \textbf{3.80} \\
-$\leq15$ & 1 & 9.72 & 14.72 & 7.51 & \textbf{3.60} \\
-         & 2 & \textbf{8.91} & \textbf{13.08} & \textbf{7.21} & 3.61 \\
+PHGST-DP & \underline{9.600} & \underline{9.270} & \underline{8.910} \\
+XGBoost & \cellcolor{altbest}\textbf{5.231} & \cellcolor{altbest}\textbf{5.231} & \cellcolor{altbest}\textbf{5.231} \\
+LSTM & 10.593 & 10.607 & 9.009 \\
+BTGCN & 19.343 & 18.102 & 12.829 \\
+BSTAN & 14.704 & 13.850 & 13.557 \\
 \bottomrule
-\end{tabular}
-\end{table}
+\end{tabular*}
+\end{table*}
 
-Head-specific fine-tuning strengthens this output while preserving the event and cause predictions. As shown in Table~\ref{tab:remain-stage}, test MAE decreases from $10.93/11.21/9.72$ to $9.60/9.27/8.91$~min, reductions of approximately $12\%/17\%/8\%$. The largest absolute gains occur in early production: MAE decreases from $16.84/17.27/14.72$ to $14.14/13.78/13.08$~min over 2,330 test windows. Late-phase MAE reaches $3.96/3.80/3.61$~min. This specialization improves completion-time estimation at the stage when substantial work remains, while the shared bottleneck forecast continues to identify local production constraints.
-
+The existing head-specific fine-tuning further establishes how completion-time estimation can be improved while the event and cause outputs remain fixed. Relative to the stage-1 reference, MAE decreases by approximately $12\%/17\%/8\%$ to the values in Table~\ref{tab:comparison-remain}; the largest absolute gains occur in early production (Section~\ref{sec:decoder-training}). The order-level head therefore adds progress information to the resource-level warning and can be specialized without changing the bottleneck report's event and explanatory outputs.
 
 \subsection{Ablation study}
 
@@ -1343,7 +1307,7 @@ NoPattern & & 61.6\% & 60.1\% & 42.7\% & 39.6\% & 16.3\% & 57.3\% & 11.06 \\
 \end{tabular*}
 \end{table*}
 
-\subsubsection{Decoder and training components}
+\subsubsection{Decoder and training components}\label{sec:decoder-training}
 
 The decoder and training comparisons examine two requirements of advance warning: distinguishing new events from continuing events and maintaining sensitivity to distant onsets. NoSplit replaces the continuation and onset heads with one shared head. NoFarBoost uses the configuration without far-onset weighting, together with the earlier false-alarm penalty and report-F1 checkpoint criterion. Table~\ref{tab:decoder-ablation} reports the resulting operating points.
 
@@ -1444,34 +1408,48 @@ On the full Start$\leq5$ test split, support is uneven across the 15 targets (Fi
 Process-cause outputs link a predicted event to interpretable production symptoms: transport delay, material shortage, upstream starvation, and queue buildup. The labels encode process-rule evidence, so the explanation is an association with observed operating conditions. Quantitative evaluation covers these four supported classes (Section~\ref{sec:comparison-cause}); blocked-downstream and high-utilization classes have zero test support. Together with the event and state traces, these outputs provide a resource, a time interval, and a process context for reviewing a predicted constraint.
 
 
-\subsection{Computational efficiency}\label{sec:efficiency}
+\subsection{Prediction quality and computational cost}\label{sec:efficiency}
 
-Computational efficiency was measured for the three retained PHGST-DP checkpoints without retraining, threshold adjustment, or test-set model selection. All measurements used the same NVIDIA GeForce RTX~5090 under Python~3.11.15, PyTorch~2.11.0, and CUDA~12.8. Each checkpoint contains 713,984 trainable parameters and occupies 2.91~MiB. The common test split contains 5,354 windows. A complete test pass used batch size 16 and was repeated five times after 50 warm-up batches. Batch-one forward and report latency were each measured over 5,000 synchronized calls. Forward latency covers the model computation on a GPU-resident batch; report latency additionally includes CPU-to-GPU transfer, prediction, and materialization of the event fields. The test-pass timing further includes DataLoader iteration.
+This experiment evaluates the computation required to deliver the predictive quality reported in Section~\ref{sec:comparison-event}. All five models perform inference on an NVIDIA GeForce RTX~5090. The environment uses Python~3.11.15 and CUDA~12.8, with PyTorch~2.11.0 for the neural models and XGBoost~3.2.0 with CuPy~14.2.0 for the seven tree-based prediction heads. Throughput is measured over five complete test passes at batch size 16 after 50 warm-up batches. Forward and report latency use batch size 1 and 5,000 timed calls, with CUDA synchronization before and after each measurement. The timing boundary covers model-side reporting. Forward timing covers prediction with inputs or prepared features resident on the GPU. Report timing includes input transfer, model-specific feature processing, prediction, and event-report generation; for XGBoost, this includes CPU history-feature construction, host-to-device transfer, seven CUDA prediction heads, and device-to-host output transfer. Batched test passes also include data loading. Table~\ref{tab:efficiency} summarizes the three onset caps, and Figure~\ref{fig:quality-cost} relates report latency to the Report F1 values in Table~\ref{tab:comparison-main}.
 
-
+% All 15 GPU timing rows are verified against isaac_factory@a5b6c92,
+% including the original PHGST-DP report snapshots. B2 uses the 2026-10-24 CUDA run.
+% See experiments/efficiency_comparison_2026-10-24.md for provenance and checks.
 \begin{table*}[t]
 \centering
-\caption{PHGST-DP inference efficiency on the retained checkpoints. Build time includes test-set construction and is not a weight-loading-only measurement. Test-pass time uses batch size 16; forward and report latency use batch size 1. Latencies are reported as p50/p95/p99.}
+\caption{Inference cost on the RTX~5090. Ranges give the minimum and maximum across Start $\leq5$, $\leq10$, and $\leq15$ min. Throughput uses batch size 16 and report latency uses batch size 1. GPU allocation is the PyTorch allocator peak.}
 \label{tab:efficiency}
-\scriptsize
+\footnotesize
 \setlength{\tabcolsep}{3.3pt}
-\renewcommand{\arraystretch}{1.08}
-\begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}lrrrrrrr@{}}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}lrrrrrr@{}}
 \toprule
-Start cap & \makecell{Checkpoint\\epoch} & \makecell{Build\\(s)} & \makecell{Test pass\\(s)} & \makecell{Throughput\\(samples/s)} & \makecell{Forward p50/p95/p99\\(ms)} & \makecell{Report p50/p95/p99\\(ms)} & \makecell{Peak GPU\\(MiB)} \\
+Model & Parameters & \makecell{GPU allocation\\(MiB)} & \makecell{Throughput $\uparrow$\\(samples/s)} & \makecell{Report p50 $\downarrow$\\(ms)} & \makecell{Report p95 $\downarrow$\\(ms)} & \makecell{Report p99 $\downarrow$\\(ms)} \\
 \midrule
-$\leq5$  & 16 & 9.70 & 2.695 & 1,987 & 3.52/4.09/4.24 & 4.75/5.38/5.53 & 175.8 \\
-$\leq10$ & 9  & 8.21 & 2.751 & 1,946 & 3.53/4.08/4.21 & 4.77/5.41/5.60 & 175.8 \\
-$\leq15$ & 12 & 8.10 & 2.703 & 1,981 & 3.49/4.06/4.16 & 4.72/5.32/5.51 & 175.8 \\
+\textbf{PHGST-DP} & 713,984 & 175.8 & 1,946\textendash{}1,987 & 4.72\textendash{}4.77 & 5.32\textendash{}5.41 & 5.51\textendash{}5.60 \\
+XGBoost & \na & \na & 236\textendash{}323 & 39.29\textendash{}58.55 & 41.73\textendash{}60.86 & 52.81\textendash{}72.66 \\
+LSTM & 752,867 & 83.8 & 8,547\textendash{}8,740 & 0.64\textendash{}0.65 & 1.14\textendash{}1.15 & 1.33\textendash{}1.35 \\
+BTGCN & 274,339 & 240.3 & 6,881\textendash{}7,274 & 0.92\textendash{}0.95 & 1.48\textendash{}1.51 & 1.62\textendash{}1.66 \\
+BSTAN & 287,267 & 239.7 & 6,584\textendash{}6,667 & 1.00\textendash{}1.03 & 1.54\textendash{}1.58 & 1.64\textendash{}1.68 \\
 \bottomrule
 \end{tabular*}
+\par\vspace{3pt}
+\begin{minipage}{\FullWidth}
+\scriptsize
+Timing runs use the source-recorded workloads on a shared server; the common-sample status follows Section~\ref{sec:comparison-overview}. GPU allocation includes resident inference inputs. XGBoost uses its native CUDA allocator, so its PyTorch allocation is unavailable; its separately sampled NVML process peak is 662--670~MiB, including the CUDA context, libraries, and caches.
+\end{minipage}
 \end{table*}
 
-Table~\ref{tab:efficiency} shows that the three onset settings have nearly identical inference cost. A complete pass over 5,354 windows takes 2.695--2.751~s, corresponding to 1,946--1,987 samples/s; the throughput spread is only about $2.1\%$. For online batch-one use, the median complete-report latency is 4.72--4.77~ms and the p95 latency is 5.32--5.41~ms. Event decoding and data transfer add approximately 1.2--1.3~ms beyond the pure forward pass. The small variation is expected because changing the onset cap changes the learned checkpoint and decision task but not the PHGST-DP architecture or input shape. The constant 175.8~MiB peak allocated GPU memory and compact checkpoint further indicate that the three forecasting ranges do not introduce additional inference resources.
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.96\textwidth]{../figures/fig_quality_cost.pdf}
+\caption{Reported event-identification quality versus median report latency for each onset cap, with a logarithmic latency axis. Report F1 is taken from Table~\ref{tab:comparison-main}; latency is measured for the corresponding model and onset setting. All five models use RTX~5090 inference.}
+\label{fig:quality-cost}
+\end{figure*}
 
+PHGST-DP combines Report F1 of $0.804/0.778/0.768$ with median report latency of 4.72--4.77~ms and p99 latency of 5.51--5.60~ms. Figure~\ref{fig:quality-cost} places it at the highest Report F1 for each onset cap with millisecond-scale reporting. XGBoost's measured CUDA implementation has report p50 of 39.29--58.55~ms and p99 of 52.81--72.66~ms; LSTM, BTGCN, and BSTAN have median report latency below 1.1~ms. These operating points expose the predictive-quality and runtime choices among the measured implementations. PHGST-DP's heterogeneous resource interactions and delay-pattern conditioning fit within a model-side reporting budget far shorter than the 60-s observation interval, making its event coverage and advance warning usable within the studied update cycle.
 
-The largest observed p95 report latency, 5.41~ms, is far below the one-minute sampling interval used by the prediction pipeline. This provides a substantial computation margin for refreshing a bottleneck report after a new window becomes available on the tested platform. The result should nevertheless be interpreted as model-side feasibility rather than end-to-end factory response time: acquisition from MES/WMS and transport systems, feature aggregation, communication, queueing, and downstream decision execution were outside the benchmark. Moreover, the current measurements support within-model comparison across the three PHGST-DP checkpoints only. No matched efficiency measurements are available for the baselines, and the archived runs did not record per-epoch training time, complete fitting time, or process RSS; consequently, no cross-model efficiency ranking or training-cost claim is made.
-
+The resource requirements remain stable across onset caps. PHGST-DP processes 1,946--1,987 samples/s, with a 0.05-ms spread in median report latency. Its 713,984 parameters occupy a 2.91-MiB checkpoint, and peak GPU allocation is approximately 175.8~MiB, about 27\% below BTGCN and BSTAN under the measured configurations; LSTM uses 83.8~MiB. The three checkpoints share the same architecture and input shape. This combination of a compact parameter set, stable inference cost, and detailed event predictions supports frequent report updates on the tested platform.
 
 \section{Discussion}\label{sec:discussion}
 
