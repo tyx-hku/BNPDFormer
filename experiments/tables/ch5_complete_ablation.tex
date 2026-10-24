@@ -1,0 +1,890 @@
+\begin{table*}[p]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.12}
+\caption{Event identification and onset tolerance (metric group 1). Proportions are percentages; timing errors are in minutes. PHGST-DP and Full-S1 share frozen event/cause heads. Training schedules and event pools follow Table~\ref{tab:ablation-arms}. The pretraining row is a historical reference, not a matched comparator. Upcoming/Ongoing and onset-bin recalls use strict report matching; tolerance is 3 min unless stated. Delta F1 is in percentage points.}
+\label{tab:complete-1-1}
+\begin{tabularx}{\textwidth}{@{}lXXXXXX@{}}
+\toprule
+Arm & Start & Thr & $P$ & $R$ & \textbf{F1} & $\Delta$F1 \\
+\midrule
+PHGST-DP & $\le 5$ & 0.94 & 79.4\% & 81.7\% & 80.5\% & 0.0 pp \\
+Full-S1 & $\le 5$ & 0.94 & 79.4\% & 81.7\% & 80.5\% & 0.0 pp \\
+NoFarBoost & $\le 5$ & 0.90 & 83.2\% & 80.8\% & 82.0\% & 1.5 pp \\
+NoCluster & $\le 5$ & 0.94 & 81.2\% & 67.1\% & 73.5\% & -7.0 pp \\
+NoGraph & $\le 5$ & 0.94 & 83.2\% & 67.8\% & 74.7\% & -5.8 pp \\
+NoGroup & $\le 5$ & 0.94 & 76.6\% & 75.6\% & 76.1\% & -4.4 pp \\
+NoPattern & $\le 5$ & 0.94 & 80.2\% & 70.1\% & 74.8\% & -5.7 pp \\
+NoSplit & $\le 5$ & 0.94 & 75.2\% & 70.8\% & 72.9\% & -7.6 pp \\
+NoCross & $\le 5$ & 0.94 & 75.0\% & 69.8\% & 72.3\% & -8.2 pp \\
+NoInfo & $\le 5$ & 0.94 & 77.0\% & 55.3\% & 64.4\% & -16.1 pp \\
+MachineOnly & $\le 5$ & 0.94 & 79.8\% & 54.9\% & 65.0\% & -15.5 pp \\
+\midrule
+PHGST-DP & $\le 10$ & 0.94 & 80.6\% & 76.1\% & 78.3\% & 0.0 pp \\
+Full-S1 & $\le 10$ & 0.94 & 80.6\% & 76.1\% & 78.3\% & 0.0 pp \\
+NoFarBoost & $\le 10$ & 0.88 & 75.0\% & 76.3\% & 75.7\% & -2.6 pp \\
+NoCluster & $\le 10$ & 0.94 & 54.2\% & 67.7\% & 60.2\% & -18.1 pp \\
+NoGraph & $\le 10$ & 0.94 & 82.1\% & 53.9\% & 65.1\% & -13.2 pp \\
+NoGroup & $\le 10$ & 0.94 & 60.5\% & 74.5\% & 66.8\% & -11.5 pp \\
+NoPattern & $\le 10$ & 0.94 & 57.3\% & 64.5\% & 60.7\% & -17.6 pp \\
+NoSplit & $\le 10$ & 0.94 & 56.4\% & 63.8\% & 59.9\% & -18.4 pp \\
+NoCross & $\le 10$ & 0.94 & 59.6\% & 59.3\% & 59.5\% & -18.8 pp \\
+NoInfo & $\le 10$ & 0.94 & 75.9\% & 42.5\% & 54.5\% & -23.8 pp \\
+MachineOnly & $\le 10$ & 0.94 & 82.0\% & 42.4\% & 55.9\% & -22.4 pp \\
+\midrule
+PHGST-DP & $\le 15$ & 0.94 & 80.6\% & 74.2\% & 77.2\% & 0.0 pp \\
+Full-S1 & $\le 15$ & 0.94 & 80.6\% & 74.2\% & 77.2\% & 0.0 pp \\
+NoFarBoost & $\le 15$ & 0.94 & 77.2\% & 71.6\% & 74.3\% & -2.9 pp \\
+NoCluster & $\le 15$ & 0.94 & 51.0\% & 66.4\% & 57.7\% & -19.6 pp \\
+NoGraph & $\le 15$ & 0.94 & 85.1\% & 48.2\% & 61.6\% & -15.7 pp \\
+NoGroup & $\le 15$ & 0.94 & 56.7\% & 69.0\% & 62.3\% & -15.0 pp \\
+NoPattern & $\le 15$ & 0.94 & 55.2\% & 69.8\% & 61.6\% & -15.6 pp \\
+NoSplit & $\le 15$ & 0.94 & 55.9\% & 66.4\% & 60.7\% & -16.5 pp \\
+NoCross & $\le 15$ & 0.94 & 51.8\% & 61.6\% & 56.3\% & -20.9 pp \\
+NoInfo & $\le 15$ & 0.94 & 46.6\% & 51.8\% & 49.0\% & -28.2 pp \\
+MachineOnly & $\le 15$ & 0.94 & 80.2\% & 40.0\% & 53.4\% & -23.9 pp \\
+\midrule
+pretrain\_init$^\dagger$ & $\le 2$ & 0.98 & 85.2\% & 85.6\% & 85.4\% & --- \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\begin{table*}[p]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.12}
+\caption{Event identification and onset tolerance (metric group 2). Proportions are percentages; timing errors are in minutes. PHGST-DP and Full-S1 share frozen event/cause heads. Training schedules and event pools follow Table~\ref{tab:ablation-arms}. The pretraining row is a historical reference, not a matched comparator. Upcoming/Ongoing and onset-bin recalls use strict report matching; tolerance is 3 min unless stated. Delta F1 is in percentage points.}
+\label{tab:complete-1-2}
+\begin{tabularx}{\textwidth}{@{}lXXXXXX@{}}
+\toprule
+Arm & Start & Report F1 & F1@1min & F1@2min & $R_{\mathrm{up}}$ & $R_{\mathrm{on}}$ \\
+\midrule
+PHGST-DP & $\le 5$ & 80.4\% & 79.2\% & 80.1\% & 53.9\% & 93.7\% \\
+Full-S1 & $\le 5$ & 80.4\% & 79.2\% & 80.1\% & 53.9\% & 93.7\% \\
+NoFarBoost & $\le 5$ & 81.9\% & 80.1\% & 81.4\% & 54.2\% & 92.3\% \\
+NoCluster & $\le 5$ & 73.4\% & 73.0\% & 73.3\% & 12.2\% & 91.0\% \\
+NoGraph & $\le 5$ & 74.6\% & 74.2\% & 74.5\% & 10.1\% & 93.0\% \\
+NoGroup & $\le 5$ & 75.3\% & 72.2\% & 74.1\% & 30.7\% & 94.1\% \\
+NoPattern & $\le 5$ & 74.5\% & 73.9\% & 74.4\% & 15.8\% & 93.5\% \\
+NoSplit & $\le 5$ & 72.7\% & 71.3\% & 72.5\% & 18.5\% & 93.5\% \\
+NoCross & $\le 5$ & 71.6\% & 70.1\% & 71.1\% & 19.9\% & 90.7\% \\
+NoInfo & $\le 5$ & 64.4\% & 64.1\% & 64.2\% & 4.9\% & 89.9\% \\
+MachineOnly & $\le 5$ & 65.0\% & 64.8\% & 65.0\% & 3.3\% & 90.3\% \\
+\midrule
+PHGST-DP & $\le 10$ & 77.8\% & 75.2\% & 77.3\% & 52.8\% & 93.6\% \\
+Full-S1 & $\le 10$ & 77.8\% & 75.2\% & 77.3\% & 52.8\% & 93.6\% \\
+NoFarBoost & $\le 10$ & 75.1\% & 73.0\% & 74.9\% & 55.0\% & 92.2\% \\
+NoCluster & $\le 10$ & 57.0\% & 52.8\% & 55.5\% & 26.8\% & 93.5\% \\
+NoGraph & $\le 10$ & 64.9\% & 64.3\% & 64.7\% & 6.5\% & 90.9\% \\
+NoGroup & $\le 10$ & 65.1\% & 58.2\% & 62.5\% & 44.5\% & 94.7\% \\
+NoPattern & $\le 10$ & 58.8\% & 55.7\% & 57.8\% & 23.5\% & 93.1\% \\
+NoSplit & $\le 10$ & 58.0\% & 55.4\% & 56.8\% & 20.4\% & 94.4\% \\
+NoCross & $\le 10$ & 57.1\% & 54.7\% & 56.0\% & 15.7\% & 89.3\% \\
+NoInfo & $\le 10$ & 54.4\% & 54.4\% & 54.4\% & 2.0\% & 89.6\% \\
+MachineOnly & $\le 10$ & 55.9\% & 55.9\% & 55.9\% & 1.4\% & 90.1\% \\
+\midrule
+PHGST-DP & $\le 15$ & 76.8\% & 75.6\% & 76.6\% & 53.4\% & 92.5\% \\
+Full-S1 & $\le 15$ & 76.8\% & 75.6\% & 76.6\% & 53.4\% & 92.5\% \\
+NoFarBoost & $\le 15$ & 74.1\% & 70.6\% & 73.5\% & 48.9\% & 92.1\% \\
+NoCluster & $\le 15$ & 53.7\% & 48.5\% & 51.1\% & 28.2\% & 92.6\% \\
+NoGraph & $\le 15$ & 61.2\% & 61.1\% & 61.1\% & 3.7\% & 88.7\% \\
+NoGroup & $\le 15$ & 60.4\% & 53.3\% & 57.6\% & 39.5\% & 92.2\% \\
+NoPattern & $\le 15$ & 60.1\% & 55.3\% & 58.8\% & 39.7\% & 94.2\% \\
+NoSplit & $\le 15$ & 58.6\% & 54.6\% & 57.3\% & 30.9\% & 94.5\% \\
+NoCross & $\le 15$ & 51.4\% & 46.9\% & 48.9\% & 20.5\% & 89.2\% \\
+NoInfo & $\le 15$ & 44.1\% & 42.0\% & 42.9\% & 12.7\% & 92.2\% \\
+MachineOnly & $\le 15$ & 53.4\% & 53.2\% & 53.3\% & 2.1\% & 91.2\% \\
+\midrule
+pretrain\_init$^\dagger$ & $\le 2$ & 85.4\% & --- & --- & 45.5\% & 91.1\% \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\begin{table*}[p]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.12}
+\caption{Event identification and onset tolerance (metric group 3). Proportions are percentages; timing errors are in minutes. PHGST-DP and Full-S1 share frozen event/cause heads. Training schedules and event pools follow Table~\ref{tab:ablation-arms}. The pretraining row is a historical reference, not a matched comparator. Upcoming/Ongoing and onset-bin recalls use strict report matching; tolerance is 3 min unless stated. Delta F1 is in percentage points.}
+\label{tab:complete-1-3}
+\begin{tabularx}{\textwidth}{@{}lXXXXXX@{}}
+\toprule
+Arm & Start & $R_{\mathrm{up}}^{\le5}$ & $R_{\mathrm{up}}^{6\text{--}10}$ & $R_{\mathrm{up}}^{>10}$ & $n_{\mathrm{true}}$ & $n_{\mathrm{pred}}$ \\
+\midrule
+PHGST-DP & $\le 5$ & 53.9\% & --- & --- & 1102 & 1134 \\
+Full-S1 & $\le 5$ & 53.9\% & --- & --- & 1102 & 1134 \\
+NoFarBoost & $\le 5$ & 54.2\% & --- & --- & 1102 & 1070 \\
+NoCluster & $\le 5$ & 12.2\% & --- & --- & 1102 & 910 \\
+NoGraph & $\le 5$ & 10.1\% & --- & --- & 1102 & 898 \\
+NoGroup & $\le 5$ & 30.7\% & --- & --- & 1102 & 1088 \\
+NoPattern & $\le 5$ & 15.8\% & --- & --- & 1102 & 963 \\
+NoSplit & $\le 5$ & 18.5\% & --- & --- & 1102 & 1037 \\
+NoCross & $\le 5$ & 19.9\% & --- & --- & 1102 & 1026 \\
+NoInfo & $\le 5$ & 4.9\% & --- & --- & 955 & 686 \\
+MachineOnly & $\le 5$ & 3.3\% & --- & --- & 955 & 657 \\
+\midrule
+PHGST-DP & $\le 10$ & 57.7\% & 46.6\% & --- & 1372 & 1295 \\
+Full-S1 & $\le 10$ & 57.7\% & 46.6\% & --- & 1372 & 1295 \\
+NoFarBoost & $\le 10$ & 59.2\% & 49.6\% & --- & 1372 & 1396 \\
+NoCluster & $\le 10$ & 34.5\% & 17.2\% & --- & 1372 & 1715 \\
+NoGraph & $\le 10$ & 11.6\% & 0.0\% & --- & 1372 & 900 \\
+NoGroup & $\le 10$ & 50.6\% & 36.9\% & --- & 1372 & 1688 \\
+NoPattern & $\le 10$ & 30.4\% & 14.9\% & --- & 1372 & 1544 \\
+NoSplit & $\le 10$ & 25.6\% & 13.8\% & --- & 1372 & 1552 \\
+NoCross & $\le 10$ & 23.5\% & 6.0\% & --- & 1372 & 1363 \\
+NoInfo & $\le 10$ & 3.3\% & 0.0\% & --- & 1225 & 686 \\
+MachineOnly & $\le 10$ & 2.3\% & 0.0\% & --- & 1225 & 633 \\
+\midrule
+PHGST-DP & $\le 15$ & 57.4\% & 52.2\% & 43.3\% & 1478 & 1360 \\
+Full-S1 & $\le 15$ & 57.4\% & 52.2\% & 43.3\% & 1478 & 1360 \\
+NoFarBoost & $\le 15$ & 57.7\% & 47.4\% & 24.0\% & 1478 & 1370 \\
+NoCluster & $\le 15$ & 30.7\% & 33.6\% & 6.7\% & 1478 & 1925 \\
+NoGraph & $\le 15$ & 7.7\% & 0.0\% & 0.0\% & 1478 & 838 \\
+NoGroup & $\le 15$ & 44.6\% & 41.0\% & 19.2\% & 1478 & 1799 \\
+NoPattern & $\le 15$ & 47.0\% & 39.6\% & 16.3\% & 1478 & 1867 \\
+NoSplit & $\le 15$ & 36.6\% & 31.0\% & 12.5\% & 1478 & 1756 \\
+NoCross & $\le 15$ & 27.4\% & 17.2\% & 6.7\% & 1478 & 1758 \\
+NoInfo & $\le 15$ & 21.9\% & 4.4\% & 0.0\% & 1331 & 1479 \\
+MachineOnly & $\le 15$ & 4.1\% & 0.0\% & 0.0\% & 1331 & 663 \\
+\midrule
+pretrain\_init$^\dagger$ & $\le 2$ & --- & --- & --- & 940 & 945 \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\begin{table*}[p]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.12}
+\caption{Onset and duration estimation (metric group 1). Proportions are percentages; timing errors are in minutes. PHGST-DP and Full-S1 share frozen event/cause heads. Training schedules and event pools follow Table~\ref{tab:ablation-arms}. The pretraining row is a historical reference, not a matched comparator.}
+\label{tab:complete-2-1}
+\begin{tabularx}{\textwidth}{@{}lXXXXXX@{}}
+\toprule
+Arm & Start & Start MAE & Start RMSE & Start MAE$_{\mathrm{up}}$ & Exact start & Exact start$_{\mathrm{up}}$ \\
+\midrule
+PHGST-DP & $\le 5$ & 0.13 & 0.43 & 0.63 & 89.6\% & 48.4\% \\
+Full-S1 & $\le 5$ & 0.13 & 0.43 & 0.63 & 89.6\% & 48.4\% \\
+NoFarBoost & $\le 5$ & 0.13 & 0.46 & 0.66 & 89.6\% & 49.2\% \\
+NoCluster & $\le 5$ & 0.03 & 0.25 & 0.50 & 98.2\% & 69.0\% \\
+NoGraph & $\le 5$ & 0.02 & 0.23 & 0.49 & 98.8\% & 74.3\% \\
+NoGroup & $\le 5$ & 0.17 & 0.67 & 1.26 & 92.0\% & 40.2\% \\
+NoPattern & $\le 5$ & 0.05 & 0.36 & 0.70 & 97.2\% & 60.7\% \\
+NoSplit & $\le 5$ & 0.07 & 0.41 & 0.88 & 96.0\% & 51.6\% \\
+NoCross & $\le 5$ & 0.11 & 0.57 & 1.14 & 95.1\% & 48.6\% \\
+NoInfo & $\le 5$ & 0.02 & 0.18 & 0.47 & 98.9\% & 68.4\% \\
+MachineOnly & $\le 5$ & 0.01 & 0.14 & 0.46 & 99.2\% & 69.2\% \\
+\midrule
+PHGST-DP & $\le 10$ & 0.23 & 0.74 & 0.67 & 84.4\% & 50.2\% \\
+Full-S1 & $\le 10$ & 0.23 & 0.74 & 0.67 & 84.4\% & 50.2\% \\
+NoFarBoost & $\le 10$ & 0.24 & 0.73 & 0.72 & 82.3\% & 45.6\% \\
+NoCluster & $\le 10$ & 0.51 & 1.53 & 2.18 & 83.2\% & 26.3\% \\
+NoGraph & $\le 10$ & 0.05 & 0.55 & 0.51 & 98.1\% & 69.2\% \\
+NoGroup & $\le 10$ & 0.46 & 1.17 & 1.54 & 78.0\% & 23.9\% \\
+NoPattern & $\le 10$ & 0.34 & 1.12 & 1.65 & 86.3\% & 29.2\% \\
+NoSplit & $\le 10$ & 0.32 & 1.19 & 1.76 & 88.6\% & 34.2\% \\
+NoCross & $\le 10$ & 0.34 & 1.22 & 2.04 & 89.3\% & 32.0\% \\
+NoInfo & $\le 10$ & 0.02 & 0.36 & 0.71 & 99.4\% & 78.6\% \\
+MachineOnly & $\le 10$ & 0.00 & 0.04 & 0.11 & 99.8\% & 88.9\% \\
+\midrule
+PHGST-DP & $\le 15$ & 0.23 & 0.81 & 0.54 & 83.1\% & 52.4\% \\
+Full-S1 & $\le 15$ & 0.23 & 0.81 & 0.54 & 83.1\% & 52.4\% \\
+NoFarBoost & $\le 15$ & 0.28 & 0.85 & 0.75 & 80.9\% & 42.5\% \\
+NoCluster & $\le 15$ & 0.66 & 1.72 & 2.28 & 78.5\% & 21.6\% \\
+NoGraph & $\le 15$ & 0.07 & 0.80 & 0.31 & 98.7\% & 80.8\% \\
+NoGroup & $\le 15$ & 0.52 & 1.32 & 1.59 & 76.9\% & 24.2\% \\
+NoPattern & $\le 15$ & 0.47 & 1.45 & 1.47 & 78.6\% & 28.1\% \\
+NoSplit & $\le 15$ & 0.49 & 1.62 & 1.75 & 82.1\% & 31.2\% \\
+NoCross & $\le 15$ & 0.73 & 1.90 & 2.81 & 80.4\% & 20.5\% \\
+NoInfo & $\le 15$ & 0.77 & 2.16 & 3.17 & 82.1\% & 26.3\% \\
+MachineOnly & $\le 15$ & 0.02 & 0.17 & 0.50 & 99.1\% & 68.8\% \\
+\midrule
+pretrain\_init$^\dagger$ & $\le 2$ & 0.09 & 0.38 & 1.39 & --- & --- \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\begin{table*}[p]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.12}
+\caption{Onset and duration estimation (metric group 2). Proportions are percentages; timing errors are in minutes. PHGST-DP and Full-S1 share frozen event/cause heads. Training schedules and event pools follow Table~\ref{tab:ablation-arms}. The pretraining row is a historical reference, not a matched comparator.}
+\label{tab:complete-2-2}
+\begin{tabularx}{\textwidth}{@{}lXXXXXX@{}}
+\toprule
+Arm & Start & Onset bucket & Dur MAE (tp) & Dur RMSE (tp) & Dur MAE$_{\mathrm{up}}$ & \textbf{Dur MAE} \\
+\midrule
+PHGST-DP & $\le 5$ & 92.1\% & 1.86 & 2.56 & 1.51 & 4.17 \\
+Full-S1 & $\le 5$ & 92.1\% & 1.86 & 2.56 & 1.51 & 4.17 \\
+NoFarBoost & $\le 5$ & 91.7\% & 1.93 & 2.64 & 1.66 & 4.03 \\
+NoCluster & $\le 5$ & 94.3\% & 2.89 & 4.11 & 2.40 & 5.43 \\
+NoGraph & $\le 5$ & 95.6\% & 2.98 & 4.26 & 2.88 & 5.48 \\
+NoGroup & $\le 5$ & 89.1\% & 2.59 & 3.53 & 2.44 & 5.11 \\
+NoPattern & $\le 5$ & 93.4\% & 2.56 & 3.53 & 2.08 & 5.27 \\
+NoSplit & $\le 5$ & 93.3\% & 2.69 & 3.79 & 2.45 & 5.56 \\
+NoCross & $\le 5$ & 91.0\% & 2.59 & 3.80 & 2.44 & 5.28 \\
+NoInfo & $\le 5$ & 96.4\% & 3.55 & 5.07 & 2.17 & 6.66 \\
+MachineOnly & $\le 5$ & 97.5\% & 3.57 & 5.06 & 2.75 & 6.51 \\
+\midrule
+PHGST-DP & $\le 10$ & 91.8\% & 1.79 & 2.50 & 1.39 & 4.38 \\
+Full-S1 & $\le 10$ & 91.8\% & 1.79 & 2.50 & 1.39 & 4.38 \\
+NoFarBoost & $\le 10$ & 91.5\% & 1.77 & 2.43 & 1.41 & 4.66 \\
+NoCluster & $\le 10$ & 83.3\% & 2.40 & 3.38 & 1.84 & 6.69 \\
+NoGraph & $\le 10$ & 94.7\% & 3.09 & 4.45 & 2.75 & 6.46 \\
+NoGroup & $\le 10$ & 84.1\% & 2.43 & 3.40 & 1.82 & 6.05 \\
+NoPattern & $\le 10$ & 87.3\% & 2.41 & 3.30 & 1.96 & 6.56 \\
+NoSplit & $\le 10$ & 87.9\% & 2.19 & 2.99 & 1.72 & 6.63 \\
+NoCross & $\le 10$ & 86.8\% & 2.51 & 3.62 & 2.02 & 6.60 \\
+NoInfo & $\le 10$ & 97.3\% & 3.72 & 5.15 & 2.18 & 7.57 \\
+MachineOnly & $\le 10$ & 98.3\% & 3.60 & 5.00 & 2.14 & 7.40 \\
+\midrule
+PHGST-DP & $\le 15$ & 92.0\% & 1.72 & 2.49 & 1.19 & 4.43 \\
+Full-S1 & $\le 15$ & 92.0\% & 1.72 & 2.49 & 1.19 & 4.43 \\
+NoFarBoost & $\le 15$ & 89.5\% & 1.88 & 2.57 & 1.46 & 4.87 \\
+NoCluster & $\le 15$ & 82.5\% & 2.30 & 3.22 & 1.73 & 6.65 \\
+NoGraph & $\le 15$ & 96.4\% & 3.04 & 4.38 & 2.56 & 6.57 \\
+NoGroup & $\le 15$ & 83.1\% & 2.49 & 3.46 & 1.74 & 6.34 \\
+NoPattern & $\le 15$ & 87.5\% & 2.14 & 2.86 & 1.66 & 6.20 \\
+NoSplit & $\le 15$ & 87.2\% & 2.11 & 2.90 & 1.64 & 6.36 \\
+NoCross & $\le 15$ & 80.5\% & 2.37 & 3.46 & 1.61 & 6.77 \\
+NoInfo & $\le 15$ & 78.7\% & 2.94 & 4.25 & 1.66 & 7.66 \\
+MachineOnly & $\le 15$ & 97.0\% & 3.39 & 4.60 & 2.64 & 7.46 \\
+\midrule
+pretrain\_init$^\dagger$ & $\le 2$ & --- & 1.96 & 2.60 & 1.37 & 3.39 \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\begin{table*}[p]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.12}
+\caption{Onset and duration estimation (metric group 3). Proportions are percentages; timing errors are in minutes. PHGST-DP and Full-S1 share frozen event/cause heads. Training schedules and event pools follow Table~\ref{tab:ablation-arms}. The pretraining row is a historical reference, not a matched comparator.}
+\label{tab:complete-2-3}
+\begin{tabularx}{\textwidth}{@{}lXX@{}}
+\toprule
+Arm & Start & \textbf{Dur RMSE} \\
+\midrule
+PHGST-DP & $\le 5$ & 5.92 \\
+Full-S1 & $\le 5$ & 5.92 \\
+NoFarBoost & $\le 5$ & 5.76 \\
+NoCluster & $\le 5$ & 7.05 \\
+NoGraph & $\le 5$ & 7.12 \\
+NoGroup & $\le 5$ & 6.68 \\
+NoPattern & $\le 5$ & 6.95 \\
+NoSplit & $\le 5$ & 7.22 \\
+NoCross & $\le 5$ & 6.87 \\
+NoInfo & $\le 5$ & 8.10 \\
+MachineOnly & $\le 5$ & 7.96 \\
+\midrule
+PHGST-DP & $\le 10$ & 6.11 \\
+Full-S1 & $\le 10$ & 6.11 \\
+NoFarBoost & $\le 10$ & 6.35 \\
+NoCluster & $\le 10$ & 8.05 \\
+NoGraph & $\le 10$ & 7.91 \\
+NoGroup & $\le 10$ & 7.48 \\
+NoPattern & $\le 10$ & 7.92 \\
+NoSplit & $\le 10$ & 8.05 \\
+NoCross & $\le 10$ & 7.96 \\
+NoInfo & $\le 10$ & 8.75 \\
+MachineOnly & $\le 10$ & 8.62 \\
+\midrule
+PHGST-DP & $\le 15$ & 6.15 \\
+Full-S1 & $\le 15$ & 6.15 \\
+NoFarBoost & $\le 15$ & 6.47 \\
+NoCluster & $\le 15$ & 7.91 \\
+NoGraph & $\le 15$ & 7.94 \\
+NoGroup & $\le 15$ & 7.64 \\
+NoPattern & $\le 15$ & 7.52 \\
+NoSplit & $\le 15$ & 7.73 \\
+NoCross & $\le 15$ & 8.03 \\
+NoInfo & $\le 15$ & 8.72 \\
+MachineOnly & $\le 15$ & 8.58 \\
+\midrule
+pretrain\_init$^\dagger$ & $\le 2$ & 4.85 \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\begin{table*}[p]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.12}
+\caption{Decoded state, occupancy and resource-type performance (metric group 1). Proportions are percentages; timing errors are in minutes. PHGST-DP and Full-S1 share frozen event/cause heads. Training schedules and event pools follow Table~\ref{tab:ablation-arms}. The pretraining row is a historical reference, not a matched comparator. State is decoded from event timing; Hot is the occupancy head. Type hmean is the harmonic mean of per-type Hot F1.}
+\label{tab:complete-3-1}
+\begin{tabularx}{\textwidth}{@{}lXXXXXX@{}}
+\toprule
+Arm & Start & State $P$ & State $R$ & State F1 & State F1$_K$ & Hot $P$ \\
+\midrule
+PHGST-DP & $\le 5$ & 85.0\% & 91.9\% & 88.3\% & 52.5\% & 67.7\% \\
+Full-S1 & $\le 5$ & 85.0\% & 91.9\% & 88.3\% & 52.5\% & 67.7\% \\
+NoFarBoost & $\le 5$ & 86.0\% & 90.8\% & 88.3\% & 53.1\% & 71.9\% \\
+NoCluster & $\le 5$ & 80.4\% & 88.1\% & 84.1\% & 40.0\% & 64.1\% \\
+NoGraph & $\le 5$ & 85.1\% & 89.5\% & 87.3\% & 40.0\% & 66.1\% \\
+NoGroup & $\le 5$ & 76.5\% & 91.9\% & 83.5\% & 44.0\% & 61.1\% \\
+NoPattern & $\le 5$ & 79.7\% & 90.8\% & 84.9\% & 42.1\% & 62.6\% \\
+NoSplit & $\le 5$ & 75.4\% & 90.8\% & 82.4\% & 40.8\% & 57.9\% \\
+NoCross & $\le 5$ & 74.9\% & 88.7\% & 81.2\% & 40.7\% & 62.3\% \\
+NoInfo & $\le 5$ & 77.8\% & 63.4\% & 69.9\% & 31.1\% & 48.7\% \\
+MachineOnly & $\le 5$ & 81.8\% & 62.7\% & 70.9\% & 31.2\% & 53.9\% \\
+\midrule
+PHGST-DP & $\le 10$ & 86.5\% & 92.0\% & 89.2\% & 58.9\% & 71.0\% \\
+Full-S1 & $\le 10$ & 86.5\% & 92.0\% & 89.2\% & 58.9\% & 71.0\% \\
+NoFarBoost & $\le 10$ & 86.1\% & 91.0\% & 88.5\% & 57.6\% & 65.5\% \\
+NoCluster & $\le 10$ & 69.0\% & 92.0\% & 78.9\% & 39.9\% & 39.6\% \\
+NoGraph & $\le 10$ & 81.1\% & 88.0\% & 84.4\% & 39.4\% & 62.3\% \\
+NoGroup & $\le 10$ & 74.4\% & 92.8\% & 82.6\% & 46.4\% & 46.5\% \\
+NoPattern & $\le 10$ & 75.6\% & 91.1\% & 82.6\% & 40.6\% & 44.4\% \\
+NoSplit & $\le 10$ & 70.2\% & 92.4\% & 79.8\% & 40.2\% & 41.1\% \\
+NoCross & $\le 10$ & 67.0\% & 87.6\% & 75.9\% & 38.8\% & 44.6\% \\
+NoInfo & $\le 10$ & 75.6\% & 62.4\% & 68.4\% & 30.6\% & 41.3\% \\
+MachineOnly & $\le 10$ & 81.8\% & 62.4\% & 70.8\% & 31.1\% & 49.4\% \\
+\midrule
+PHGST-DP & $\le 15$ & 89.1\% & 91.0\% & 90.0\% & 61.0\% & 70.4\% \\
+Full-S1 & $\le 15$ & 89.1\% & 91.0\% & 90.0\% & 61.0\% & 70.4\% \\
+NoFarBoost & $\le 15$ & 86.2\% & 91.2\% & 88.6\% & 57.3\% & 66.0\% \\
+NoCluster & $\le 15$ & 74.3\% & 91.2\% & 81.9\% & 39.9\% & 36.0\% \\
+NoGraph & $\le 15$ & 87.6\% & 85.4\% & 86.5\% & 38.9\% & 67.4\% \\
+NoGroup & $\le 15$ & 75.1\% & 90.2\% & 81.9\% & 44.2\% & 43.1\% \\
+NoPattern & $\le 15$ & 78.1\% & 92.8\% & 84.8\% & 44.9\% & 42.8\% \\
+NoSplit & $\le 15$ & 75.9\% & 92.5\% & 83.4\% & 43.3\% & 41.8\% \\
+NoCross & $\le 15$ & 67.2\% & 87.6\% & 76.0\% & 37.9\% & 38.4\% \\
+NoInfo & $\le 15$ & 51.9\% & 70.1\% & 59.6\% & 30.9\% & 30.1\% \\
+MachineOnly & $\le 15$ & 79.5\% & 63.5\% & 70.6\% & 31.7\% & 47.9\% \\
+\midrule
+pretrain\_init$^\dagger$ & $\le 2$ & 83.1\% & 90.8\% & 86.8\% & 54.7\% & 67.4\% \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\begin{table*}[p]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.12}
+\caption{Decoded state, occupancy and resource-type performance (metric group 2). Proportions are percentages; timing errors are in minutes. PHGST-DP and Full-S1 share frozen event/cause heads. Training schedules and event pools follow Table~\ref{tab:ablation-arms}. The pretraining row is a historical reference, not a matched comparator. State is decoded from event timing; Hot is the occupancy head. Type hmean is the harmonic mean of per-type Hot F1.}
+\label{tab:complete-3-2}
+\begin{tabularx}{\textwidth}{@{}lXXXXXX@{}}
+\toprule
+Arm & Start & Hot $R$ & Hot F1 & Hot AP & Type hmean & F1$_{\mathrm{Machine}}$ \\
+\midrule
+PHGST-DP & $\le 5$ & 45.6\% & 54.5\% & 52.4\% & 50.5\% & 80.5\% \\
+Full-S1 & $\le 5$ & 45.6\% & 54.5\% & 52.4\% & 50.5\% & 80.5\% \\
+NoFarBoost & $\le 5$ & 44.7\% & 55.1\% & 52.4\% & 52.8\% & 81.6\% \\
+NoCluster & $\le 5$ & 31.3\% & 42.0\% & 38.1\% & 41.2\% & 75.3\% \\
+NoGraph & $\le 5$ & 28.3\% & 39.6\% & 35.2\% & 38.4\% & 76.0\% \\
+NoGroup & $\le 5$ & 35.2\% & 44.7\% & 43.0\% & 43.2\% & 77.2\% \\
+NoPattern & $\le 5$ & 34.9\% & 44.8\% & 39.3\% & 43.3\% & 75.8\% \\
+NoSplit & $\le 5$ & 33.0\% & 42.0\% & 36.5\% & 41.2\% & 74.8\% \\
+NoCross & $\le 5$ & 32.3\% & 42.5\% & 37.7\% & 39.6\% & 73.2\% \\
+NoInfo & $\le 5$ & 22.9\% & 31.2\% & 25.0\% & 0.0\% & 72.0\% \\
+MachineOnly & $\le 5$ & 22.2\% & 31.5\% & 25.1\% & 0.0\% & 73.0\% \\
+\midrule
+PHGST-DP & $\le 10$ & 53.4\% & 61.0\% & 59.8\% & 53.0\% & 77.4\% \\
+Full-S1 & $\le 10$ & 53.4\% & 61.0\% & 59.8\% & 53.0\% & 77.4\% \\
+NoFarBoost & $\le 10$ & 55.8\% & 60.3\% & 59.2\% & 50.3\% & 76.3\% \\
+NoCluster & $\le 10$ & 43.7\% & 41.5\% & 41.4\% & 41.7\% & 60.4\% \\
+NoGraph & $\le 10$ & 27.6\% & 38.2\% & 32.3\% & 37.6\% & 66.3\% \\
+NoGroup & $\le 10$ & 50.6\% & 48.5\% & 47.8\% & 45.2\% & 66.3\% \\
+NoPattern & $\le 10$ & 42.2\% & 43.2\% & 43.2\% & 40.5\% & 62.8\% \\
+NoSplit & $\le 10$ & 42.4\% & 41.7\% & 41.7\% & 41.4\% & 61.4\% \\
+NoCross & $\le 10$ & 37.5\% & 40.7\% & 38.6\% & 37.1\% & 61.9\% \\
+NoInfo & $\le 10$ & 25.0\% & 31.2\% & 23.3\% & 0.0\% & 63.7\% \\
+MachineOnly & $\le 10$ & 23.6\% & 32.0\% & 25.2\% & 0.0\% & 65.6\% \\
+\midrule
+PHGST-DP & $\le 15$ & 56.1\% & 62.4\% & 61.3\% & 53.6\% & 75.1\% \\
+Full-S1 & $\le 15$ & 56.1\% & 62.4\% & 61.3\% & 53.6\% & 75.1\% \\
+NoFarBoost & $\le 15$ & 53.8\% & 59.3\% & 58.4\% & 51.8\% & 74.6\% \\
+NoCluster & $\le 15$ & 47.8\% & 41.1\% & 43.0\% & 41.2\% & 57.2\% \\
+NoGraph & $\le 15$ & 25.6\% & 37.1\% & 33.9\% & 36.0\% & 63.9\% \\
+NoGroup & $\le 15$ & 51.6\% & 47.0\% & 47.4\% & 46.9\% & 62.6\% \\
+NoPattern & $\le 15$ & 50.8\% & 46.5\% & 47.6\% & 38.7\% & 64.2\% \\
+NoSplit & $\le 15$ & 47.2\% & 44.3\% & 45.0\% & 44.3\% & 61.6\% \\
+NoCross & $\le 15$ & 42.8\% & 40.5\% & 39.9\% & 36.5\% & 61.0\% \\
+NoInfo & $\le 15$ & 32.6\% & 31.3\% & 30.6\% & 0.0\% & 55.3\% \\
+MachineOnly & $\le 15$ & 24.3\% & 32.2\% & 25.4\% & 0.0\% & 63.4\% \\
+\midrule
+pretrain\_init$^\dagger$ & $\le 2$ & 51.4\% & 58.3\% & 57.6\% & 56.9\% & 86.0\% \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\begin{table*}[p]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.12}
+\caption{Decoded state, occupancy and resource-type performance (metric group 3). Proportions are percentages; timing errors are in minutes. PHGST-DP and Full-S1 share frozen event/cause heads. Training schedules and event pools follow Table~\ref{tab:ablation-arms}. The pretraining row is a historical reference, not a matched comparator. State is decoded from event timing; Hot is the occupancy head. Type hmean is the harmonic mean of per-type Hot F1.}
+\label{tab:complete-3-3}
+\begin{tabularx}{\textwidth}{@{}lXXX@{}}
+\toprule
+Arm & Start & F1$_{\mathrm{Gantry}}$ & F1$_{\mathrm{AGV}}$ \\
+\midrule
+PHGST-DP & $\le 5$ & 81.1\% & 77.1\% \\
+Full-S1 & $\le 5$ & 81.1\% & 77.1\% \\
+NoFarBoost & $\le 5$ & 83.8\% & 76.9\% \\
+NoCluster & $\le 5$ & 66.4\% & 80.0\% \\
+NoGraph & $\le 5$ & 69.6\% & 80.0\% \\
+NoGroup & $\le 5$ & 72.1\% & 79.5\% \\
+NoPattern & $\le 5$ & 70.8\% & 80.0\% \\
+NoSplit & $\le 5$ & 67.0\% & 80.0\% \\
+NoCross & $\le 5$ & 67.7\% & 80.0\% \\
+NoInfo & $\le 5$ & 8.2\% & 0.0\% \\
+MachineOnly & $\le 5$ & 0.0\% & 0.0\% \\
+\midrule
+PHGST-DP & $\le 10$ & 82.0\% & 66.0\% \\
+Full-S1 & $\le 10$ & 82.0\% & 66.0\% \\
+NoFarBoost & $\le 10$ & 77.3\% & 51.9\% \\
+NoCluster & $\le 10$ & 58.6\% & 70.3\% \\
+NoGraph & $\le 10$ & 60.6\% & 71.1\% \\
+NoGroup & $\le 10$ & 68.4\% & 63.4\% \\
+NoPattern & $\le 10$ & 55.5\% & 62.1\% \\
+NoSplit & $\le 10$ & 55.1\% & 71.1\% \\
+NoCross & $\le 10$ & 51.1\% & 59.3\% \\
+NoInfo & $\le 10$ & 0.0\% & 0.0\% \\
+MachineOnly & $\le 10$ & 0.0\% & 0.0\% \\
+\midrule
+PHGST-DP & $\le 15$ & 84.0\% & 63.9\% \\
+Full-S1 & $\le 15$ & 84.0\% & 63.9\% \\
+NoFarBoost & $\le 15$ & 75.8\% & 56.6\% \\
+NoCluster & $\le 15$ & 58.4\% & 61.5\% \\
+NoGraph & $\le 15$ & 54.0\% & 68.1\% \\
+NoGroup & $\le 15$ & 61.5\% & 62.7\% \\
+NoPattern & $\le 15$ & 57.4\% & 48.9\% \\
+NoSplit & $\le 15$ & 58.2\% & 65.5\% \\
+NoCross & $\le 15$ & 45.7\% & 55.2\% \\
+NoInfo & $\le 15$ & 29.4\% & 0.0\% \\
+MachineOnly & $\le 15$ & 0.0\% & 0.0\% \\
+\midrule
+pretrain\_init$^\dagger$ & $\le 2$ & 84.5\% & 80.6\% \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\begin{table*}[p]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.12}
+\caption{Process-cause identification (metric group 1). Proportions are percentages; timing errors are in minutes. PHGST-DP and Full-S1 share frozen event/cause heads. Training schedules and event pools follow Table~\ref{tab:ablation-arms}. The pretraining row is a historical reference, not a matched comparator. Cause labels are rule-derived associations; the unsupervised NoCluster cause head is not evaluated.}
+\label{tab:complete-4-1}
+\begin{tabularx}{\textwidth}{@{}lXXXXXX@{}}
+\toprule
+Arm & Start & Accuracy & \textbf{Macro recall} & Val macro & Majority & $n_{\mathrm{cause}}$ \\
+\midrule
+PHGST-DP & $\le 5$ & 96.5\% & 96.7\% & 96.3\% & 40.9\% & 579 \\
+Full-S1 & $\le 5$ & 96.5\% & 96.7\% & 96.3\% & 40.9\% & 579 \\
+NoFarBoost & $\le 5$ & 96.5\% & 96.9\% & 76.9\% & 40.9\% & 579 \\
+NoCluster & $\le 5$ & --- & --- & --- & 40.9\% & 579 \\
+NoGraph & $\le 5$ & 87.6\% & 88.9\% & 88.6\% & 40.9\% & 579 \\
+NoGroup & $\le 5$ & 94.3\% & 95.5\% & 95.2\% & 40.9\% & 579 \\
+NoPattern & $\le 5$ & 73.2\% & 73.4\% & 72.5\% & 40.9\% & 579 \\
+NoSplit & $\le 5$ & 85.3\% & 87.4\% & 87.4\% & 40.9\% & 579 \\
+NoCross & $\le 5$ & 86.2\% & 86.4\% & 87.0\% & 40.9\% & 579 \\
+NoInfo & $\le 5$ & 87.0\% & 88.8\% & 90.6\% & 40.9\% & 579 \\
+MachineOnly & $\le 5$ & 69.9\% & 67.6\% & 68.0\% & 40.9\% & 579 \\
+\midrule
+PHGST-DP & $\le 10$ & 96.2\% & 96.5\% & 96.8\% & 40.9\% & 579 \\
+Full-S1 & $\le 10$ & 96.2\% & 96.5\% & 96.8\% & 40.9\% & 579 \\
+NoFarBoost & $\le 10$ & 96.5\% & 97.0\% & 77.4\% & 40.9\% & 579 \\
+NoCluster & $\le 10$ & --- & --- & --- & 40.9\% & 579 \\
+NoGraph & $\le 10$ & 73.4\% & 74.6\% & 75.5\% & 40.9\% & 579 \\
+NoGroup & $\le 10$ & 93.8\% & 95.3\% & 94.4\% & 40.9\% & 579 \\
+NoPattern & $\le 10$ & 79.3\% & 80.5\% & 82.3\% & 40.9\% & 579 \\
+NoSplit & $\le 10$ & 86.9\% & 88.4\% & 90.4\% & 40.9\% & 579 \\
+NoCross & $\le 10$ & 84.1\% & 85.1\% & 84.6\% & 40.9\% & 579 \\
+NoInfo & $\le 10$ & 68.2\% & 70.7\% & 67.5\% & 40.9\% & 579 \\
+MachineOnly & $\le 10$ & 73.6\% & 73.0\% & 71.0\% & 40.9\% & 579 \\
+\midrule
+PHGST-DP & $\le 15$ & 97.4\% & 97.8\% & 97.8\% & 40.9\% & 579 \\
+Full-S1 & $\le 15$ & 97.4\% & 97.8\% & 97.8\% & 40.9\% & 579 \\
+NoFarBoost & $\le 15$ & 96.9\% & 97.4\% & 77.6\% & 40.9\% & 579 \\
+NoCluster & $\le 15$ & --- & --- & --- & 40.9\% & 579 \\
+NoGraph & $\le 15$ & 79.4\% & 78.7\% & 79.0\% & 40.9\% & 579 \\
+NoGroup & $\le 15$ & 93.8\% & 94.9\% & 95.0\% & 40.9\% & 579 \\
+NoPattern & $\le 15$ & 84.3\% & 85.0\% & 86.2\% & 40.9\% & 579 \\
+NoSplit & $\le 15$ & 86.9\% & 89.0\% & 91.5\% & 40.9\% & 579 \\
+NoCross & $\le 15$ & 80.1\% & 81.1\% & 80.7\% & 40.9\% & 579 \\
+NoInfo & $\le 15$ & 91.7\% & 92.9\% & 92.6\% & 40.9\% & 579 \\
+MachineOnly & $\le 15$ & 74.4\% & 73.5\% & 72.8\% & 40.9\% & 579 \\
+\midrule
+pretrain\_init$^\dagger$ & $\le 2$ & 96.5\% & 97.1\% & 77.4\% & 40.9\% & 579 \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\begin{table*}[p]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.12}
+\caption{Process-cause identification (metric group 2). Proportions are percentages; timing errors are in minutes. PHGST-DP and Full-S1 share frozen event/cause heads. Training schedules and event pools follow Table~\ref{tab:ablation-arms}. The pretraining row is a historical reference, not a matched comparator. Cause labels are rule-derived associations; the unsupervised NoCluster cause head is not evaluated.}
+\label{tab:complete-4-2}
+\begin{tabularx}{\textwidth}{@{}lXXXXX@{}}
+\toprule
+Arm & Start & transport\_delay & material\_shortage & starved\_upstream & queue\_buildup \\
+\midrule
+PHGST-DP & $\le 5$ & 94.1\% & 97.6\% & 96.6\% & 98.4\% \\
+Full-S1 & $\le 5$ & 94.1\% & 97.6\% & 96.6\% & 98.4\% \\
+NoFarBoost & $\le 5$ & 96.3\% & 96.3\% & 94.9\% & 100.0\% \\
+NoCluster & $\le 5$ & --- & --- & --- & --- \\
+NoGraph & $\le 5$ & 97.1\% & 100.0\% & 85.2\% & 73.4\% \\
+NoGroup & $\le 5$ & 95.6\% & 100.0\% & 91.1\% & 95.2\% \\
+NoPattern & $\le 5$ & 99.3\% & 100.0\% & 79.7\% & 14.5\% \\
+NoSplit & $\le 5$ & 93.4\% & 100.0\% & 80.6\% & 75.8\% \\
+NoCross & $\le 5$ & 95.6\% & 96.3\% & 88.2\% & 65.3\% \\
+NoInfo & $\le 5$ & 75.7\% & 97.6\% & 84.4\% & 97.6\% \\
+MachineOnly & $\le 5$ & 81.6\% & 98.8\% & 89.9\% & 0.0\% \\
+\midrule
+PHGST-DP & $\le 10$ & 92.6\% & 98.8\% & 96.2\% & 98.4\% \\
+Full-S1 & $\le 10$ & 92.6\% & 98.8\% & 96.2\% & 98.4\% \\
+NoFarBoost & $\le 10$ & 94.9\% & 98.8\% & 95.4\% & 99.2\% \\
+NoCluster & $\le 10$ & --- & --- & --- & --- \\
+NoGraph & $\le 10$ & 99.3\% & 96.3\% & 73.8\% & 29.0\% \\
+NoGroup & $\le 10$ & 95.6\% & 100.0\% & 89.0\% & 96.8\% \\
+NoPattern & $\le 10$ & 94.1\% & 100.0\% & 80.2\% & 47.6\% \\
+NoSplit & $\le 10$ & 83.1\% & 100.0\% & 85.7\% & 84.7\% \\
+NoCross & $\le 10$ & 97.8\% & 100.0\% & 84.4\% & 58.1\% \\
+NoInfo & $\le 10$ & 93.4\% & 100.0\% & 66.7\% & 22.6\% \\
+MachineOnly & $\le 10$ & 95.6\% & 100.0\% & 83.5\% & 12.9\% \\
+\midrule
+PHGST-DP & $\le 15$ & 97.8\% & 98.8\% & 96.2\% & 98.4\% \\
+Full-S1 & $\le 15$ & 97.8\% & 98.8\% & 96.2\% & 98.4\% \\
+NoFarBoost & $\le 15$ & 96.3\% & 98.8\% & 95.4\% & 99.2\% \\
+NoCluster & $\le 15$ & --- & --- & --- & --- \\
+NoGraph & $\le 15$ & 99.3\% & 98.8\% & 87.8\% & 29.0\% \\
+NoGroup & $\le 15$ & 92.6\% & 100.0\% & 91.1\% & 96.0\% \\
+NoPattern & $\le 15$ & 97.1\% & 100.0\% & 85.7\% & 57.3\% \\
+NoSplit & $\le 15$ & 87.5\% & 100.0\% & 82.3\% & 86.3\% \\
+NoCross & $\le 15$ & 97.1\% & 100.0\% & 81.4\% & 46.0\% \\
+NoInfo & $\le 15$ & 86.8\% & 97.6\% & 89.0\% & 98.4\% \\
+MachineOnly & $\le 15$ & 87.5\% & 100.0\% & 86.5\% & 20.2\% \\
+\midrule
+pretrain\_init$^\dagger$ & $\le 2$ & 95.6\% & 98.8\% & 94.9\% & 99.2\% \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\begin{table*}[p]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.12}
+\caption{Order remaining-time estimation (metric group 1). Proportions are percentages; timing errors are in minutes. PHGST-DP and Full-S1 share frozen event/cause heads. Training schedules and event pools follow Table~\ref{tab:ablation-arms}. The pretraining row is a historical reference, not a matched comparator. Only PHGST-DP receives stage-2 remaining-time fine-tuning; Full-S1 is the appropriate stage-1 reference.}
+\label{tab:complete-5-1}
+\begin{tabularx}{\textwidth}{@{}lXXXXXX@{}}
+\toprule
+Arm & Start & Val MAE & \textbf{Test MAE} & Progress-wtd & Early & Middle \\
+\midrule
+PHGST-DP & $\le 5$ & 10.74 & 9.60 & 8.68 & 14.14 & 7.66 \\
+Full-S1 & $\le 5$ & 12.30 & 10.93 & 8.66 & 16.84 & 8.18 \\
+NoFarBoost & $\le 5$ & 12.03 & 10.64 & --- & --- & --- \\
+NoCluster & $\le 5$ & 18.58 & 17.41 & 13.58 & 27.71 & 12.42 \\
+NoGraph & $\le 5$ & 18.20 & 16.97 & 13.22 & 27.75 & 10.22 \\
+NoGroup & $\le 5$ & 13.25 & 12.69 & 10.21 & 18.95 & 10.28 \\
+NoPattern & $\le 5$ & 20.06 & 18.62 & 14.17 & 30.67 & 12.18 \\
+NoSplit & $\le 5$ & 20.80 & 18.85 & 14.27 & 31.59 & 11.55 \\
+NoCross & $\le 5$ & 19.07 & 17.79 & 13.78 & 28.82 & 11.86 \\
+NoInfo & $\le 5$ & 21.57 & 19.44 & 15.62 & 28.98 & 16.35 \\
+MachineOnly & $\le 5$ & 25.19 & 23.26 & 18.46 & 35.95 & 17.66 \\
+\midrule
+PHGST-DP & $\le 10$ & 10.41 & 9.27 & 8.33 & 13.78 & 7.24 \\
+Full-S1 & $\le 10$ & 12.58 & 11.21 & 8.87 & 17.27 & 8.45 \\
+NoFarBoost & $\le 10$ & 10.86 & 9.61 & --- & --- & --- \\
+NoCluster & $\le 10$ & 12.81 & 11.49 & 9.42 & 16.92 & 9.04 \\
+NoGraph & $\le 10$ & 24.07 & 23.35 & 17.42 & 40.33 & 12.70 \\
+NoGroup & $\le 10$ & 12.54 & 11.58 & 9.36 & 17.24 & 9.53 \\
+NoPattern & $\le 10$ & 14.85 & 13.35 & 10.48 & 20.97 & 9.63 \\
+NoSplit & $\le 10$ & 15.64 & 14.38 & 11.09 & 23.54 & 8.84 \\
+NoCross & $\le 10$ & 15.20 & 13.93 & 10.99 & 22.22 & 9.08 \\
+NoInfo & $\le 10$ & 27.04 & 24.73 & 19.50 & 38.14 & 19.07 \\
+MachineOnly & $\le 10$ & 28.64 & 26.83 & 21.14 & 42.03 & 20.31 \\
+\midrule
+PHGST-DP & $\le 15$ & 10.07 & 8.91 & 8.02 & 13.08 & 7.21 \\
+Full-S1 & $\le 15$ & 10.97 & 9.72 & 7.75 & 14.72 & 7.51 \\
+NoFarBoost & $\le 15$ & 11.77 & 10.20 & --- & --- & --- \\
+NoCluster & $\le 15$ & 11.67 & 10.60 & 8.84 & 14.46 & 10.15 \\
+NoGraph & $\le 15$ & 21.38 & 20.81 & 15.87 & 35.04 & 11.72 \\
+NoGroup & $\le 15$ & 11.06 & 10.55 & 8.91 & 14.64 & 9.34 \\
+NoPattern & $\le 15$ & 12.53 & 11.06 & 9.05 & 16.05 & 9.21 \\
+NoSplit & $\le 15$ & 15.23 & 13.85 & 10.68 & 22.53 & 8.88 \\
+NoCross & $\le 15$ & 16.49 & 15.27 & 12.05 & 24.34 & 10.15 \\
+NoInfo & $\le 15$ & 15.20 & 13.98 & 11.53 & 20.01 & 12.28 \\
+MachineOnly & $\le 15$ & 22.98 & 21.23 & 16.88 & 32.44 & 16.88 \\
+\midrule
+pretrain\_init$^\dagger$ & $\le 2$ & 12.03 & 10.49 & --- & --- & --- \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\begin{table*}[p]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.12}
+\caption{Order remaining-time estimation (metric group 2). Proportions are percentages; timing errors are in minutes. PHGST-DP and Full-S1 share frozen event/cause heads. Training schedules and event pools follow Table~\ref{tab:ablation-arms}. The pretraining row is a historical reference, not a matched comparator. Only PHGST-DP receives stage-2 remaining-time fine-tuning; Full-S1 is the appropriate stage-1 reference.}
+\label{tab:complete-5-2}
+\begin{tabularx}{\textwidth}{@{}lXXXX@{}}
+\toprule
+Arm & Start & Late & Early wtd & Late wtd \\
+\midrule
+PHGST-DP & $\le 5$ & 3.96 & 13.73 & 3.92 \\
+Full-S1 & $\le 5$ & 3.87 & 16.10 & 3.76 \\
+NoFarBoost & $\le 5$ & --- & --- & --- \\
+NoCluster & $\le 5$ & 5.42 & 26.77 & 5.25 \\
+NoGraph & $\le 5$ & 6.54 & 26.75 & 6.29 \\
+NoGroup & $\le 5$ & 4.55 & 18.33 & 4.43 \\
+NoPattern & $\le 5$ & 5.43 & 29.26 & 5.29 \\
+NoSplit & $\le 5$ & 5.60 & 30.29 & 5.45 \\
+NoCross & $\le 5$ & 5.76 & 27.93 & 5.59 \\
+NoInfo & $\le 5$ & 6.25 & 28.54 & 5.91 \\
+MachineOnly & $\le 5$ & 7.75 & 35.26 & 7.44 \\
+\midrule
+PHGST-DP & $\le 10$ & 3.80 & 13.28 & 3.76 \\
+Full-S1 & $\le 10$ & 3.94 & 16.39 & 3.84 \\
+NoFarBoost & $\le 10$ & --- & --- & --- \\
+NoCluster & $\le 10$ & 4.91 & 16.51 & 4.81 \\
+NoGraph & $\le 10$ & 6.92 & 38.70 & 6.75 \\
+NoGroup & $\le 10$ & 4.04 & 16.81 & 3.93 \\
+NoPattern & $\le 10$ & 4.54 & 19.99 & 4.44 \\
+NoSplit & $\le 10$ & 5.21 & 22.49 & 5.04 \\
+NoCross & $\le 10$ & 5.40 & 21.44 & 5.25 \\
+NoInfo & $\le 10$ & 7.97 & 37.18 & 7.70 \\
+MachineOnly & $\le 10$ & 8.00 & 41.49 & 7.80 \\
+\midrule
+PHGST-DP & $\le 15$ & 3.61 & 12.62 & 3.57 \\
+Full-S1 & $\le 15$ & 3.60 & 13.94 & 3.51 \\
+NoFarBoost & $\le 15$ & --- & --- & --- \\
+NoCluster & $\le 15$ & 4.14 & 14.30 & 4.08 \\
+NoGraph & $\le 15$ & 7.25 & 33.66 & 7.05 \\
+NoGroup & $\le 15$ & 4.75 & 14.47 & 4.54 \\
+NoPattern & $\le 15$ & 4.49 & 15.34 & 4.38 \\
+NoSplit & $\le 15$ & 4.81 & 21.52 & 4.66 \\
+NoCross & $\le 15$ & 5.72 & 23.62 & 5.60 \\
+NoInfo & $\le 15$ & 5.30 & 19.70 & 5.15 \\
+MachineOnly & $\le 15$ & 6.70 & 31.86 & 6.46 \\
+\midrule
+pretrain\_init$^\dagger$ & $\le 2$ & --- & --- & --- \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\begin{table*}[p]
+\centering\scriptsize
+\caption{Label representation separability. Development comparison at seed 42, not an ablation of the retained PHGST-DP checkpoint. Proportions are percentages; geometry indices retain their original scales.}
+\begin{tabularx}{\textwidth}{lXXXXX}
+\toprule
+Method & test\_positive\_rate & macro\_f1 & balanced\_accuracy & auroc & station\_macro\_f1 \\
+\midrule
+Active Period & 3.8\% & 62.8\% & 90.4\% & 96.3\% & 59.0\% \\
+Utilization & 4.5\% & 60.0\% & 85.3\% & 92.1\% & 55.6\% \\
+Ops & 1.5\% & 58.1\% & 84.9\% & 90.8\% & 61.9\% \\
+Queue-Wait & 8.7\% & 54.2\% & 78.8\% & 84.6\% & 61.4\% \\
+TPM & 1.8\% & 51.2\% & 84.1\% & 92.0\% & 53.4\% \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\begin{table*}[p]
+\centering\scriptsize
+\caption{Label representation geometry. Development comparison at seed 42, not an ablation of the retained PHGST-DP checkpoint. Proportions are percentages; geometry indices retain their original scales.}
+\begin{tabularx}{\textwidth}{lXXX}
+\toprule
+Method & silhouette & davies\_bouldin & fisher\_ratio \\
+\midrule
+Active Period & 0.272 & 2.330 & 0.114 \\
+Utilization & 0.178 & 2.997 & 0.073 \\
+Ops & 0.147 & 3.571 & 0.064 \\
+Queue-Wait & 0.130 & 3.717 & 0.048 \\
+TPM & 0.146 & 3.500 & 0.059 \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\begin{table*}[p]
+\centering\scriptsize
+\caption{Label-method cause classification. Development comparison at seed 42, not an ablation of the retained PHGST-DP checkpoint. Proportions are percentages; geometry indices retain their original scales.}
+\begin{tabularx}{\textwidth}{lXXX}
+\toprule
+Method & accuracy & macro\_f1 & balanced\_accuracy \\
+\midrule
+Queue-Wait & 95.9\% & 94.0\% & 95.8\% \\
+Active Period & 89.6\% & 88.5\% & 91.0\% \\
+Utilization & 91.4\% & 88.3\% & 91.1\% \\
+Ops & 85.6\% & 83.9\% & 85.6\% \\
+TPM & 77.7\% & 79.9\% & 83.2\% \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\begin{table*}[p]
+\centering\scriptsize
+\caption{Label-method cause recall. Development comparison at seed 42, not an ablation of the retained PHGST-DP checkpoint. Proportions are percentages; geometry indices retain their original scales.}
+\begin{tabularx}{\textwidth}{lXXXX}
+\toprule
+Method & transport\_delay & material\_shortage & starved\_upstream & queue\_buildup \\
+\midrule
+Queue-Wait & 98.8\% & 98.9\% & 86.3\% & 99.3\% \\
+Active Period & 84.4\% & 97.7\% & 84.0\% & 97.9\% \\
+Utilization & 91.7\% & 93.2\% & 83.2\% & 96.4\% \\
+Ops & 92.0\% & 96.6\% & 54.3\% & 99.5\% \\
+TPM & 66.0\% & 100.0\% & 82.4\% & 84.6\% \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\begin{table*}[p]
+\centering\scriptsize
+\caption{Validation results at the selected checkpoints. Report precision/recall and F1 are validation report metrics; remaining-time MAE is in minutes. These values document selection, not held-out superiority. Proportions retain the archived 0--1 scale.}
+\begin{tabularx}{\textwidth}{lXXXXX}
+\toprule
+Checkpoint & Precision $P$ & Recall $R$ & F1 & Upcoming $R_{\mathrm{up}}$ & Ongoing $R_{\mathrm{on}}$ \\
+\midrule
+PHGST-DP\_start5 & 0.837 & 0.891 & 0.863 & 0.739 & 0.969 \\
+PHGST-DP\_start10 & 0.831 & 0.840 & 0.835 & 0.711 & 0.960 \\
+PHGST-DP\_start15 & 0.841 & 0.835 & 0.838 & 0.722 & 0.960 \\
+Full-S1\_start5 & 0.837 & 0.891 & 0.863 & 0.739 & 0.969 \\
+Full-S1\_start10 & 0.831 & 0.840 & 0.835 & 0.711 & 0.960 \\
+Full-S1\_start15 & 0.841 & 0.835 & 0.838 & 0.722 & 0.960 \\
+full\_nofarboost\_start5 & 0.865 & 0.872 & 0.869 & 0.722 & 0.949 \\
+full\_nofarboost\_start10 & 0.805 & 0.836 & 0.820 & 0.739 & 0.927 \\
+full\_nofarboost\_start15 & 0.813 & 0.803 & 0.808 & 0.674 & 0.944 \\
+nocluster\_start5 & 0.807 & 0.649 & 0.719 & 0.129 & 0.916 \\
+nocluster\_start10 & 0.571 & 0.637 & 0.602 & 0.310 & 0.943 \\
+nocluster\_start15 & 0.513 & 0.629 & 0.565 & 0.339 & 0.949 \\
+nograph\_start5 & 0.823 & 0.658 & 0.731 & 0.115 & 0.937 \\
+nograph\_start10 & 0.807 & 0.486 & 0.606 & 0.049 & 0.894 \\
+nograph\_start15 & 0.819 & 0.435 & 0.568 & 0.028 & 0.883 \\
+nogroup\_start5 & 0.782 & 0.765 & 0.774 & 0.383 & 0.962 \\
+nogroup\_start10 & 0.663 & 0.790 & 0.721 & 0.636 & 0.934 \\
+nogroup\_start15 & 0.620 & 0.760 & 0.683 & 0.609 & 0.927 \\
+nopattern\_start5 & 0.789 & 0.671 & 0.725 & 0.166 & 0.930 \\
+nopattern\_start10 & 0.598 & 0.659 & 0.627 & 0.360 & 0.939 \\
+nopattern\_start15 & 0.631 & 0.769 & 0.693 & 0.600 & 0.956 \\
+nosplit\_start5 & 0.784 & 0.670 & 0.723 & 0.149 & 0.937 \\
+nosplit\_start10 & 0.596 & 0.614 & 0.605 & 0.254 & 0.951 \\
+nosplit\_start15 & 0.627 & 0.690 & 0.657 & 0.453 & 0.951 \\
+nocross\_start5 & 0.759 & 0.696 & 0.726 & 0.224 & 0.939 \\
+nocross\_start10 & 0.625 & 0.589 & 0.606 & 0.233 & 0.922 \\
+nocross\_start15 & 0.518 & 0.561 & 0.539 & 0.247 & 0.908 \\
+noinfo\_start5 & 0.802 & 0.539 & 0.645 & 0.056 & 0.895 \\
+noinfo\_start10 & 0.777 & 0.417 & 0.543 & 0.021 & 0.925 \\
+noinfo\_start15 & 0.455 & 0.494 & 0.474 & 0.175 & 0.973 \\
+machineonly\_start5 & 0.829 & 0.554 & 0.664 & 0.043 & 0.930 \\
+machineonly\_start10 & 0.818 & 0.417 & 0.552 & 0.023 & 0.923 \\
+machineonly\_start15 & 0.787 & 0.387 & 0.519 & 0.021 & 0.936 \\
+pretrain\_init & 0.883 & 0.881 & 0.882 & 0.633 & 0.920 \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\begin{table*}[p]
+\centering\scriptsize
+\caption{Validation results at the selected checkpoints. Report precision/recall and F1 are validation report metrics; remaining-time MAE is in minutes. These values document selection, not held-out superiority. Proportions retain the archived 0--1 scale.}
+\begin{tabularx}{\textwidth}{lXXXXX}
+\toprule
+Checkpoint & Start MAE (tp) & Duration MAE (tp) & Hot F1 & Accuracy & Macro recall \\
+\midrule
+PHGST-DP\_start5 & 0.14 & 1.80 & 0.568 & 0.956 & 0.963 \\
+PHGST-DP\_start10 & 0.22 & 1.67 & 0.653 & 0.958 & 0.968 \\
+PHGST-DP\_start15 & 0.19 & 1.53 & 0.694 & 0.967 & 0.978 \\
+Full-S1\_start5 & 0.14 & 1.80 & 0.568 & 0.956 & 0.963 \\
+Full-S1\_start10 & 0.22 & 1.67 & 0.653 & 0.958 & 0.968 \\
+Full-S1\_start15 & 0.19 & 1.53 & 0.694 & 0.967 & 0.978 \\
+full\_nofarboost\_start5 & 0.16 & 1.84 & 0.566 & 0.952 & 0.769 \\
+full\_nofarboost\_start10 & 0.21 & 1.70 & 0.645 & 0.956 & 0.774 \\
+full\_nofarboost\_start15 & 0.28 & 1.77 & 0.645 & 0.956 & 0.776 \\
+nocluster\_start5 & 0.04 & 2.84 & 0.367 & --- & --- \\
+nocluster\_start10 & 0.53 & 2.25 & 0.421 & --- & --- \\
+nocluster\_start15 & 0.85 & 2.16 & 0.436 & --- & --- \\
+nograph\_start5 & 0.05 & 2.72 & 0.361 & 0.866 & 0.886 \\
+nograph\_start10 & 0.02 & 3.06 & 0.314 & 0.741 & 0.755 \\
+nograph\_start15 & 0.06 & 3.06 & 0.302 & 0.796 & 0.790 \\
+nogroup\_start5 & 0.30 & 2.29 & 0.449 & 0.932 & 0.952 \\
+nogroup\_start10 & 0.75 & 2.15 & 0.554 & 0.928 & 0.944 \\
+nogroup\_start15 & 0.66 & 2.09 & 0.534 & 0.941 & 0.950 \\
+nopattern\_start5 & 0.07 & 2.65 & 0.381 & 0.726 & 0.725 \\
+nopattern\_start10 & 0.46 & 2.14 & 0.450 & 0.807 & 0.823 \\
+nopattern\_start15 & 0.52 & 1.92 & 0.548 & 0.851 & 0.862 \\
+nosplit\_start5 & 0.06 & 2.65 & 0.379 & 0.853 & 0.874 \\
+nosplit\_start10 & 0.42 & 2.16 & 0.427 & 0.888 & 0.904 \\
+nosplit\_start15 & 0.51 & 1.87 & 0.498 & 0.897 & 0.915 \\
+nocross\_start5 & 0.15 & 2.50 & 0.395 & 0.862 & 0.870 \\
+nocross\_start10 & 0.66 & 2.43 & 0.430 & 0.831 & 0.846 \\
+nocross\_start15 & 1.12 & 2.35 & 0.438 & 0.798 & 0.807 \\
+noinfo\_start5 & 0.05 & 3.47 & 0.278 & 0.886 & 0.906 \\
+noinfo\_start10 & 0.03 & 3.34 & 0.263 & 0.616 & 0.675 \\
+noinfo\_start15 & 1.08 & 2.57 & 0.351 & 0.917 & 0.926 \\
+machineonly\_start5 & 0.02 & 3.35 & 0.282 & 0.704 & 0.680 \\
+machineonly\_start10 & 0.02 & 3.40 & 0.271 & 0.700 & 0.710 \\
+machineonly\_start15 & 0.07 & 3.35 & 0.278 & 0.724 & 0.728 \\
+pretrain\_init & 0.13 & 1.98 & 0.599 & 0.961 & 0.774 \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\begin{table*}[p]
+\centering\scriptsize
+\caption{Validation results at the selected checkpoints. Report precision/recall and F1 are validation report metrics; remaining-time MAE is in minutes. These values document selection, not held-out superiority. Proportions retain the archived 0--1 scale.}
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+Checkpoint & MAE \\
+\midrule
+PHGST-DP\_start5 & 10.74 \\
+PHGST-DP\_start10 & 10.41 \\
+PHGST-DP\_start15 & 10.07 \\
+Full-S1\_start5 & 12.30 \\
+Full-S1\_start10 & 12.58 \\
+Full-S1\_start15 & 10.97 \\
+full\_nofarboost\_start5 & 12.03 \\
+full\_nofarboost\_start10 & 10.86 \\
+full\_nofarboost\_start15 & 11.77 \\
+nocluster\_start5 & 18.58 \\
+nocluster\_start10 & 12.81 \\
+nocluster\_start15 & 11.67 \\
+nograph\_start5 & 18.20 \\
+nograph\_start10 & 24.07 \\
+nograph\_start15 & 21.38 \\
+nogroup\_start5 & 13.25 \\
+nogroup\_start10 & 12.54 \\
+nogroup\_start15 & 11.06 \\
+nopattern\_start5 & 20.06 \\
+nopattern\_start10 & 14.85 \\
+nopattern\_start15 & 12.53 \\
+nosplit\_start5 & 20.80 \\
+nosplit\_start10 & 15.64 \\
+nosplit\_start15 & 15.23 \\
+nocross\_start5 & 19.07 \\
+nocross\_start10 & 15.20 \\
+nocross\_start15 & 16.49 \\
+noinfo\_start5 & 21.57 \\
+noinfo\_start10 & 27.04 \\
+noinfo\_start15 & 15.20 \\
+machineonly\_start5 & 25.19 \\
+machineonly\_start10 & 28.64 \\
+machineonly\_start15 & 22.98 \\
+pretrain\_init & 12.03 \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\begin{table*}[p]
+\centering\scriptsize
+\caption{Matched-budget auxiliary supervision: logged and separately selected cause metrics. All arms use seed 42, Start cap 5 min and 50 epochs. Values are percentages; the two export definitions are not interchanged.}
+\begin{tabularx}{\textwidth}{lXXXXX}
+\toprule
+Arm & Logged station F1 & Logged cause acc. & Selected cause acc. & Selected cause macro recall & Seed \\
+\midrule
+Backbone & 73.5\% & 19.5\% & 25.2\% & 25.5\% & 42 \\
++Cause & 73.3\% & 89.5\% & 92.2\% & 93.7\% & 42 \\
++State & 73.2\% & 18.5\% & 21.2\% & 24.7\% & 42 \\
++Cause+State & 72.6\% & 89.5\% & 91.7\% & 93.6\% & 42 \\
++Cause+State+Lift & 72.6\% & 89.5\% & 91.7\% & 93.6\% & 42 \\
+\bottomrule
+\end{tabularx}
+\end{table*}

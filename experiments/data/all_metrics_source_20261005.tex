@@ -1,0 +1,1855 @@
+\documentclass[9pt,a4paper,twocolumn]{extarticle}
+\usepackage[margin=12mm,columnsep=7mm]{geometry}
+\usepackage{fontspec}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{caption}
+\setmainfont{Liberation Serif}
+\setsansfont{Liberation Sans}
+\captionsetup{font=scriptsize,labelfont=bf,skip=3pt}
+\pagestyle{plain}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.35em}
+\renewcommand{\arraystretch}{1.05}
+\raggedbottom
+\renewcommand{\dbltopfraction}{0.6}
+\renewcommand{\dblfloatpagefraction}{0.5}
+\setcounter{dbltopnumber}{3}
+\makeatletter
+\setlength{\@dblfptop}{0pt}
+\setlength{\@dblfpsep}{14pt}
+\makeatother
+\begin{document}
+
+\twocolumn[{%
+\begin{center}
+{\Large\bfseries BNPDFormer: All Experiment Metrics}\\[2pt]
+{\normalsize BestModel, far-start boost, structure and entity ablations (34 checkpoints)}
+\end{center}
+\vspace{2pt}
+}]
+
+\textbf{Protocol.}
+Dataset \texttt{dense\_i1} ($N{=}38$ nodes, $F{=}27$ features, 15 supervised devices: 7 machines, 4 gantries, 4 AGVs);
+episode split $140/28/36$ (seed 42); test windows 5354.
+Input $T_{\mathrm{in}}{=}30$\,min, horizon $H{=}20$\,min, 60\,s windows.
+Bottleneck truth: longest bottleneck segment per device within $H$; new bottlenecks must last $\ge 8$\,min (Min8), ongoing ones $\ge 1$\,min;
+start cap $\le 5/10/15$\,min selects which events count as positives.
+A report is correct iff the device matches and $|\hat{s}-s|\le 3$\,min.
+Thresholds are selected on validation with report precision $\ge 0.80$, then frozen on test (0.94 for most runs).
+
+\textbf{Sources.}
+Event reports, cause head, remaining time and occupancy grid come from each run's \texttt{last\_metrics.json} (test split, selected checkpoint).
+Duration / start MAE and RMSE, state F1 and per-device numbers come from \texttt{factory\_bn/eval\_bottleneck.py}; its will15 F1 reproduces the training report for all 33 runs that have one.
+
+\textbf{Arms.}
+\textbf{BestModel} = Full-S1 + remaining-time head fine-tuning (encoder and all bottleneck / cause heads frozen), so its bottleneck and cause numbers equal Full-S1 and only remaining time changes.
+Ablations remove one component and, except NoFarBoost, are trained from scratch for 50 epochs (BestModel: warm start + curriculum, 100 epochs), so deltas mix component removal with training budget.
+
+\textbf{Metric groups.}
+(i) bottleneck prediction: who / when / how long (Tables 1--3);
+(ii) bottleneck cause: process-heuristic cause classification (Table 4);
+(iii) order remaining time (Table 5).
+
+
+\begin{table*}[tp]
+\centering\scriptsize\setlength{\tabcolsep}{3.2pt}
+\caption{Bottleneck event reports on test (who / when within the 20-min horizon). Checkpoint metric is will15 F1 (bold header). $\Delta$F1 is relative to BestModel at the same start cap. In every table, bold cells are the best per start cap (primary metrics only; pretrain\_init excluded).}
+\begin{tabular}{llrrrrrrrrrrrrrrr}
+\toprule
+Arm & Start & Thr & $P$ & $R$ & \textbf{F1} & $\Delta$F1 & Report F1 & F1@1min & F1@2min & $R_{\mathrm{up}}$ & $R_{\mathrm{on}}$ & $R_{\mathrm{up}}^{\le5}$ & $R_{\mathrm{up}}^{6\text{--}10}$ & $R_{\mathrm{up}}^{>10}$ & $n_{\mathrm{true}}$ & $n_{\mathrm{pred}}$ \\
+\midrule
+BestModel & $\le 5$ & 0.94 & 0.794 & 0.817 & 0.805 & 0.000 & 0.804 & 0.792 & 0.801 & 0.539 & 0.937 & 0.539 & --- & --- & 1102 & 1134 \\
+Full-S1 &  & 0.94 & 0.794 & 0.817 & 0.805 & 0.000 & 0.804 & 0.792 & 0.801 & 0.539 & 0.937 & 0.539 & --- & --- & 1102 & 1134 \\
+NoFarBoost &  & 0.90 & 0.832 & 0.808 & \textbf{0.820} & 0.015 & \textbf{0.819} & \textbf{0.801} & \textbf{0.814} & \textbf{0.542} & 0.923 & \textbf{0.542} & --- & --- & 1102 & 1070 \\
+NoCluster &  & 0.94 & 0.812 & 0.671 & 0.735 & -0.070 & 0.734 & 0.730 & 0.733 & 0.122 & 0.910 & 0.122 & --- & --- & 1102 & 910 \\
+NoGraph &  & 0.94 & 0.832 & 0.678 & 0.747 & -0.058 & 0.746 & 0.742 & 0.745 & 0.101 & 0.930 & 0.101 & --- & --- & 1102 & 898 \\
+NoGroup &  & 0.94 & 0.766 & 0.756 & 0.761 & -0.044 & 0.753 & 0.722 & 0.741 & 0.307 & \textbf{0.941} & 0.307 & --- & --- & 1102 & 1088 \\
+NoPattern &  & 0.94 & 0.802 & 0.701 & 0.748 & -0.057 & 0.745 & 0.739 & 0.744 & 0.158 & 0.935 & 0.158 & --- & --- & 1102 & 963 \\
+NoSplit &  & 0.94 & 0.752 & 0.708 & 0.729 & -0.076 & 0.727 & 0.713 & 0.725 & 0.185 & 0.935 & 0.185 & --- & --- & 1102 & 1037 \\
+NoCross &  & 0.94 & 0.750 & 0.698 & 0.723 & -0.082 & 0.716 & 0.701 & 0.711 & 0.199 & 0.907 & 0.199 & --- & --- & 1102 & 1026 \\
+NoInfo &  & 0.94 & 0.770 & 0.553 & 0.644 & -0.161 & 0.644 & 0.641 & 0.642 & 0.049 & 0.899 & 0.049 & --- & --- & 955 & 686 \\
+MachineOnly &  & 0.94 & 0.798 & 0.549 & 0.650 & -0.155 & 0.650 & 0.648 & 0.650 & 0.033 & 0.903 & 0.033 & --- & --- & 955 & 657 \\
+\midrule
+BestModel & $\le 10$ & 0.94 & 0.806 & 0.761 & \textbf{0.783} & 0.000 & \textbf{0.778} & \textbf{0.752} & \textbf{0.773} & 0.528 & 0.936 & 0.577 & 0.466 & --- & 1372 & 1295 \\
+Full-S1 &  & 0.94 & 0.806 & 0.761 & \textbf{0.783} & 0.000 & \textbf{0.778} & \textbf{0.752} & \textbf{0.773} & 0.528 & 0.936 & 0.577 & 0.466 & --- & 1372 & 1295 \\
+NoFarBoost &  & 0.88 & 0.750 & 0.763 & 0.757 & -0.026 & 0.751 & 0.730 & 0.749 & \textbf{0.550} & 0.922 & \textbf{0.592} & \textbf{0.496} & --- & 1372 & 1396 \\
+NoCluster &  & 0.94 & 0.542 & 0.677 & 0.602 & -0.181 & 0.570 & 0.528 & 0.555 & 0.268 & 0.935 & 0.345 & 0.172 & --- & 1372 & 1715 \\
+NoGraph &  & 0.94 & 0.821 & 0.539 & 0.651 & -0.132 & 0.649 & 0.643 & 0.647 & 0.065 & 0.909 & 0.116 & 0.000 & --- & 1372 & 900 \\
+NoGroup &  & 0.94 & 0.605 & 0.745 & 0.668 & -0.115 & 0.651 & 0.582 & 0.625 & 0.445 & \textbf{0.947} & 0.506 & 0.369 & --- & 1372 & 1688 \\
+NoPattern &  & 0.94 & 0.573 & 0.645 & 0.607 & -0.176 & 0.588 & 0.557 & 0.578 & 0.235 & 0.931 & 0.304 & 0.149 & --- & 1372 & 1544 \\
+NoSplit &  & 0.94 & 0.564 & 0.638 & 0.599 & -0.184 & 0.580 & 0.554 & 0.568 & 0.204 & 0.944 & 0.256 & 0.138 & --- & 1372 & 1552 \\
+NoCross &  & 0.94 & 0.596 & 0.593 & 0.595 & -0.188 & 0.571 & 0.547 & 0.560 & 0.157 & 0.893 & 0.235 & 0.060 & --- & 1372 & 1363 \\
+NoInfo &  & 0.94 & 0.759 & 0.425 & 0.545 & -0.238 & 0.544 & 0.544 & 0.544 & 0.020 & 0.896 & 0.033 & 0.000 & --- & 1225 & 686 \\
+MachineOnly &  & 0.94 & 0.820 & 0.424 & 0.559 & -0.224 & 0.559 & 0.559 & 0.559 & 0.014 & 0.901 & 0.023 & 0.000 & --- & 1225 & 633 \\
+\midrule
+BestModel & $\le 15$ & 0.94 & 0.806 & 0.742 & \textbf{0.772} & 0.000 & \textbf{0.768} & \textbf{0.756} & \textbf{0.766} & \textbf{0.534} & 0.925 & 0.574 & \textbf{0.522} & \textbf{0.433} & 1478 & 1360 \\
+Full-S1 &  & 0.94 & 0.806 & 0.742 & \textbf{0.772} & 0.000 & \textbf{0.768} & \textbf{0.756} & \textbf{0.766} & \textbf{0.534} & 0.925 & 0.574 & \textbf{0.522} & \textbf{0.433} & 1478 & 1360 \\
+NoFarBoost &  & 0.94 & 0.772 & 0.716 & 0.743 & -0.029 & 0.741 & 0.706 & 0.735 & 0.489 & 0.921 & \textbf{0.577} & 0.474 & 0.240 & 1478 & 1370 \\
+NoCluster &  & 0.94 & 0.510 & 0.664 & 0.577 & -0.196 & 0.537 & 0.485 & 0.511 & 0.282 & 0.926 & 0.307 & 0.336 & 0.067 & 1478 & 1925 \\
+NoGraph &  & 0.94 & 0.851 & 0.482 & 0.616 & -0.157 & 0.612 & 0.611 & 0.611 & 0.037 & 0.887 & 0.077 & 0.000 & 0.000 & 1478 & 838 \\
+NoGroup &  & 0.94 & 0.567 & 0.690 & 0.623 & -0.150 & 0.604 & 0.533 & 0.576 & 0.395 & 0.922 & 0.446 & 0.410 & 0.192 & 1478 & 1799 \\
+NoPattern &  & 0.94 & 0.552 & 0.698 & 0.616 & -0.156 & 0.601 & 0.553 & 0.588 & 0.397 & 0.942 & 0.470 & 0.396 & 0.163 & 1478 & 1867 \\
+NoSplit &  & 0.94 & 0.559 & 0.664 & 0.607 & -0.165 & 0.586 & 0.546 & 0.573 & 0.309 & \textbf{0.945} & 0.366 & 0.310 & 0.125 & 1478 & 1756 \\
+NoCross &  & 0.94 & 0.518 & 0.616 & 0.563 & -0.209 & 0.514 & 0.469 & 0.489 & 0.205 & 0.892 & 0.274 & 0.172 & 0.067 & 1478 & 1758 \\
+NoInfo &  & 0.94 & 0.466 & 0.518 & 0.490 & -0.282 & 0.441 & 0.420 & 0.429 & 0.127 & 0.922 & 0.219 & 0.044 & 0.000 & 1331 & 1479 \\
+MachineOnly &  & 0.94 & 0.802 & 0.400 & 0.534 & -0.239 & 0.534 & 0.532 & 0.533 & 0.021 & 0.912 & 0.041 & 0.000 & 0.000 & 1331 & 663 \\
+\midrule
+pretrain\_init$^\dagger$ & $\le 2$ & 0.98 & 0.852 & 0.856 & 0.854 & --- & 0.854 & --- & --- & 0.455 & 0.911 & --- & --- & --- & 940 & 945 \\
+\bottomrule
+\end{tabular}
+\par\smallskip\parbox{\textwidth}{\scriptsize $R_{\mathrm{up}}$ / $R_{\mathrm{on}}$: report recall on upcoming ($s>0$) / ongoing ($s=0$) events; superscripts split upcoming events by true start (min). F1@$k$min: report F1 with start tolerance $k$ min (default tolerance 3 min = Report F1). NoInfo / MachineOnly observe a smaller event pool ($n_{\mathrm{true}}$ differs). $^\dagger$pretrain\_init uses horizon 15 min, start $\le$ 2 and threshold 0.98, and logs report P/R/F1 instead of will15; not comparable.}
+\end{table*}
+
+\begin{table*}[tp]
+\centering\scriptsize\setlength{\tabcolsep}{3.2pt}
+\caption{Bottleneck timing on test (minutes; accuracies in [0,1]). Bold headers are the primary duration metrics.}
+\begin{tabular}{llrrrrrrrrrrr}
+\toprule
+Arm & Start & Start MAE & Start RMSE & Start MAE$_{\mathrm{up}}$ & Exact start & Exact start$_{\mathrm{up}}$ & Onset bucket & Dur MAE (tp) & Dur RMSE (tp) & Dur MAE$_{\mathrm{up}}$ & \textbf{Dur MAE} & \textbf{Dur RMSE} \\
+\midrule
+BestModel & $\le 5$ & 0.13 & 0.43 & 0.63 & 0.896 & 0.484 & 0.921 & 1.86 & 2.56 & 1.51 & 4.17 & 5.92 \\
+Full-S1 &  & 0.13 & 0.43 & 0.63 & 0.896 & 0.484 & 0.921 & 1.86 & 2.56 & 1.51 & 4.17 & 5.92 \\
+NoFarBoost &  & 0.13 & 0.46 & 0.66 & 0.896 & 0.492 & 0.917 & 1.93 & 2.64 & 1.66 & \textbf{4.03} & \textbf{5.76} \\
+NoCluster &  & 0.03 & 0.25 & 0.50 & 0.982 & 0.690 & 0.943 & 2.89 & 4.11 & 2.40 & 5.43 & 7.05 \\
+NoGraph &  & 0.02 & 0.23 & 0.49 & 0.988 & 0.743 & 0.956 & 2.98 & 4.26 & 2.88 & 5.48 & 7.12 \\
+NoGroup &  & 0.17 & 0.67 & 1.26 & 0.920 & 0.402 & 0.891 & 2.59 & 3.53 & 2.44 & 5.11 & 6.68 \\
+NoPattern &  & 0.05 & 0.36 & 0.70 & 0.972 & 0.607 & 0.934 & 2.56 & 3.53 & 2.08 & 5.27 & 6.95 \\
+NoSplit &  & 0.07 & 0.41 & 0.88 & 0.960 & 0.516 & 0.933 & 2.69 & 3.79 & 2.45 & 5.56 & 7.22 \\
+NoCross &  & 0.11 & 0.57 & 1.14 & 0.951 & 0.486 & 0.910 & 2.59 & 3.80 & 2.44 & 5.28 & 6.87 \\
+NoInfo &  & 0.02 & 0.18 & 0.47 & 0.989 & 0.684 & 0.964 & 3.55 & 5.07 & 2.17 & 6.66 & 8.10 \\
+MachineOnly &  & 0.01 & 0.14 & 0.46 & 0.992 & 0.692 & 0.975 & 3.57 & 5.06 & 2.75 & 6.51 & 7.96 \\
+\midrule
+BestModel & $\le 10$ & 0.23 & 0.74 & 0.67 & 0.844 & 0.502 & 0.918 & 1.79 & 2.50 & 1.39 & \textbf{4.38} & \textbf{6.11} \\
+Full-S1 &  & 0.23 & 0.74 & 0.67 & 0.844 & 0.502 & 0.918 & 1.79 & 2.50 & 1.39 & \textbf{4.38} & \textbf{6.11} \\
+NoFarBoost &  & 0.24 & 0.73 & 0.72 & 0.823 & 0.456 & 0.915 & 1.77 & 2.43 & 1.41 & 4.66 & 6.35 \\
+NoCluster &  & 0.51 & 1.53 & 2.18 & 0.832 & 0.263 & 0.833 & 2.40 & 3.38 & 1.84 & 6.69 & 8.05 \\
+NoGraph &  & 0.05 & 0.55 & 0.51 & 0.981 & 0.692 & 0.947 & 3.09 & 4.45 & 2.75 & 6.46 & 7.91 \\
+NoGroup &  & 0.46 & 1.17 & 1.54 & 0.780 & 0.239 & 0.841 & 2.43 & 3.40 & 1.82 & 6.05 & 7.48 \\
+NoPattern &  & 0.34 & 1.12 & 1.65 & 0.863 & 0.292 & 0.873 & 2.41 & 3.30 & 1.96 & 6.56 & 7.92 \\
+NoSplit &  & 0.32 & 1.19 & 1.76 & 0.886 & 0.342 & 0.879 & 2.19 & 2.99 & 1.72 & 6.63 & 8.05 \\
+NoCross &  & 0.34 & 1.22 & 2.04 & 0.893 & 0.320 & 0.868 & 2.51 & 3.62 & 2.02 & 6.60 & 7.96 \\
+NoInfo &  & 0.02 & 0.36 & 0.71 & 0.994 & 0.786 & 0.973 & 3.72 & 5.15 & 2.18 & 7.57 & 8.75 \\
+MachineOnly &  & 0.00 & 0.04 & 0.11 & 0.998 & 0.889 & 0.983 & 3.60 & 5.00 & 2.14 & 7.40 & 8.62 \\
+\midrule
+BestModel & $\le 15$ & 0.23 & 0.81 & 0.54 & 0.831 & 0.524 & 0.920 & 1.72 & 2.49 & 1.19 & \textbf{4.43} & \textbf{6.15} \\
+Full-S1 &  & 0.23 & 0.81 & 0.54 & 0.831 & 0.524 & 0.920 & 1.72 & 2.49 & 1.19 & \textbf{4.43} & \textbf{6.15} \\
+NoFarBoost &  & 0.28 & 0.85 & 0.75 & 0.809 & 0.425 & 0.895 & 1.88 & 2.57 & 1.46 & 4.87 & 6.47 \\
+NoCluster &  & 0.66 & 1.72 & 2.28 & 0.785 & 0.216 & 0.825 & 2.30 & 3.22 & 1.73 & 6.65 & 7.91 \\
+NoGraph &  & 0.07 & 0.80 & 0.31 & 0.987 & 0.808 & 0.964 & 3.04 & 4.38 & 2.56 & 6.57 & 7.94 \\
+NoGroup &  & 0.52 & 1.32 & 1.59 & 0.769 & 0.242 & 0.831 & 2.49 & 3.46 & 1.74 & 6.34 & 7.64 \\
+NoPattern &  & 0.47 & 1.45 & 1.47 & 0.786 & 0.281 & 0.875 & 2.14 & 2.86 & 1.66 & 6.20 & 7.52 \\
+NoSplit &  & 0.49 & 1.62 & 1.75 & 0.821 & 0.312 & 0.872 & 2.11 & 2.90 & 1.64 & 6.36 & 7.73 \\
+NoCross &  & 0.73 & 1.90 & 2.81 & 0.804 & 0.205 & 0.805 & 2.37 & 3.46 & 1.61 & 6.77 & 8.03 \\
+NoInfo &  & 0.77 & 2.16 & 3.17 & 0.821 & 0.263 & 0.787 & 2.94 & 4.25 & 1.66 & 7.66 & 8.72 \\
+MachineOnly &  & 0.02 & 0.17 & 0.50 & 0.991 & 0.688 & 0.970 & 3.39 & 4.60 & 2.64 & 7.46 & 8.58 \\
+\midrule
+pretrain\_init$^\dagger$ & $\le 2$ & 0.09 & 0.38 & 1.39 & --- & --- & --- & 1.96 & 2.60 & 1.37 & 3.39 & 4.85 \\
+\bottomrule
+\end{tabular}
+\par\smallskip\parbox{\textwidth}{\scriptsize tp = correctly reported bottlenecks only. Dur MAE / RMSE (bold) are computed over every (window, device) cell where a bottleneck is true or predicted (missed $\to$ prediction 0, false alarm $\to$ truth 0), so they penalise misses, false alarms and length errors. Start/Dur ``up'': upcoming events only. Exact start: predicted start window equals the true one; onset bucket: same start bucket.}
+\end{table*}
+
+\begin{table*}[tp]
+\centering\scriptsize\setlength{\tabcolsep}{3.2pt}
+\caption{Bottleneck state / occupancy grid and per-entity-type report F1 on test.}
+\begin{tabular}{llrrrrrrrrrrrr}
+\toprule
+Arm & Start & State $P$ & State $R$ & State F1 & State F1$_K$ & Hot $P$ & Hot $R$ & Hot F1 & Hot AP & Type hmean & F1$_{\mathrm{Machine}}$ & F1$_{\mathrm{Gantry}}$ & F1$_{\mathrm{AGV}}$ \\
+\midrule
+BestModel & $\le 5$ & 0.850 & 0.919 & \textbf{0.883} & 0.525 & 0.677 & 0.456 & 0.545 & \textbf{0.524} & 0.505 & 0.805 & 0.811 & 0.771 \\
+Full-S1 &  & 0.850 & 0.919 & \textbf{0.883} & 0.525 & 0.677 & 0.456 & 0.545 & \textbf{0.524} & 0.505 & 0.805 & 0.811 & 0.771 \\
+NoFarBoost &  & 0.860 & 0.908 & \textbf{0.883} & \textbf{0.531} & 0.719 & 0.447 & \textbf{0.551} & \textbf{0.524} & \textbf{0.528} & \textbf{0.816} & \textbf{0.838} & 0.769 \\
+NoCluster &  & 0.804 & 0.881 & 0.841 & 0.400 & 0.641 & 0.313 & 0.420 & 0.381 & 0.412 & 0.753 & 0.664 & \textbf{0.800} \\
+NoGraph &  & 0.851 & 0.895 & 0.873 & 0.400 & 0.661 & 0.283 & 0.396 & 0.352 & 0.384 & 0.760 & 0.696 & \textbf{0.800} \\
+NoGroup &  & 0.765 & 0.919 & 0.835 & 0.440 & 0.611 & 0.352 & 0.447 & 0.430 & 0.432 & 0.772 & 0.721 & 0.795 \\
+NoPattern &  & 0.797 & 0.908 & 0.849 & 0.421 & 0.626 & 0.349 & 0.448 & 0.393 & 0.433 & 0.758 & 0.708 & \textbf{0.800} \\
+NoSplit &  & 0.754 & 0.908 & 0.824 & 0.408 & 0.579 & 0.330 & 0.420 & 0.365 & 0.412 & 0.748 & 0.670 & \textbf{0.800} \\
+NoCross &  & 0.749 & 0.887 & 0.812 & 0.407 & 0.623 & 0.323 & 0.425 & 0.377 & 0.396 & 0.732 & 0.677 & \textbf{0.800} \\
+NoInfo &  & 0.778 & 0.634 & 0.699 & 0.311 & 0.487 & 0.229 & 0.312 & 0.250 & 0.000 & 0.720 & 0.082 & 0.000 \\
+MachineOnly &  & 0.818 & 0.627 & 0.709 & 0.312 & 0.539 & 0.222 & 0.315 & 0.251 & 0.000 & 0.730 & 0.000 & 0.000 \\
+\midrule
+BestModel & $\le 10$ & 0.865 & 0.920 & \textbf{0.892} & \textbf{0.589} & 0.710 & 0.534 & \textbf{0.610} & \textbf{0.598} & \textbf{0.530} & \textbf{0.774} & \textbf{0.820} & 0.660 \\
+Full-S1 &  & 0.865 & 0.920 & \textbf{0.892} & \textbf{0.589} & 0.710 & 0.534 & \textbf{0.610} & \textbf{0.598} & \textbf{0.530} & \textbf{0.774} & \textbf{0.820} & 0.660 \\
+NoFarBoost &  & 0.861 & 0.910 & 0.885 & 0.576 & 0.655 & 0.558 & 0.603 & 0.592 & 0.503 & 0.763 & 0.773 & 0.519 \\
+NoCluster &  & 0.690 & 0.920 & 0.789 & 0.399 & 0.396 & 0.437 & 0.415 & 0.414 & 0.417 & 0.604 & 0.586 & 0.703 \\
+NoGraph &  & 0.811 & 0.880 & 0.844 & 0.394 & 0.623 & 0.276 & 0.382 & 0.323 & 0.376 & 0.663 & 0.606 & \textbf{0.711} \\
+NoGroup &  & 0.744 & 0.928 & 0.826 & 0.464 & 0.465 & 0.506 & 0.485 & 0.478 & 0.452 & 0.663 & 0.684 & 0.634 \\
+NoPattern &  & 0.756 & 0.911 & 0.826 & 0.406 & 0.444 & 0.422 & 0.432 & 0.432 & 0.405 & 0.628 & 0.555 & 0.621 \\
+NoSplit &  & 0.702 & 0.924 & 0.798 & 0.402 & 0.411 & 0.424 & 0.417 & 0.417 & 0.414 & 0.614 & 0.551 & \textbf{0.711} \\
+NoCross &  & 0.670 & 0.876 & 0.759 & 0.388 & 0.446 & 0.375 & 0.407 & 0.386 & 0.371 & 0.619 & 0.511 & 0.593 \\
+NoInfo &  & 0.756 & 0.624 & 0.684 & 0.306 & 0.413 & 0.250 & 0.312 & 0.233 & 0.000 & 0.637 & 0.000 & 0.000 \\
+MachineOnly &  & 0.818 & 0.624 & 0.708 & 0.311 & 0.494 & 0.236 & 0.320 & 0.252 & 0.000 & 0.656 & 0.000 & 0.000 \\
+\midrule
+BestModel & $\le 15$ & 0.891 & 0.910 & \textbf{0.900} & \textbf{0.610} & 0.704 & 0.561 & \textbf{0.624} & \textbf{0.613} & \textbf{0.536} & \textbf{0.751} & \textbf{0.840} & 0.639 \\
+Full-S1 &  & 0.891 & 0.910 & \textbf{0.900} & \textbf{0.610} & 0.704 & 0.561 & \textbf{0.624} & \textbf{0.613} & \textbf{0.536} & \textbf{0.751} & \textbf{0.840} & 0.639 \\
+NoFarBoost &  & 0.862 & 0.912 & 0.886 & 0.573 & 0.660 & 0.538 & 0.593 & 0.584 & 0.518 & 0.746 & 0.758 & 0.566 \\
+NoCluster &  & 0.743 & 0.912 & 0.819 & 0.399 & 0.360 & 0.478 & 0.411 & 0.430 & 0.412 & 0.572 & 0.584 & 0.615 \\
+NoGraph &  & 0.876 & 0.854 & 0.865 & 0.389 & 0.674 & 0.256 & 0.371 & 0.339 & 0.360 & 0.639 & 0.540 & \textbf{0.681} \\
+NoGroup &  & 0.751 & 0.902 & 0.819 & 0.442 & 0.431 & 0.516 & 0.470 & 0.474 & 0.469 & 0.626 & 0.615 & 0.627 \\
+NoPattern &  & 0.781 & 0.928 & 0.848 & 0.449 & 0.428 & 0.508 & 0.465 & 0.476 & 0.387 & 0.642 & 0.574 & 0.489 \\
+NoSplit &  & 0.759 & 0.925 & 0.834 & 0.433 & 0.418 & 0.472 & 0.443 & 0.450 & 0.443 & 0.616 & 0.582 & 0.655 \\
+NoCross &  & 0.672 & 0.876 & 0.760 & 0.379 & 0.384 & 0.428 & 0.405 & 0.399 & 0.365 & 0.610 & 0.457 & 0.552 \\
+NoInfo &  & 0.519 & 0.701 & 0.596 & 0.309 & 0.301 & 0.326 & 0.313 & 0.306 & 0.000 & 0.553 & 0.294 & 0.000 \\
+MachineOnly &  & 0.795 & 0.635 & 0.706 & 0.317 & 0.479 & 0.243 & 0.322 & 0.254 & 0.000 & 0.634 & 0.000 & 0.000 \\
+\midrule
+pretrain\_init$^\dagger$ & $\le 2$ & 0.831 & 0.908 & 0.868 & 0.547 & 0.674 & 0.514 & 0.583 & 0.576 & 0.569 & 0.860 & 0.845 & 0.806 \\
+\bottomrule
+\end{tabular}
+\par\smallskip\parbox{\textwidth}{\scriptsize State: per-window bottleneck yes/no decoded from predicted start + duration (1 step = next window, $K$ = all 20 windows). Hot: occupancy-grid head (training report). Type hmean: harmonic mean of per-type hot F1. F1$_{\mathrm{type}}$: will15 F1 pooled over devices of that type (7 machines, 4 gantries, 4 AGVs).}
+\end{table*}
+
+\begin{table*}[tp]
+\centering\scriptsize\setlength{\tabcolsep}{3.2pt}
+\caption{Process-cause head on test (4 active of 6 classes; per-class recall).}
+\begin{tabular}{llrrrrrrrrr}
+\toprule
+Arm & Start & Accuracy & \textbf{Macro recall} & Val macro & Majority & $n_{\mathrm{cause}}$ & transport\_delay & material\_shortage & starved\_upstream & queue\_buildup \\
+\midrule
+BestModel & $\le 5$ & \textbf{0.965} & 0.967 & 0.963 & 0.409 & 579 & 0.941 & 0.976 & \textbf{0.966} & 0.984 \\
+Full-S1 &  & \textbf{0.965} & 0.967 & 0.963 & 0.409 & 579 & 0.941 & 0.976 & \textbf{0.966} & 0.984 \\
+NoFarBoost &  & \textbf{0.965} & \textbf{0.969} & 0.769 & 0.409 & 579 & 0.963 & 0.963 & 0.949 & \textbf{1.000} \\
+NoCluster &  & --- & --- & --- & 0.409 & 579 & --- & --- & --- & --- \\
+NoGraph &  & 0.876 & 0.889 & 0.886 & 0.409 & 579 & 0.971 & \textbf{1.000} & 0.852 & 0.734 \\
+NoGroup &  & 0.943 & 0.955 & 0.952 & 0.409 & 579 & 0.956 & \textbf{1.000} & 0.911 & 0.952 \\
+NoPattern &  & 0.732 & 0.734 & 0.725 & 0.409 & 579 & \textbf{0.993} & \textbf{1.000} & 0.797 & 0.145 \\
+NoSplit &  & 0.853 & 0.874 & 0.874 & 0.409 & 579 & 0.934 & \textbf{1.000} & 0.806 & 0.758 \\
+NoCross &  & 0.862 & 0.864 & 0.870 & 0.409 & 579 & 0.956 & 0.963 & 0.882 & 0.653 \\
+NoInfo &  & 0.870 & 0.888 & 0.906 & 0.409 & 579 & 0.757 & 0.976 & 0.844 & 0.976 \\
+MachineOnly &  & 0.699 & 0.676 & 0.680 & 0.409 & 579 & 0.816 & 0.988 & 0.899 & 0.000 \\
+\midrule
+BestModel & $\le 10$ & 0.962 & 0.965 & 0.968 & 0.409 & 579 & 0.926 & 0.988 & \textbf{0.962} & 0.984 \\
+Full-S1 &  & 0.962 & 0.965 & 0.968 & 0.409 & 579 & 0.926 & 0.988 & \textbf{0.962} & 0.984 \\
+NoFarBoost &  & \textbf{0.965} & \textbf{0.970} & 0.774 & 0.409 & 579 & 0.949 & 0.988 & 0.954 & \textbf{0.992} \\
+NoCluster &  & --- & --- & --- & 0.409 & 579 & --- & --- & --- & --- \\
+NoGraph &  & 0.734 & 0.746 & 0.755 & 0.409 & 579 & \textbf{0.993} & 0.963 & 0.738 & 0.290 \\
+NoGroup &  & 0.938 & 0.953 & 0.944 & 0.409 & 579 & 0.956 & \textbf{1.000} & 0.890 & 0.968 \\
+NoPattern &  & 0.793 & 0.805 & 0.823 & 0.409 & 579 & 0.941 & \textbf{1.000} & 0.802 & 0.476 \\
+NoSplit &  & 0.869 & 0.884 & 0.904 & 0.409 & 579 & 0.831 & \textbf{1.000} & 0.857 & 0.847 \\
+NoCross &  & 0.841 & 0.851 & 0.846 & 0.409 & 579 & 0.978 & \textbf{1.000} & 0.844 & 0.581 \\
+NoInfo &  & 0.682 & 0.707 & 0.675 & 0.409 & 579 & 0.934 & \textbf{1.000} & 0.667 & 0.226 \\
+MachineOnly &  & 0.736 & 0.730 & 0.710 & 0.409 & 579 & 0.956 & \textbf{1.000} & 0.835 & 0.129 \\
+\midrule
+BestModel & $\le 15$ & \textbf{0.974} & \textbf{0.978} & 0.978 & 0.409 & 579 & 0.978 & 0.988 & \textbf{0.962} & 0.984 \\
+Full-S1 &  & \textbf{0.974} & \textbf{0.978} & 0.978 & 0.409 & 579 & 0.978 & 0.988 & \textbf{0.962} & 0.984 \\
+NoFarBoost &  & 0.969 & 0.974 & 0.776 & 0.409 & 579 & 0.963 & 0.988 & 0.954 & \textbf{0.992} \\
+NoCluster &  & --- & --- & --- & 0.409 & 579 & --- & --- & --- & --- \\
+NoGraph &  & 0.794 & 0.787 & 0.790 & 0.409 & 579 & \textbf{0.993} & 0.988 & 0.878 & 0.290 \\
+NoGroup &  & 0.938 & 0.949 & 0.950 & 0.409 & 579 & 0.926 & \textbf{1.000} & 0.911 & 0.960 \\
+NoPattern &  & 0.843 & 0.850 & 0.862 & 0.409 & 579 & 0.971 & \textbf{1.000} & 0.857 & 0.573 \\
+NoSplit &  & 0.869 & 0.890 & 0.915 & 0.409 & 579 & 0.875 & \textbf{1.000} & 0.823 & 0.863 \\
+NoCross &  & 0.801 & 0.811 & 0.807 & 0.409 & 579 & 0.971 & \textbf{1.000} & 0.814 & 0.460 \\
+NoInfo &  & 0.917 & 0.929 & 0.926 & 0.409 & 579 & 0.868 & 0.976 & 0.890 & 0.984 \\
+MachineOnly &  & 0.744 & 0.735 & 0.728 & 0.409 & 579 & 0.875 & \textbf{1.000} & 0.865 & 0.202 \\
+\midrule
+pretrain\_init$^\dagger$ & $\le 2$ & 0.965 & 0.971 & 0.774 & 0.409 & 579 & 0.956 & 0.988 & 0.949 & 0.992 \\
+\bottomrule
+\end{tabular}
+\par\smallskip\parbox{\textwidth}{\scriptsize Cause labels are process heuristics, not causal ground truth. NoCluster sets w\_cause=0, so its cause head is untrained (n/a, shown as ---). BestModel shares the frozen Full-S1 cause head. blocked\_downstream and high\_utilization have no test support.}
+\end{table*}
+
+\begin{table*}[tp]
+\centering\scriptsize\setlength{\tabcolsep}{3.2pt}
+\caption{Order remaining time on test (MAE, minutes). Early / middle / late split by production progress ($n$ = 2330 / 1750 / 1274 windows).}
+\begin{tabular}{llrrrrrrrr}
+\toprule
+Arm & Start & Val MAE & \textbf{Test MAE} & Progress-wtd & Early & Middle & Late & Early wtd & Late wtd \\
+\midrule
+BestModel & $\le 5$ & 10.74 & \textbf{9.60} & 8.68 & \textbf{14.14} & \textbf{7.66} & 3.96 & \textbf{13.73} & 3.92 \\
+Full-S1 &  & 12.30 & 10.93 & \textbf{8.66} & 16.84 & 8.18 & \textbf{3.87} & 16.10 & \textbf{3.76} \\
+NoFarBoost &  & 12.03 & 10.64 & --- & --- & --- & --- & --- & --- \\
+NoCluster &  & 18.58 & 17.41 & 13.58 & 27.71 & 12.42 & 5.42 & 26.77 & 5.25 \\
+NoGraph &  & 18.20 & 16.97 & 13.22 & 27.75 & 10.22 & 6.54 & 26.75 & 6.29 \\
+NoGroup &  & 13.25 & 12.69 & 10.21 & 18.95 & 10.28 & 4.55 & 18.33 & 4.43 \\
+NoPattern &  & 20.06 & 18.62 & 14.17 & 30.67 & 12.18 & 5.43 & 29.26 & 5.29 \\
+NoSplit &  & 20.80 & 18.85 & 14.27 & 31.59 & 11.55 & 5.60 & 30.29 & 5.45 \\
+NoCross &  & 19.07 & 17.79 & 13.78 & 28.82 & 11.86 & 5.76 & 27.93 & 5.59 \\
+NoInfo &  & 21.57 & 19.44 & 15.62 & 28.98 & 16.35 & 6.25 & 28.54 & 5.91 \\
+MachineOnly &  & 25.19 & 23.26 & 18.46 & 35.95 & 17.66 & 7.75 & 35.26 & 7.44 \\
+\midrule
+BestModel & $\le 10$ & 10.41 & \textbf{9.27} & \textbf{8.33} & \textbf{13.78} & \textbf{7.24} & \textbf{3.80} & \textbf{13.28} & \textbf{3.76} \\
+Full-S1 &  & 12.58 & 11.21 & 8.87 & 17.27 & 8.45 & 3.94 & 16.39 & 3.84 \\
+NoFarBoost &  & 10.86 & 9.61 & --- & --- & --- & --- & --- & --- \\
+NoCluster &  & 12.81 & 11.49 & 9.42 & 16.92 & 9.04 & 4.91 & 16.51 & 4.81 \\
+NoGraph &  & 24.07 & 23.35 & 17.42 & 40.33 & 12.70 & 6.92 & 38.70 & 6.75 \\
+NoGroup &  & 12.54 & 11.58 & 9.36 & 17.24 & 9.53 & 4.04 & 16.81 & 3.93 \\
+NoPattern &  & 14.85 & 13.35 & 10.48 & 20.97 & 9.63 & 4.54 & 19.99 & 4.44 \\
+NoSplit &  & 15.64 & 14.38 & 11.09 & 23.54 & 8.84 & 5.21 & 22.49 & 5.04 \\
+NoCross &  & 15.20 & 13.93 & 10.99 & 22.22 & 9.08 & 5.40 & 21.44 & 5.25 \\
+NoInfo &  & 27.04 & 24.73 & 19.50 & 38.14 & 19.07 & 7.97 & 37.18 & 7.70 \\
+MachineOnly &  & 28.64 & 26.83 & 21.14 & 42.03 & 20.31 & 8.00 & 41.49 & 7.80 \\
+\midrule
+BestModel & $\le 15$ & 10.07 & \textbf{8.91} & 8.02 & \textbf{13.08} & \textbf{7.21} & 3.61 & \textbf{12.62} & 3.57 \\
+Full-S1 &  & 10.97 & 9.72 & \textbf{7.75} & 14.72 & 7.51 & \textbf{3.60} & 13.94 & \textbf{3.51} \\
+NoFarBoost &  & 11.77 & 10.20 & --- & --- & --- & --- & --- & --- \\
+NoCluster &  & 11.67 & 10.60 & 8.84 & 14.46 & 10.15 & 4.14 & 14.30 & 4.08 \\
+NoGraph &  & 21.38 & 20.81 & 15.87 & 35.04 & 11.72 & 7.25 & 33.66 & 7.05 \\
+NoGroup &  & 11.06 & 10.55 & 8.91 & 14.64 & 9.34 & 4.75 & 14.47 & 4.54 \\
+NoPattern &  & 12.53 & 11.06 & 9.05 & 16.05 & 9.21 & 4.49 & 15.34 & 4.38 \\
+NoSplit &  & 15.23 & 13.85 & 10.68 & 22.53 & 8.88 & 4.81 & 21.52 & 4.66 \\
+NoCross &  & 16.49 & 15.27 & 12.05 & 24.34 & 10.15 & 5.72 & 23.62 & 5.60 \\
+NoInfo &  & 15.20 & 13.98 & 11.53 & 20.01 & 12.28 & 5.30 & 19.70 & 5.15 \\
+MachineOnly &  & 22.98 & 21.23 & 16.88 & 32.44 & 16.88 & 6.70 & 31.86 & 6.46 \\
+\midrule
+pretrain\_init$^\dagger$ & $\le 2$ & 12.03 & 10.49 & --- & --- & --- & --- & --- & --- \\
+\bottomrule
+\end{tabular}
+\par\smallskip\parbox{\textwidth}{\scriptsize Only BestModel fine-tunes the remaining-time head; the fair no-fine-tune reference for ablations is Full-S1. ``wtd'' = progress-weighted within the phase. NoFarBoost and pretrain\_init were trained with older code that did not log phase MAE.}
+\end{table*}
+
+\section*{Per-device results (BestModel, start $\le 5$)}
+
+\begin{center}\scriptsize\setlength{\tabcolsep}{2.6pt}
+\captionof{table}{Per-device test results of BestModel start$\le$5 (durations in min).}
+\begin{tabular}{lrrrrrrr}
+\toprule
+Device & $n_{\mathrm{true}}$ & $n_{\mathrm{pred}}$ & $P$ & $R$ & F1 & Dur MAE & Dur RMSE \\
+\midrule
+
+num00\_weld\_ws0 & 115 & 100 & 0.700 & 0.609 & 0.651 & 5.31 & 7.11 \\
+
+num00\_weld\_ws1 & 17 & 19 & 0.895 & 1.000 & 0.944 & 1.54 & 2.76 \\
+
+num01\_robotweld\_ws0 & 46 & 25 & 0.760 & 0.413 & 0.535 & 6.04 & 7.56 \\
+
+num02\_CNC$^\ast$\_ws0 & 301 & 343 & 0.767 & 0.874 & 0.817 & 4.67 & 6.45 \\
+
+num04\_groove\_ws0 & 20 & 27 & 0.556 & 0.750 & 0.638 & 5.32 & 6.87 \\
+
+num08\_bench\_ws0 & 186 & 162 & 0.914 & 0.796 & 0.851 & 3.47 & 5.02 \\
+
+num08\_bench\_ws1 & 94 & 101 & 0.931 & 1.000 & 0.964 & 2.65 & 3.65 \\
+
+gantry\_0 & 18 & 26 & 0.577 & 0.833 & 0.682 & 3.35 & 4.85 \\
+
+gantry\_1 & 31 & 34 & 0.765 & 0.839 & 0.800 & 4.55 & 6.45 \\
+
+gantry\_2 & 108 & 132 & 0.742 & 0.907 & 0.817 & 3.59 & 5.56 \\
+
+gantry\_3 & 121 & 127 & 0.811 & 0.851 & 0.831 & 3.56 & 5.04 \\
+
+robot\_0 & 15 & 10 & 0.900 & 0.600 & 0.720 & 4.01 & 6.14 \\
+
+robot\_1 & 30 & 28 & 0.821 & 0.767 & 0.793 & 5.03 & 6.80 \\
+
+robot\_2 & 0 & 0 & --- & --- & --- & --- & --- \\
+
+robot\_3 & 0 & 0 & --- & --- & --- & --- & --- \\
+
+\bottomrule
+\end{tabular}
+\par\smallskip{\scriptsize $^\ast$key device (most bottlenecks on test).}
+\end{center}
+
+\section*{Notes}
+\footnotesize
+(1) BestModel and Full-S1 have identical bottleneck and cause metrics because stage 2 freezes everything except the remaining-time head; BestModel lowers remaining-time MAE from 10.93/11.21/9.72 to 9.60/9.27/8.91 min.
+(2) NoFarBoost uses thresholds 0.90 (start$\le$5) and 0.88 (start$\le$10); lower thresholds favour its F1. It also differs from Full-S1 in curriculum and checkpoint metric.
+(3) NoCluster's cause head is not supervised (w\_cause=0); its cause accuracy ($\approx$0.20) is not meaningful and is omitted.
+(4) NoInfo / MachineOnly mask non-machine observations, which changes the observed event pool ($n_{\mathrm{true}}$=955/1225/1331 vs 1102/1372/1478); compare them to each other first.
+(5) NoGroup's selected validation report precision (0.782/0.663/0.620) is below the 0.80 gate used for the full model.
+(6) pretrain\_init is the warm-start checkpoint (horizon 15 min, start$\le$2); it is listed for reference only.
+
+
+\section*{Per-run checkpoint cards}
+
+{\small Validation numbers are report\_* at the selected epoch; test primary numbers are will15\_*. BestModel's validation row comes from its remaining-time fine-tuning run (bottleneck numbers frozen from Full-S1).}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries BestModel, start $\le 5$}\\
+{\scriptsize\texttt{bestmodel\_start5\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_bestmodel\_start5.json}; init same-start Full-S1; max 20 ep; best epoch 16; ckpt metric \texttt{val\_loss}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape Full model + far-start boost; stage 2 fine-tunes only the remaining-time head (rate term), everything else frozen.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.837 & 0.794 \\
+  & Recall $R$ & 0.891 & 0.817 \\
+  & F1 & 0.863 & \textbf{0.805} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.739 & 0.539 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.969 & 0.937 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.14 & 0.13 \\
+  & Duration MAE (tp) & 1.80 & 1.86 \\
+  & Duration MAE (union) & --- & 4.17 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.568 & 0.545 \\
+  & State F1 (1 step) & --- & 0.883 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.956 & 0.965 \\
+  & Macro recall & 0.963 & 0.967 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 10.74 & \textbf{9.60} \\
+  & MAE early / mid / late & --- & 14.1 / 7.7 / 4.0 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{336 / 766 / 1102} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries BestModel, start $\le 10$}\\
+{\scriptsize\texttt{bestmodel\_start10\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_bestmodel\_start10.json}; init same-start Full-S1; max 20 ep; best epoch 9; ckpt metric \texttt{val\_loss}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape Full model + far-start boost; stage 2 fine-tunes only the remaining-time head (rate term), everything else frozen.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.831 & 0.806 \\
+  & Recall $R$ & 0.840 & 0.761 \\
+  & F1 & 0.835 & \textbf{0.783} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.711 & 0.528 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.960 & 0.936 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.22 & 0.23 \\
+  & Duration MAE (tp) & 1.67 & 1.79 \\
+  & Duration MAE (union) & --- & 4.38 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.653 & 0.610 \\
+  & State F1 (1 step) & --- & 0.892 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.958 & 0.962 \\
+  & Macro recall & 0.968 & 0.965 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 10.41 & \textbf{9.27} \\
+  & MAE early / mid / late & --- & 13.8 / 7.2 / 3.8 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{604 / 768 / 1372} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries BestModel, start $\le 15$}\\
+{\scriptsize\texttt{bestmodel\_start15\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_bestmodel\_start15.json}; init same-start Full-S1; max 20 ep; best epoch 12; ckpt metric \texttt{val\_loss}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape Full model + far-start boost; stage 2 fine-tunes only the remaining-time head (rate term), everything else frozen.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.841 & 0.806 \\
+  & Recall $R$ & 0.835 & 0.742 \\
+  & F1 & 0.838 & \textbf{0.772} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.722 & 0.534 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.960 & 0.925 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.19 & 0.23 \\
+  & Duration MAE (tp) & 1.53 & 1.72 \\
+  & Duration MAE (union) & --- & 4.43 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.694 & 0.624 \\
+  & State F1 (1 step) & --- & 0.900 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.967 & 0.974 \\
+  & Macro recall & 0.978 & 0.978 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 10.07 & \textbf{8.91} \\
+  & MAE early / mid / late & --- & 13.1 / 7.2 / 3.6 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{708 / 770 / 1478} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries Full-S1, start $\le 5$}\\
+{\scriptsize\texttt{full\_farboost\_start5\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_12\_3\_start5\_min8\_opt.json}; init pretrain\_init $\to$ curriculum; max 100 ep; best epoch 39; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape Stage 1 of BestModel (former 12\_3): full model + far-start boost, before remaining-time fine-tuning.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.837 & 0.794 \\
+  & Recall $R$ & 0.891 & 0.817 \\
+  & F1 & 0.863 & \textbf{0.805} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.739 & 0.539 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.969 & 0.937 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.14 & 0.13 \\
+  & Duration MAE (tp) & 1.80 & 1.86 \\
+  & Duration MAE (union) & --- & 4.17 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.568 & 0.545 \\
+  & State F1 (1 step) & --- & 0.883 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.956 & 0.965 \\
+  & Macro recall & 0.963 & 0.967 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 12.30 & \textbf{10.93} \\
+  & MAE early / mid / late & --- & 16.8 / 8.2 / 3.9 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{336 / 766 / 1102} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries Full-S1, start $\le 10$}\\
+{\scriptsize\texttt{full\_farboost\_start10\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_12\_3\_start10\_min8\_opt.json}; init pretrain\_init $\to$ curriculum; max 100 ep; best epoch 41; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape Stage 1 of BestModel (former 12\_3): full model + far-start boost, before remaining-time fine-tuning.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.831 & 0.806 \\
+  & Recall $R$ & 0.840 & 0.761 \\
+  & F1 & 0.835 & \textbf{0.783} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.711 & 0.528 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.960 & 0.936 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.22 & 0.23 \\
+  & Duration MAE (tp) & 1.67 & 1.79 \\
+  & Duration MAE (union) & --- & 4.38 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.653 & 0.610 \\
+  & State F1 (1 step) & --- & 0.892 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.958 & 0.962 \\
+  & Macro recall & 0.968 & 0.965 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 12.58 & \textbf{11.21} \\
+  & MAE early / mid / late & --- & 17.3 / 8.4 / 3.9 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{604 / 768 / 1372} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries Full-S1, start $\le 15$}\\
+{\scriptsize\texttt{full\_farboost\_start15\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_12\_3\_start15\_min8\_opt.json}; init pretrain\_init $\to$ curriculum; max 100 ep; best epoch 42; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape Stage 1 of BestModel (former 12\_3): full model + far-start boost, before remaining-time fine-tuning.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.841 & 0.806 \\
+  & Recall $R$ & 0.835 & 0.742 \\
+  & F1 & 0.838 & \textbf{0.772} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.722 & 0.534 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.960 & 0.925 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.19 & 0.23 \\
+  & Duration MAE (tp) & 1.53 & 1.72 \\
+  & Duration MAE (union) & --- & 4.43 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.694 & 0.624 \\
+  & State F1 (1 step) & --- & 0.900 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.967 & 0.974 \\
+  & Macro recall & 0.978 & 0.978 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 10.97 & \textbf{9.72} \\
+  & MAE early / mid / late & --- & 14.7 / 7.5 / 3.6 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{708 / 770 / 1478} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries NoFarBoost, start $\le 5$}\\
+{\scriptsize\texttt{full\_nofarboost\_start5\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_12\_2\_start5\_min8\_ep100.json}; init pretrain\_init (each start); max 100 ep; best epoch 33; ckpt metric \texttt{report\_f1}; thr 0.90}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape Full architecture without the far-start boost settings (former 12\_2).}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.865 & 0.832 \\
+  & Recall $R$ & 0.872 & 0.808 \\
+  & F1 & 0.869 & \textbf{0.820} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.722 & 0.542 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.949 & 0.923 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.16 & 0.13 \\
+  & Duration MAE (tp) & 1.84 & 1.93 \\
+  & Duration MAE (union) & --- & 4.03 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.566 & 0.551 \\
+  & State F1 (1 step) & --- & 0.883 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.952 & 0.965 \\
+  & Macro recall & 0.769 & 0.969 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 12.03 & \textbf{10.64} \\
+  & MAE early / mid / late & --- & --- / --- / --- \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{336 / 766 / 1102} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries NoFarBoost, start $\le 10$}\\
+{\scriptsize\texttt{full\_nofarboost\_start10\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_12\_2\_start10\_min8\_ep100.json}; init pretrain\_init (each start); max 100 ep; best epoch 83; ckpt metric \texttt{report\_f1}; thr 0.88}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape Full architecture without the far-start boost settings (former 12\_2).}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.805 & 0.750 \\
+  & Recall $R$ & 0.836 & 0.763 \\
+  & F1 & 0.820 & \textbf{0.757} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.739 & 0.550 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.927 & 0.922 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.21 & 0.24 \\
+  & Duration MAE (tp) & 1.70 & 1.77 \\
+  & Duration MAE (union) & --- & 4.66 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.645 & 0.603 \\
+  & State F1 (1 step) & --- & 0.885 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.956 & 0.965 \\
+  & Macro recall & 0.774 & 0.970 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 10.86 & \textbf{9.61} \\
+  & MAE early / mid / late & --- & --- / --- / --- \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{604 / 768 / 1372} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries NoFarBoost, start $\le 15$}\\
+{\scriptsize\texttt{full\_nofarboost\_start15\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_12\_2\_start15\_min8\_ep100.json}; init pretrain\_init (each start); max 100 ep; best epoch 37; ckpt metric \texttt{report\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape Full architecture without the far-start boost settings (former 12\_2).}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.813 & 0.772 \\
+  & Recall $R$ & 0.803 & 0.716 \\
+  & F1 & 0.808 & \textbf{0.743} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.674 & 0.489 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.944 & 0.921 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.28 & 0.28 \\
+  & Duration MAE (tp) & 1.77 & 1.88 \\
+  & Duration MAE (union) & --- & 4.87 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.645 & 0.593 \\
+  & State F1 (1 step) & --- & 0.886 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.956 & 0.969 \\
+  & Macro recall & 0.776 & 0.974 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 11.77 & \textbf{10.20} \\
+  & MAE early / mid / late & --- & --- / --- / --- \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{708 / 770 / 1478} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries NoCluster, start $\le 5$}\\
+{\scriptsize\texttt{ablation\_nocluster\_start5\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_struct\_nocluster\_start5\_min8.json}; init scratch; max 50 ep; best epoch 12; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape No process-heuristic cause supervision and no history-cluster fusion / contrast / recall lift.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.807 & 0.812 \\
+  & Recall $R$ & 0.649 & 0.671 \\
+  & F1 & 0.719 & \textbf{0.735} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.129 & 0.122 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.916 & 0.910 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.04 & 0.03 \\
+  & Duration MAE (tp) & 2.84 & 2.89 \\
+  & Duration MAE (union) & --- & 5.43 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.367 & 0.420 \\
+  & State F1 (1 step) & --- & 0.841 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & --- & n/a \\
+  & Macro recall & --- & n/a \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 18.58 & \textbf{17.41} \\
+  & MAE early / mid / late & --- & 27.7 / 12.4 / 5.4 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{336 / 766 / 1102} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries NoCluster, start $\le 10$}\\
+{\scriptsize\texttt{ablation\_nocluster\_start10\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_struct\_nocluster\_start10\_min8.json}; init scratch; max 50 ep; best epoch 35; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape No process-heuristic cause supervision and no history-cluster fusion / contrast / recall lift.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.571 & 0.542 \\
+  & Recall $R$ & 0.637 & 0.677 \\
+  & F1 & 0.602 & \textbf{0.602} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.310 & 0.268 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.943 & 0.935 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.53 & 0.51 \\
+  & Duration MAE (tp) & 2.25 & 2.40 \\
+  & Duration MAE (union) & --- & 6.69 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.421 & 0.415 \\
+  & State F1 (1 step) & --- & 0.789 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & --- & n/a \\
+  & Macro recall & --- & n/a \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 12.81 & \textbf{11.49} \\
+  & MAE early / mid / late & --- & 16.9 / 9.0 / 4.9 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{604 / 768 / 1372} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries NoCluster, start $\le 15$}\\
+{\scriptsize\texttt{ablation\_nocluster\_start15\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_struct\_nocluster\_start15\_min8.json}; init scratch; max 50 ep; best epoch 38; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape No process-heuristic cause supervision and no history-cluster fusion / contrast / recall lift.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.513 & 0.510 \\
+  & Recall $R$ & 0.629 & 0.664 \\
+  & F1 & 0.565 & \textbf{0.577} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.339 & 0.282 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.949 & 0.926 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.85 & 0.66 \\
+  & Duration MAE (tp) & 2.16 & 2.30 \\
+  & Duration MAE (union) & --- & 6.65 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.436 & 0.411 \\
+  & State F1 (1 step) & --- & 0.819 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & --- & n/a \\
+  & Macro recall & --- & n/a \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 11.67 & \textbf{10.60} \\
+  & MAE early / mid / late & --- & 14.5 / 10.2 / 4.1 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{708 / 770 / 1478} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries NoGraph, start $\le 5$}\\
+{\scriptsize\texttt{ablation\_nograph\_start5\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_struct\_nograph\_start5\_min8.json}; init scratch; max 50 ep; best epoch 19; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape graph\_mode=identity: self-loops only, no factory edges.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.823 & 0.832 \\
+  & Recall $R$ & 0.658 & 0.678 \\
+  & F1 & 0.731 & \textbf{0.747} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.115 & 0.101 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.937 & 0.930 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.05 & 0.02 \\
+  & Duration MAE (tp) & 2.72 & 2.98 \\
+  & Duration MAE (union) & --- & 5.48 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.361 & 0.396 \\
+  & State F1 (1 step) & --- & 0.873 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.866 & 0.876 \\
+  & Macro recall & 0.886 & 0.889 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 18.20 & \textbf{16.97} \\
+  & MAE early / mid / late & --- & 27.7 / 10.2 / 6.5 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{336 / 766 / 1102} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries NoGraph, start $\le 10$}\\
+{\scriptsize\texttt{ablation\_nograph\_start10\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_struct\_nograph\_start10\_min8.json}; init scratch; max 50 ep; best epoch 9; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape graph\_mode=identity: self-loops only, no factory edges.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.807 & 0.821 \\
+  & Recall $R$ & 0.486 & 0.539 \\
+  & F1 & 0.606 & \textbf{0.651} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.049 & 0.065 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.894 & 0.909 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.02 & 0.05 \\
+  & Duration MAE (tp) & 3.06 & 3.09 \\
+  & Duration MAE (union) & --- & 6.46 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.314 & 0.382 \\
+  & State F1 (1 step) & --- & 0.844 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.741 & 0.734 \\
+  & Macro recall & 0.755 & 0.746 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 24.07 & \textbf{23.35} \\
+  & MAE early / mid / late & --- & 40.3 / 12.7 / 6.9 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{604 / 768 / 1372} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries NoGraph, start $\le 15$}\\
+{\scriptsize\texttt{ablation\_nograph\_start15\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_struct\_nograph\_start15\_min8.json}; init scratch; max 50 ep; best epoch 11; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape graph\_mode=identity: self-loops only, no factory edges.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.819 & 0.851 \\
+  & Recall $R$ & 0.435 & 0.482 \\
+  & F1 & 0.568 & \textbf{0.616} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.028 & 0.037 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.883 & 0.887 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.06 & 0.07 \\
+  & Duration MAE (tp) & 3.06 & 3.04 \\
+  & Duration MAE (union) & --- & 6.57 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.302 & 0.371 \\
+  & State F1 (1 step) & --- & 0.865 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.796 & 0.794 \\
+  & Macro recall & 0.790 & 0.787 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 21.38 & \textbf{20.81} \\
+  & MAE early / mid / late & --- & 35.0 / 11.7 / 7.2 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{708 / 770 / 1478} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries NoGroup, start $\le 5$}\\
+{\scriptsize\texttt{ablation\_nogroup\_start5\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_struct\_nogroup\_start5\_min8.json}; init scratch; max 50 ep; best epoch 28; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape use\_grouped\_embed=false: one linear input projection instead of 6 semantic groups.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.782 & 0.766 \\
+  & Recall $R$ & 0.765 & 0.756 \\
+  & F1 & 0.774 & \textbf{0.761} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.383 & 0.307 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.962 & 0.941 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.30 & 0.17 \\
+  & Duration MAE (tp) & 2.29 & 2.59 \\
+  & Duration MAE (union) & --- & 5.11 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.449 & 0.447 \\
+  & State F1 (1 step) & --- & 0.835 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.932 & 0.943 \\
+  & Macro recall & 0.952 & 0.955 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 13.25 & \textbf{12.69} \\
+  & MAE early / mid / late & --- & 19.0 / 10.3 / 4.5 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{336 / 766 / 1102} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries NoGroup, start $\le 10$}\\
+{\scriptsize\texttt{ablation\_nogroup\_start10\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_struct\_nogroup\_start10\_min8.json}; init scratch; max 50 ep; best epoch 44; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape use\_grouped\_embed=false: one linear input projection instead of 6 semantic groups.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.663 & 0.605 \\
+  & Recall $R$ & 0.790 & 0.745 \\
+  & F1 & 0.721 & \textbf{0.668} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.636 & 0.445 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.934 & 0.947 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.75 & 0.46 \\
+  & Duration MAE (tp) & 2.15 & 2.43 \\
+  & Duration MAE (union) & --- & 6.05 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.554 & 0.485 \\
+  & State F1 (1 step) & --- & 0.826 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.928 & 0.938 \\
+  & Macro recall & 0.944 & 0.953 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 12.54 & \textbf{11.58} \\
+  & MAE early / mid / late & --- & 17.2 / 9.5 / 4.0 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{604 / 768 / 1372} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries NoGroup, start $\le 15$}\\
+{\scriptsize\texttt{ablation\_nogroup\_start15\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_struct\_nogroup\_start15\_min8.json}; init scratch; max 50 ep; best epoch 50; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape use\_grouped\_embed=false: one linear input projection instead of 6 semantic groups.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.620 & 0.567 \\
+  & Recall $R$ & 0.760 & 0.690 \\
+  & F1 & 0.683 & \textbf{0.623} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.609 & 0.395 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.927 & 0.922 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.66 & 0.52 \\
+  & Duration MAE (tp) & 2.09 & 2.49 \\
+  & Duration MAE (union) & --- & 6.34 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.534 & 0.470 \\
+  & State F1 (1 step) & --- & 0.819 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.941 & 0.938 \\
+  & Macro recall & 0.950 & 0.949 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 11.06 & \textbf{10.55} \\
+  & MAE early / mid / late & --- & 14.6 / 9.3 / 4.8 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{708 / 770 / 1478} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries NoPattern, start $\le 5$}\\
+{\scriptsize\texttt{struct\_nopattern\_start5\_min8\_cold\_ep50\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_struct\_nopattern\_start5\_min8.json}; init scratch $\to$ curriculum; max 50 ep; best epoch 15; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape use\_delay\_pattern=false: no delay-aware pattern matching.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.789 & 0.802 \\
+  & Recall $R$ & 0.671 & 0.701 \\
+  & F1 & 0.725 & \textbf{0.748} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.166 & 0.158 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.930 & 0.935 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.07 & 0.05 \\
+  & Duration MAE (tp) & 2.65 & 2.56 \\
+  & Duration MAE (union) & --- & 5.27 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.381 & 0.448 \\
+  & State F1 (1 step) & --- & 0.849 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.726 & 0.732 \\
+  & Macro recall & 0.725 & 0.734 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 20.06 & \textbf{18.62} \\
+  & MAE early / mid / late & --- & 30.7 / 12.2 / 5.4 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{336 / 766 / 1102} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries NoPattern, start $\le 10$}\\
+{\scriptsize\texttt{struct\_nopattern\_start10\_min8\_cold\_ep50\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_struct\_nopattern\_start10\_min8.json}; init scratch $\to$ curriculum; max 50 ep; best epoch 28; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape use\_delay\_pattern=false: no delay-aware pattern matching.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.598 & 0.573 \\
+  & Recall $R$ & 0.659 & 0.645 \\
+  & F1 & 0.627 & \textbf{0.607} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.360 & 0.235 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.939 & 0.931 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.46 & 0.34 \\
+  & Duration MAE (tp) & 2.14 & 2.41 \\
+  & Duration MAE (union) & --- & 6.56 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.450 & 0.432 \\
+  & State F1 (1 step) & --- & 0.826 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.807 & 0.793 \\
+  & Macro recall & 0.823 & 0.805 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 14.85 & \textbf{13.35} \\
+  & MAE early / mid / late & --- & 21.0 / 9.6 / 4.5 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{604 / 768 / 1372} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries NoPattern, start $\le 15$}\\
+{\scriptsize\texttt{struct\_nopattern\_start15\_min8\_cold\_ep50\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_struct\_nopattern\_start15\_min8.json}; init scratch $\to$ curriculum; max 50 ep; best epoch 42; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape use\_delay\_pattern=false: no delay-aware pattern matching.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.631 & 0.552 \\
+  & Recall $R$ & 0.769 & 0.698 \\
+  & F1 & 0.693 & \textbf{0.616} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.600 & 0.397 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.956 & 0.942 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.52 & 0.47 \\
+  & Duration MAE (tp) & 1.92 & 2.14 \\
+  & Duration MAE (union) & --- & 6.20 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.548 & 0.465 \\
+  & State F1 (1 step) & --- & 0.848 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.851 & 0.843 \\
+  & Macro recall & 0.862 & 0.850 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 12.53 & \textbf{11.06} \\
+  & MAE early / mid / late & --- & 16.0 / 9.2 / 4.5 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{708 / 770 / 1478} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries NoSplit, start $\le 5$}\\
+{\scriptsize\texttt{struct\_nosplit\_start5\_min8\_cold\_ep50\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_struct\_nosplit\_start5\_min8.json}; init scratch $\to$ curriculum; max 50 ep; best epoch 15; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape split\_will\_heads=false: one shared will head for continue and onset.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.784 & 0.752 \\
+  & Recall $R$ & 0.670 & 0.708 \\
+  & F1 & 0.723 & \textbf{0.729} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.149 & 0.185 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.937 & 0.935 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.06 & 0.07 \\
+  & Duration MAE (tp) & 2.65 & 2.69 \\
+  & Duration MAE (union) & --- & 5.56 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.379 & 0.420 \\
+  & State F1 (1 step) & --- & 0.824 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.853 & 0.853 \\
+  & Macro recall & 0.874 & 0.874 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 20.80 & \textbf{18.85} \\
+  & MAE early / mid / late & --- & 31.6 / 11.5 / 5.6 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{336 / 766 / 1102} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries NoSplit, start $\le 10$}\\
+{\scriptsize\texttt{struct\_nosplit\_start10\_min8\_cold\_ep50\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_struct\_nosplit\_start10\_min8.json}; init scratch $\to$ curriculum; max 50 ep; best epoch 33; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape split\_will\_heads=false: one shared will head for continue and onset.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.596 & 0.564 \\
+  & Recall $R$ & 0.614 & 0.638 \\
+  & F1 & 0.605 & \textbf{0.599} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.254 & 0.204 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.951 & 0.944 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.42 & 0.32 \\
+  & Duration MAE (tp) & 2.16 & 2.19 \\
+  & Duration MAE (union) & --- & 6.63 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.427 & 0.417 \\
+  & State F1 (1 step) & --- & 0.798 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.888 & 0.869 \\
+  & Macro recall & 0.904 & 0.884 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 15.64 & \textbf{14.38} \\
+  & MAE early / mid / late & --- & 23.5 / 8.8 / 5.2 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{604 / 768 / 1372} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries NoSplit, start $\le 15$}\\
+{\scriptsize\texttt{struct\_nosplit\_start15\_min8\_cold\_ep50\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_struct\_nosplit\_start15\_min8.json}; init scratch $\to$ curriculum; max 50 ep; best epoch 47; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape split\_will\_heads=false: one shared will head for continue and onset.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.627 & 0.559 \\
+  & Recall $R$ & 0.690 & 0.664 \\
+  & F1 & 0.657 & \textbf{0.607} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.453 & 0.309 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.951 & 0.945 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.51 & 0.49 \\
+  & Duration MAE (tp) & 1.87 & 2.11 \\
+  & Duration MAE (union) & --- & 6.36 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.498 & 0.443 \\
+  & State F1 (1 step) & --- & 0.834 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.897 & 0.869 \\
+  & Macro recall & 0.915 & 0.890 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 15.23 & \textbf{13.85} \\
+  & MAE early / mid / late & --- & 22.5 / 8.9 / 4.8 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{708 / 770 / 1478} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries NoCross, start $\le 5$}\\
+{\scriptsize\texttt{entity\_nocross\_start5\_min8\_cold\_ep50\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_entity\_nocross\_start5\_min8.json}; init scratch; max 50 ep; best epoch 29; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape No cross-type edges or cross-type semantic attention.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.759 & 0.750 \\
+  & Recall $R$ & 0.696 & 0.698 \\
+  & F1 & 0.726 & \textbf{0.723} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.224 & 0.199 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.939 & 0.907 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.15 & 0.11 \\
+  & Duration MAE (tp) & 2.50 & 2.59 \\
+  & Duration MAE (union) & --- & 5.28 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.395 & 0.425 \\
+  & State F1 (1 step) & --- & 0.812 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.862 & 0.862 \\
+  & Macro recall & 0.870 & 0.864 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 19.07 & \textbf{17.79} \\
+  & MAE early / mid / late & --- & 28.8 / 11.9 / 5.8 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{336 / 766 / 1102} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries NoCross, start $\le 10$}\\
+{\scriptsize\texttt{entity\_nocross\_start10\_min8\_cold\_ep50\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_entity\_nocross\_start10\_min8.json}; init scratch; max 50 ep; best epoch 32; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape No cross-type edges or cross-type semantic attention.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.625 & 0.596 \\
+  & Recall $R$ & 0.589 & 0.593 \\
+  & F1 & 0.606 & \textbf{0.595} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.233 & 0.157 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.922 & 0.893 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.66 & 0.34 \\
+  & Duration MAE (tp) & 2.43 & 2.51 \\
+  & Duration MAE (union) & --- & 6.60 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.430 & 0.407 \\
+  & State F1 (1 step) & --- & 0.759 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.831 & 0.841 \\
+  & Macro recall & 0.846 & 0.851 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 15.20 & \textbf{13.93} \\
+  & MAE early / mid / late & --- & 22.2 / 9.1 / 5.4 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{604 / 768 / 1372} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries NoCross, start $\le 15$}\\
+{\scriptsize\texttt{entity\_nocross\_start15\_min8\_cold\_ep50\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_entity\_nocross\_start15\_min8.json}; init scratch; max 50 ep; best epoch 41; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape No cross-type edges or cross-type semantic attention.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.518 & 0.518 \\
+  & Recall $R$ & 0.561 & 0.616 \\
+  & F1 & 0.539 & \textbf{0.563} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.247 & 0.205 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.908 & 0.892 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 1.12 & 0.73 \\
+  & Duration MAE (tp) & 2.35 & 2.37 \\
+  & Duration MAE (union) & --- & 6.77 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.438 & 0.405 \\
+  & State F1 (1 step) & --- & 0.760 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.798 & 0.801 \\
+  & Macro recall & 0.807 & 0.811 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 16.49 & \textbf{15.27} \\
+  & MAE early / mid / late & --- & 24.3 / 10.1 / 5.7 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{708 / 770 / 1478} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries NoInfo, start $\le 5$}\\
+{\scriptsize\texttt{entity\_noinfo\_start5\_min8\_cold\_ep50\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_entity\_noinfo\_start5\_min8.json}; init scratch; max 50 ep; best epoch 12; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape Machine-only observations; non-machine features and coupling channels 13,14,15,17,26 masked.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.802 & 0.770 \\
+  & Recall $R$ & 0.539 & 0.553 \\
+  & F1 & 0.645 & \textbf{0.644} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.056 & 0.049 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.895 & 0.899 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.05 & 0.02 \\
+  & Duration MAE (tp) & 3.47 & 3.55 \\
+  & Duration MAE (union) & --- & 6.66 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.278 & 0.312 \\
+  & State F1 (1 step) & --- & 0.699 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.886 & 0.870 \\
+  & Macro recall & 0.906 & 0.888 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 21.57 & \textbf{19.44} \\
+  & MAE early / mid / late & --- & 29.0 / 16.4 / 6.2 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{389 / 566 / 955} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries NoInfo, start $\le 10$}\\
+{\scriptsize\texttt{entity\_noinfo\_start10\_min8\_cold\_ep50\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_entity\_noinfo\_start10\_min8.json}; init scratch; max 50 ep; best epoch 7; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape Machine-only observations; non-machine features and coupling channels 13,14,15,17,26 masked.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.777 & 0.759 \\
+  & Recall $R$ & 0.417 & 0.425 \\
+  & F1 & 0.543 & \textbf{0.545} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.021 & 0.020 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.925 & 0.896 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.03 & 0.02 \\
+  & Duration MAE (tp) & 3.34 & 3.72 \\
+  & Duration MAE (union) & --- & 7.57 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.263 & 0.312 \\
+  & State F1 (1 step) & --- & 0.684 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.616 & 0.682 \\
+  & Macro recall & 0.675 & 0.707 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 27.04 & \textbf{24.73} \\
+  & MAE early / mid / late & --- & 38.1 / 19.1 / 8.0 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{659 / 566 / 1225} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries NoInfo, start $\le 15$}\\
+{\scriptsize\texttt{entity\_noinfo\_start15\_min8\_cold\_ep50\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_entity\_noinfo\_start15\_min8.json}; init scratch; max 50 ep; best epoch 41; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape Machine-only observations; non-machine features and coupling channels 13,14,15,17,26 masked.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.455 & 0.466 \\
+  & Recall $R$ & 0.494 & 0.518 \\
+  & F1 & 0.474 & \textbf{0.490} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.175 & 0.127 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.973 & 0.922 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 1.08 & 0.77 \\
+  & Duration MAE (tp) & 2.57 & 2.94 \\
+  & Duration MAE (union) & --- & 7.66 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.351 & 0.313 \\
+  & State F1 (1 step) & --- & 0.596 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.917 & 0.917 \\
+  & Macro recall & 0.926 & 0.929 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 15.20 & \textbf{13.98} \\
+  & MAE early / mid / late & --- & 20.0 / 12.3 / 5.3 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{765 / 566 / 1331} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries MachineOnly, start $\le 5$}\\
+{\scriptsize\texttt{entity\_machineonly\_start5\_min8\_cold\_ep50\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_entity\_machineonly\_start5\_min8.json}; init scratch; max 50 ep; best epoch 12; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape NoCross + NoInfo combined.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.829 & 0.798 \\
+  & Recall $R$ & 0.554 & 0.549 \\
+  & F1 & 0.664 & \textbf{0.650} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.043 & 0.033 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.930 & 0.903 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.02 & 0.01 \\
+  & Duration MAE (tp) & 3.35 & 3.57 \\
+  & Duration MAE (union) & --- & 6.51 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.282 & 0.315 \\
+  & State F1 (1 step) & --- & 0.709 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.704 & 0.699 \\
+  & Macro recall & 0.680 & 0.676 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 25.19 & \textbf{23.26} \\
+  & MAE early / mid / late & --- & 36.0 / 17.7 / 7.7 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{389 / 566 / 955} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries MachineOnly, start $\le 10$}\\
+{\scriptsize\texttt{entity\_machineonly\_start10\_min8\_cold\_ep50\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_entity\_machineonly\_start10\_min8.json}; init scratch; max 50 ep; best epoch 11; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape NoCross + NoInfo combined.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.818 & 0.820 \\
+  & Recall $R$ & 0.417 & 0.424 \\
+  & F1 & 0.552 & \textbf{0.559} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.023 & 0.014 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.923 & 0.901 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.02 & 0.00 \\
+  & Duration MAE (tp) & 3.40 & 3.60 \\
+  & Duration MAE (union) & --- & 7.40 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.271 & 0.320 \\
+  & State F1 (1 step) & --- & 0.708 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.700 & 0.736 \\
+  & Macro recall & 0.710 & 0.730 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 28.64 & \textbf{26.83} \\
+  & MAE early / mid / late & --- & 42.0 / 20.3 / 8.0 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{659 / 566 / 1225} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries MachineOnly, start $\le 15$}\\
+{\scriptsize\texttt{entity\_machineonly\_start15\_min8\_cold\_ep50\_seed42}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_entity\_machineonly\_start15\_min8.json}; init scratch; max 50 ep; best epoch 14; ckpt metric \texttt{will15\_f1}; thr 0.94}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape NoCross + NoInfo combined.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.787 & 0.802 \\
+  & Recall $R$ & 0.387 & 0.400 \\
+  & F1 & 0.519 & \textbf{0.534} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.021 & 0.021 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.936 & 0.912 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.07 & 0.02 \\
+  & Duration MAE (tp) & 3.35 & 3.39 \\
+  & Duration MAE (union) & --- & 7.46 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.278 & 0.322 \\
+  & State F1 (1 step) & --- & 0.706 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.724 & 0.744 \\
+  & Macro recall & 0.728 & 0.735 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 22.98 & \textbf{21.23} \\
+  & MAE early / mid / late & --- & 32.4 / 16.9 / 6.7 \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{765 / 566 / 1331} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{center}
+{\small\bfseries pretrain\_init, start $\le 2$}\\
+{\scriptsize\texttt{pretrain\_init}}\\
+{\scriptsize Recipe \texttt{FactoryBN\_dense\_f1\_p80.json}; init earlier f180 model; max 16 ep; best epoch 8; ckpt metric \texttt{report\_f1}; thr 0.98}\\[1pt]
+\parbox{0.96\columnwidth}{\scriptsize\itshape Warm-start weights (former a1\_prefix8); horizon 15 min, start $\le$ 2, threshold 0.98. Reference only.}\\[2pt]
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Group & Metric & Val & Test \\
+\midrule
+\multirow{3}{*}{Bottleneck report}
+  & Precision $P$ & 0.883 & 0.852 \\
+  & Recall $R$ & 0.881 & 0.856 \\
+  & F1 & 0.882 & \textbf{0.854} \\
+\midrule
+\multirow{2}{*}{Stratified recall}
+  & Upcoming $R_{\mathrm{up}}$ & 0.633 & 0.455 \\
+  & Ongoing $R_{\mathrm{on}}$ & 0.920 & 0.911 \\
+\midrule
+\multirow{3}{*}{Timing (min)}
+  & Start MAE (tp) & 0.13 & 0.09 \\
+  & Duration MAE (tp) & 1.98 & 1.96 \\
+  & Duration MAE (union) & --- & 3.39 \\
+\midrule
+\multirow{2}{*}{Occupancy grid}
+  & Hot F1 & 0.599 & 0.583 \\
+  & State F1 (1 step) & --- & 0.868 \\
+\midrule
+\multirow{2}{*}{Process cause}
+  & Accuracy & 0.961 & 0.965 \\
+  & Macro recall & 0.774 & 0.971 \\
+\midrule
+\multirow{2}{*}{Remaining time (min)}
+  & MAE & 12.03 & \textbf{10.49} \\
+  & MAE early / mid / late & --- & --- / --- / --- \\
+\midrule
+Support (test)
+  & $n_{\mathrm{true}}$ up / on / all & \multicolumn{2}{r}{112 / 828 / 940} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\end{document}
