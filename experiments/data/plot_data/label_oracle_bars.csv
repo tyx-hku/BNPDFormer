@@ -1,0 +1,26 @@
+method,metric,value
+Ops,ndcg3,0.531
+TPM,ndcg3,0.372
+Active Period,ndcg3,0.382
+Utilization,ndcg3,0.183
+Queue-Wait,ndcg3,0.495
+Ops,pos_r2,0.556
+TPM,pos_r2,0.278
+Active Period,pos_r2,0.278
+Utilization,pos_r2,0.222
+Queue-Wait,pos_r2,0.444
+Ops,pos_r3,0.685
+TPM,pos_r3,0.389
+Active Period,pos_r3,0.315
+Utilization,pos_r3,0.204
+Queue-Wait,pos_r3,0.556
+Ops,w_r3,0.716
+TPM,w_r3,0.421
+Active Period,w_r3,0.377
+Utilization,w_r3,0.230
+Queue-Wait,w_r3,0.585
+Ops,cov39,0.722
+TPM,cov39,0.444
+Active Period,cov39,0.389
+Utilization,cov39,0.222
+Queue-Wait,cov39,0.611

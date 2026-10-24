@@ -201,63 +201,128 @@ def calibrate_y(im: np.ndarray, box, labels_top_to_bottom: list[float]) -> tuple
 
 
 # --------------------------------------------------------------------------- #
-# 1. key_device_entity (duration traces, multi-entity ablations)
+# 1. key_device_entity (duration traces) — two panels:
+#    (a) multi-entity ablations at Start≤5
+#    (b) Full model Start≤5/10/15 on the same device/episode
+# Pixel RGB targets stay on the archived PNG colours; display hex is vivid.
 # --------------------------------------------------------------------------- #
+# Palette card: orange #F26121, mid-blue #5BA7D9; vivid green/purple complements.
+COLOR_ORANGE = "#F26121"
+COLOR_MIDBLUE = "#5BA7D9"
+COLOR_GREEN = "#00A651"
+COLOR_PURPLE = "#9B2DCF"
+
 ENTITY_SERIES = {
-    "12_3_start5": (np.array([31, 119, 180]), "#46788E"),
-    "entity_machineonly_start5": (np.array([242, 97, 33]), "#E5887B"),
-    "entity_nocross_start5": (np.array([24, 120, 96]), "#97B319"),
-    "entity_noinfo_start5": (np.array([120, 72, 144]), "#7BB7C9"),
+    "PHGST-DP": (np.array([31, 119, 180]), COLOR_MIDBLUE),
+    "MachineOnly": (np.array([242, 97, 33]), COLOR_ORANGE),
+    "NoCross": (np.array([24, 120, 96]), COLOR_GREEN),
+    "NoInfo": (np.array([120, 72, 144]), COLOR_PURPLE),
 }
 ENTITY_STYLES = {
-    "12_3_start5": (0, (4, 1.6)),
-    "entity_machineonly_start5": (0, (1.2, 1.1)),
-    "entity_nocross_start5": (0, (1, 1.3)),
-    "entity_noinfo_start5": (0, (3, 1.2, 1, 1.2)),
+    "PHGST-DP": (0, (4, 1.6)),
+    "MachineOnly": (0, (1.2, 1.1)),
+    "NoCross": (0, (1, 1.3)),
+    "NoInfo": (0, (3, 1.2, 1, 1.2)),
+}
+# Source PNG series names → display labels (RGB = matplotlib C0/C1/C2).
+START_SERIES = {
+    "Start$\\leq5$": (np.array([31, 119, 180]), COLOR_MIDBLUE),
+    "Start$\\leq10$": (np.array([255, 127, 14]), COLOR_ORANGE),
+    "Start$\\leq15$": (np.array([44, 160, 44]), COLOR_GREEN),
+}
+START_STYLES = {
+    "Start$\\leq5$": (0, (4, 1.6)),
+    "Start$\\leq10$": (0, (1.2, 1.1)),
+    "Start$\\leq15$": (0, (3, 1.2, 1, 1.2)),
 }
 
 
-def redraw_entity() -> None:
-    # Original raster kept as the extraction source (the outputs overwrite
-    # figures/key_device_entity.*, so never extract from those).
-    im = np.array(Image.open(ROOT / "experiments/data/key_device_entity_source.png").convert("RGB"))
-    box = spine_box(im)
-    x_map = calibrate_x(im, box, [50, 100, 150, 200, 250])
-    y_map = calibrate_y(im, box, [20, 17.5, 15, 12.5, 10, 7.5, 5, 2.5, 0])
-    legend = (1250, 1970, 80, 215)
+def _style_trace_ax(ax, xlabel: bool = True) -> None:
+    ax.set_xlim(20, 270)
+    ax.set_ylim(-0.8, 21)
+    ax.set_yticks([0, 5, 10, 15, 20])
+    ax.set_ylabel("Bottleneck duration (min)")
+    if xlabel:
+        ax.set_xlabel("Window index (60 s)")
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["bottom"].set_color("#9AA3A8")
+    ax.spines["left"].set_color("#9AA3A8")
+    ax.tick_params(colors="#333333")
+    ax.set_axisbelow(True)
+    ax.grid(alpha=0.3, lw=0.6)
 
-    fig, ax = plt.subplots(figsize=(10, 3.8))
+
+def _plot_true(ax) -> None:
     true_x, true_y = load_true_duration()
     (true_line,) = ax.plot(
         true_x, true_y, color=TRUE_COLOR, lw=2.0, label="True", zorder=5,
         solid_capstyle="round", solid_joinstyle="round",
     )
     true_line.set_path_effects([pe.Stroke(linewidth=3.4, foreground="white"), pe.Normal()])
-    all_targets = [t for t, _ in ENTITY_SERIES.values()]
-    for name, (target, color) in ENTITY_SERIES.items():
-        x, y = pack_series(im, box, target, x_map, y_map, legend=legend, all_targets=all_targets)
-        ax.plot(x, y, color=color, lw=1.35 if name == "12_3_start5" else 1.15,
+
+
+def _extract_colored(
+    im: np.ndarray,
+    series: dict[str, tuple[np.ndarray, str]],
+    legend: tuple[int, int, int, int],
+) -> dict[str, tuple[np.ndarray, np.ndarray]]:
+    box = spine_box(im)
+    x_map = calibrate_x(im, box, [50, 100, 150, 200, 250])
+    y_map = calibrate_y(im, box, [20, 17.5, 15, 12.5, 10, 7.5, 5, 2.5, 0])
+    all_targets = [t for t, _ in series.values()]
+    out: dict[str, tuple[np.ndarray, np.ndarray]] = {}
+    for name, (target, _) in series.items():
+        out[name] = pack_series(im, box, target, x_map, y_map, legend=legend, all_targets=all_targets)
+    return out
+
+
+def redraw_entity() -> None:
+    # Original rasters are extraction sources; outputs overwrite figures/*.
+    im_ent = np.array(Image.open(ROOT / "experiments/data/key_device_entity_source.png").convert("RGB"))
+    im_start = np.array(Image.open(ROOT / "experiments/data/key_device_start_source.png").convert("RGB"))
+    legend = (1250, 1970, 80, 215)
+    ent = _extract_colored(im_ent, ENTITY_SERIES, legend)
+    start = _extract_colored(im_start, START_SERIES, legend)
+
+    fig, axes = plt.subplots(2, 1, figsize=(10.0, 6.2), sharex=True)
+    # (a) entity ablations, Start≤5
+    ax = axes[0]
+    _plot_true(ax)
+    for name, (_, color) in ENTITY_SERIES.items():
+        x, y = ent[name]
+        ax.plot(x, y, color=color, lw=1.45 if name == "PHGST-DP" else 1.2,
                 ls=ENTITY_STYLES[name], label=name, zorder=2)
-    ax.set_ylabel("bottleneck duration (min)")
-    ax.set_xlabel("window index (60 s)")
+    _style_trace_ax(ax, xlabel=False)
+    ax.set_title("(a) Multi-entity ablations (Start$\\leq5$)", loc="left", fontsize=10)
+    ax.legend(loc="upper right", fontsize=8, frameon=False, ncol=2)
+
+    # (b) Full model across Start caps, same device/episode
+    ax = axes[1]
+    _plot_true(ax)
+    for name, (_, color) in START_SERIES.items():
+        x, y = start[name]
+        ax.plot(x, y, color=color, lw=1.45 if name == "Start$\\leq5$" else 1.2,
+                ls=START_STYLES[name], label=name, zorder=2)
+    _style_trace_ax(ax, xlabel=True)
     ax.set_title(
-        "num02_rollerbedCNCPipeIntersectionCuttingMachine_ws0 | n10_human1.0__episode_03 (entity)",
-        fontsize=9,
+        "(b) PHGST-DP under Start$\\leq5/10/15$ (same device and episode)",
+        loc="left",
+        fontsize=10,
     )
-    ax.set_xlim(20, 270)
-    ax.set_ylim(-0.8, 21)
-    ax.set_yticks([0, 5, 10, 15, 20])
-    ax.spines["bottom"].set_color("#9AA3A8")
-    ax.spines["left"].set_color("#9AA3A8")
-    ax.tick_params(colors="#333333")
-    ax.set_axisbelow(True)
-    ax.grid(alpha=0.3)
-    ax.legend(loc="upper right", fontsize=7, ncol=2)
+    ax.legend(loc="upper right", fontsize=8, frameon=False, ncol=2)
+
+    fig.suptitle(
+        "num02_rollerbedCNCPipeIntersectionCuttingMachine_ws0 | "
+        "n10_human1.0__episode_03",
+        fontsize=9,
+        y=1.01,
+    )
     fig.tight_layout()
     fig.savefig(FIG / "key_device_entity.pdf")
     fig.savefig(FIG / "key_device_entity.png", dpi=200)
     plt.close(fig)
-    print("[redraw] key_device_entity")
+    print("[redraw] key_device_entity (entity + start panels)")
 
 
 # --------------------------------------------------------------------------- #

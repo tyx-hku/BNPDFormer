@@ -17,6 +17,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = Path(__file__).resolve().parent / "data"
@@ -398,50 +399,97 @@ def plot_delay_distance(events: dict) -> None:
     _save(fig, "fig_delay_distance")
 
 
-def plot_remain_dumbbell(summary: dict) -> None:
-    """Fig 5-6: stage-1 → stage-2 remaining-time MAE dumbbell."""
+def plot_remain_finetuning_matrix(summary: dict) -> None:
+    """Stage-1 → stage-2 remaining-time MAE by production phase."""
+    metrics = (
+        ("Overall", "remain_mae"),
+        ("Early", "remain_mae_early"),
+        ("Middle", "remain_mae_middle"),
+        ("Late", "remain_mae_late"),
+    )
+    stage1 = np.zeros((len(STARTS), len(metrics)))
+    stage2 = np.zeros_like(stage1)
     rows_out = []
-    stage1, stage2 = [], []
-    for start in STARTS:
-        a = _f(summary[RUNS["Stage1"].format(s=start)], "remain_mae")
-        b = _f(summary[RUNS["Full"].format(s=start)], "remain_mae")
-        stage1.append(a)
-        stage2.append(b)
-        rows_out.append({
-            "arm": "Full", "start_cap": start, "stage1_mae": a, "stage2_mae": b,
-            "absolute_drop": a - b, "percent_drop": 100.0 * (a - b) / a,
-            "source_stage1": RUNS["Stage1"].format(s=start),
-            "source_stage2": RUNS["Full"].format(s=start),
-        })
+    for i, start in enumerate(STARTS):
+        source_stage1 = RUNS["Stage1"].format(s=start)
+        source_stage2 = RUNS["Full"].format(s=start)
+        for j, (phase, key) in enumerate(metrics):
+            before = _f(summary[source_stage1], key)
+            after = _f(summary[source_stage2], key)
+            stage1[i, j] = before
+            stage2[i, j] = after
+            rows_out.append({
+                "arm": "Full",
+                "start_cap": start,
+                "phase": phase,
+                "stage1_mae": before,
+                "stage2_mae": after,
+                "absolute_drop": before - after,
+                "percent_drop": 100.0 * (before - after) / before,
+                "source_stage1": source_stage1,
+                "source_stage2": source_stage2,
+            })
+
     published = {
         5: (10.925976792778325, 9.601598876066781),
         10: (11.213109243704304, 9.268456968835453),
         15: (9.716936303467548, 8.90945713298286),
     }
-    for start, a, b in zip(STARTS, stage1, stage2):
-        assert abs(a - published[start][0]) < 1e-9 and abs(b - published[start][1]) < 1e-9
+    for i, start in enumerate(STARTS):
+        assert abs(stage1[i, 0] - published[start][0]) < 1e-9
+        assert abs(stage2[i, 0] - published[start][1]) < 1e-9
     _write_csv(PLOT_DATA / "remain_dumbbell_full.csv", rows_out)
 
-    fig, ax = plt.subplots(figsize=(6.4, 2.45))
-    y = np.arange(len(STARTS))[::-1]
-    for yi, a, b in zip(y, stage1, stage2):
-        ax.plot([a, b], [yi, yi], color="#9AA8AE", lw=1.2, zorder=1)
-        ax.scatter([a], [yi], s=46, color=LIGHT, marker="s", zorder=3,
-                   label="Stage 1" if yi == y[0] else None, edgecolors="none")
-        ax.scatter([b], [yi], s=52, color=STEEL, marker="o", zorder=3,
-                   label="Stage 2" if yi == y[0] else None, edgecolors="none")
-        ax.text(a + 0.05, yi - 0.22, f"{a:.2f}", ha="left", va="top", fontsize=7.5, color=LIGHT)
-        ax.text(b - 0.05, yi - 0.22, f"{b:.2f}", ha="right", va="top", fontsize=7.5, color=STEEL)
-        drop = a - b
-        ax.text((a + b) / 2, yi + 0.18, f"−{drop:.2f} ({100 * drop / a:.0f}%)",
-                ha="center", va="bottom", fontsize=8)
-    ax.set_yticks(y)
-    ax.set_yticklabels([f"Start ≤{s}" for s in STARTS])
-    ax.set_xlabel("Remaining-time MAE (min); lower is better")
-    ax.set_xlim(8.3, 11.8)
-    ax.grid(axis="x", color="#E6E1D8", lw=0.6)
-    ax.legend(frameon=False, loc="lower right", fontsize=8)
-    fig.tight_layout()
+    reduction = stage1 - stage2
+    cmap = LinearSegmentedColormap.from_list(
+        "remain_gain",
+        [(0.0, CORAL), (0.5, "#FAF8F3"), (0.70, "#D9E7F4"), (1.0, STEEL)],
+    )
+    norm = TwoSlopeNorm(vmin=-0.25, vcenter=0.0, vmax=3.6)
+    fig, ax = plt.subplots(figsize=(6.6, 2.75))
+    image = ax.imshow(reduction, cmap=cmap, norm=norm, aspect="auto")
+
+    for i in range(len(STARTS)):
+        for j in range(len(metrics)):
+            before = stage1[i, j]
+            after = stage2[i, j]
+            drop = reduction[i, j]
+            pct = 100.0 * abs(drop) / before
+            arrow = "↓" if drop >= 0 else "↑"
+            pct_text = f"{pct:.1f}%" if pct < 1.0 else f"{pct:.0f}%"
+            text_color = "white" if drop >= 2.35 else INK
+            ax.text(
+                j, i - 0.10, f"{before:.2f} → {after:.2f}",
+                ha="center", va="center", fontsize=8.2, color=text_color,
+            )
+            ax.text(
+                j, i + 0.19, f"{arrow}{abs(drop):.2f} min ({pct_text})",
+                ha="center", va="center", fontsize=7.5, fontweight="bold",
+                color=text_color,
+            )
+
+    ax.set_xticks(np.arange(len(metrics)))
+    ax.set_xticklabels([name for name, _ in metrics])
+    ax.xaxis.tick_top()
+    ax.set_yticks(np.arange(len(STARTS)))
+    ax.set_yticklabels([f"Start ≤{start}" for start in STARTS])
+    ax.tick_params(which="both", length=0, pad=5)
+    ax.set_xticks(np.arange(-0.5, len(metrics), 1), minor=True)
+    ax.set_yticks(np.arange(-0.5, len(STARTS), 1), minor=True)
+    ax.grid(which="minor", color="white", linewidth=1.8)
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+    ax.set_title(
+        "Stage 1 → Stage 2 remaining-time MAE (min; lower is better)",
+        loc="left", pad=10, fontsize=9,
+    )
+
+    colorbar = fig.colorbar(image, ax=ax, fraction=0.032, pad=0.035)
+    colorbar.set_label("MAE reduction (min)", fontsize=8)
+    colorbar.set_ticks([-0.2, 0.0, 1.0, 2.0, 3.0])
+    colorbar.ax.tick_params(labelsize=7, length=2)
+    colorbar.outline.set_linewidth(0.5)
+    fig.subplots_adjust(left=0.13, right=0.91, top=0.76, bottom=0.08)
     _save(fig, "fig_remain_dumbbell")
 
 
@@ -712,7 +760,7 @@ def main() -> None:
     plot_dataset_composition()
     plot_range_response()
     plot_delay_distance(events)
-    plot_remain_dumbbell(summary)
+    plot_remain_finetuning_matrix(summary)
     plot_label_dots(labels)
     plot_cause_recall(labels)
     plot_per_device_box()

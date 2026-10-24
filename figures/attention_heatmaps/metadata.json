@@ -1,0 +1,69 @@
+{
+  "git_commit": "c1404e06befa4a1eaeaf7701cd0c9a4a52b6e5f6",
+  "device": "cpu",
+  "seed": 42,
+  "samples_per_condition": 96,
+  "runs": {
+    "Start<=5": "dense_i1_mix_start5_min8_cause4_opt_main_seed42",
+    "Start<=10": "dense_i1_mix_start10_min8_cause4_opt_main_seed42",
+    "Start<=15": "dense_i1_mix_start15_min8_cause4_opt_main_seed42"
+  },
+  "selected_counts": {
+    "Start<=5": {
+      "normal": 96,
+      "upcoming": 96,
+      "ongoing": 96
+    },
+    "Start<=10": {
+      "normal": 96,
+      "upcoming": 96,
+      "ongoing": 96
+    },
+    "Start<=15": {
+      "normal": 96,
+      "upcoming": 96,
+      "ongoing": 96
+    }
+  },
+  "busy_episode": "n10_mix_all1.0__episode_03",
+  "busy_episode_windows_plotted": 241,
+  "resource_count": 38,
+  "displayed_resource_count": 20,
+  "displayed_resource_types": [
+    "machine",
+    "gantry",
+    "human",
+    "transport_robot"
+  ],
+  "visualization_filter": {
+    "excluded_resource_type": "buffer",
+    "excluded_labels": "B1-B18",
+    "renormalized_after_filtering": false
+  },
+  "plot_script": "experiments/plot_ch5_attention_heatmaps.py",
+  "plot_script_sha256": "32480d522c4b5ecdbca609e85b5232add68b05c5bf48ebdeb9fad3e74556e32b",
+  "resource_type_counts": {
+    "machine": 7,
+    "gantry": 4,
+    "human": 5,
+    "transport_robot": 4,
+    "buffer": 18
+  },
+  "palette": {
+    "deep_teal": "#46788E",
+    "light_blue": "#78B7C9",
+    "pale_yellow": "#F6E093",
+    "coral": "#E58B7B",
+    "yellow_green": "#97B319"
+  },
+  "aggregation": {
+    "resource_attention": "mean over selected samples, history steps, heads, and encoder layers",
+    "temporal_attention": "mean over selected samples, resources, heads, and encoder layers",
+    "conditions": {
+      "normal": "no current and no future bottleneck",
+      "upcoming": "no current bottleneck and at least one future bottleneck",
+      "ongoing": "at least one current bottleneck"
+    }
+  },
+  "claim_boundary": "Attention is an associative learned weight, not a causal effect."
+}
