@@ -279,8 +279,8 @@ def plot_dataset_composition() -> None:
 
 
 def plot_range_response() -> None:
-    """Compare three discrete onset-cap settings without connecting them."""
-    from matplotlib.lines import Line2D
+    """Grouped horizontal bars for three discrete onset-cap settings."""
+    from matplotlib.patches import Patch
     from matplotlib.ticker import PercentFormatter
     from matplotlib import font_manager
     for path in Path("/System/Library/Fonts/Supplemental").glob("Times New Roman*.ttf"):
@@ -291,24 +291,26 @@ def plot_range_response() -> None:
     _write_csv(PLOT_DATA / "range_response.csv", rows)
     models = ("PHGST-DP", "XGBoost", "LSTM", "BTGCN", "BSTAN")
     metrics = (
-        ("report_f1", "(a) Report F1", "Higher is better", (0.40, 0.86)),
-        ("upcoming", "(b) Upcoming recall", "Higher is better", (0.0, 0.62)),
-        ("dur_mae", "(c) Duration MAE", "Minutes · lower is better", (1.4, 4.2)),
+        ("report_f1", "(a) Report F1", "Higher is better", (0.0, 0.90)),
+        ("upcoming", "(b) Upcoming recall", "Higher is better", (0.0, 0.65)),
+        ("dur_mae", "(c) Duration MAE", "Minutes · lower is better", (0.0, 4.4)),
     )
-    colors, markers = (STEEL, CORAL, OLIVE), ("o", "s", "^")
-    fig, axes = plt.subplots(1, 3, figsize=(7.5, 3.2), sharey=True)
+    # Palette light blue / coral / yellow for Start ≤5 / 10 / 15.
+    colors = (LIGHT, CORAL, YELLOW)
+    bar_h = 0.22
+    offsets = (-bar_h, 0.0, bar_h)
+    fig, axes = plt.subplots(1, 3, figsize=(7.5, 3.35), sharey=True)
     y = np.arange(len(models))
     for ax, (key, title, xlabel, limits) in zip(axes, metrics):
-        ax.axhspan(-0.43, 0.43, color="#E9F0F3", zorder=0)
-        for row in range(1, len(models)):
-            ax.axhline(row, color="#E9E9E9", lw=0.55, zorder=0)
+        ax.axhspan(-0.48, 0.48, color="#EEF5F7", zorder=0)
         for j, cap in enumerate(STARTS):
-            ys = y + (j-1)*0.20
             xs = [float(values[(m, cap)][key]) for m in models]
-            ax.scatter(xs, ys, s=33, marker=markers[j], color=colors[j],
-                       edgecolors="white", linewidths=0.45, zorder=3)
+            ax.barh(
+                y + offsets[j], xs, height=bar_h * 0.92, color=colors[j],
+                edgecolor="none", zorder=3, label=f"Start ≤ {cap} min",
+            )
         ax.set_xlim(limits)
-        ax.set_ylim(len(models)-0.5, -0.55)
+        ax.set_ylim(len(models) - 0.55, -0.55)
         ax.set_yticks(y)
         ax.set_yticklabels(models, fontsize=10)
         ax.tick_params(axis="y", length=0, pad=6)
@@ -320,15 +322,18 @@ def plot_range_response() -> None:
         ax.grid(axis="x", color="#E3E5E5", lw=0.5)
         ax.set_axisbelow(True)
     axes[0].get_yticklabels()[0].set_fontweight("bold")
-    handles = [Line2D([], [], color=c, marker=m, ls="none", markersize=5.5,
-                      label=f"Start ≤ {cap} min")
-               for cap, c, m in zip(STARTS, colors, markers)]
+    handles = [Patch(facecolor=c, edgecolor="none", label=f"Start ≤ {cap} min")
+               for cap, c in zip(STARTS, colors)]
     fig.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.55, 1.0),
                ncol=3, frameon=False, fontsize=10, handletextpad=0.4)
     fig.subplots_adjust(left=0.13, right=0.99, bottom=0.19, top=0.79, wspace=0.20)
     _save(fig, "fig_range_response")
     svg = FIG / "fig_range_response.svg"
-    svg.write_text("\n".join(line.rstrip() for line in svg.read_text().splitlines()) + "\n")
+    if svg.is_file():
+        svg.write_text(
+            "\n".join(line.rstrip() for line in svg.read_text(encoding="utf-8").splitlines()) + "\n",
+            encoding="utf-8",
+        )
 
 
 def plot_delay_distance(events: dict) -> None:

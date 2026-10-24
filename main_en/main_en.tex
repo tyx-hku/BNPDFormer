@@ -845,7 +845,7 @@ For machine, human, and logistics disturbances, every Level~2 pulse lasts at lea
 
 Raw records use logical simulation time at one-second resolution and include resource-state transitions, workpiece routes and completion times, buffer changes, transport tasks, material inventories, and disturbance logs. The aggregation pipeline reconstructs resource-state intervals and aligns them into non-overlapping 60-s windows. Processing, blockage, starvation, and stoppage durations are accumulated over their overlap with each window; active and unavailable ratios divide the corresponding durations by the window length. Queue features count waiting jobs and summarize their waiting times, while buffer occupancy is averaged over recorded values in the window (carrying forward the preceding value when no update is recorded) and its growth is computed from the difference between the window-end and window-start counts. Process and transport relations supply upstream/downstream state ratios, route delay, inbound waiting, and material-shortage propagation.
 
-All windows share a fixed resource ordering. Each node has 21 operational channels, a five-dimensional resource-type encoding, and one labour-saturation channel, forming a $38\times27$ feature matrix per window. The export routine fills absent numeric entries with zero and recomputes labour saturation from worker activity. Episodes are retained after all ten workpieces have completed; runs containing a deadlock reset are excluded. A run-stratified, episode-level split gives 140/28/36 training/validation/test episodes out of 204 complete episodes. Sliding samples use 30 historical windows and a 20-window future grid, with a one-window stride and no crossing of episode boundaries. The resulting splits contain 20,826/4,331/5,354 forecast windows (Figure~\ref{fig:dataset-composition}); feature standardization is fitted on the training histories and applied to validation and test inputs. The comparison protocol specifies these same 5,354 test-window identities for all five models.
+All windows share a fixed resource ordering. Each node has 21 operational channels, a five-dimensional resource-type encoding, and one labour-saturation channel, forming a $38\times27$ feature matrix per window. The export routine fills absent numeric entries with zero and recomputes labour saturation from worker activity. Episodes are retained after all ten workpieces have completed; runs containing a deadlock reset are excluded. A run-stratified, episode-level split gives 140/28/36 training/validation/test episodes out of 204 complete episodes. Sliding samples use 30 historical windows and a 20-window future grid, with a one-window stride and no crossing of episode boundaries. The resulting splits contain 20,826/4,331/5,354 forecast windows (Table~\ref{tab:exp-dataset}); feature standardization is fitted on the training histories and applied to validation and test inputs. The comparison protocol specifies these same 5,354 test-window identities for all five models. Table~\ref{tab:dataset-labels} reports the Upcoming, Ongoing, and no-event composition of the test window--resource pairs under each Start cap.
 
 Operational-state rules combine processing activity, queue buildup, starvation, and resource-coupling indicators into resource-level bottleneck labels. Process-cause targets are derived from the corresponding operating evidence; the test set supports transport delay, material shortage, upstream starvation, and queue buildup. Workpiece completion records provide the order-level target: the time from the forecast origin until all ten workpieces have finished.
 
@@ -872,12 +872,23 @@ Report matching & Three-window onset tolerance \\
 \end{tabularx}
 \end{table}
 
-\begin{figure*}[t]
+\begin{table}[t]
 \centering
-\includegraphics[width=0.96\textwidth]{../figures/fig_dataset_composition.pdf}
-\caption{Dataset composition. (a)--(a$^\prime$) Episode and window counts for the train/validation/test split. (b)~Share of Upcoming, Ongoing, and no-event window--resource pairs on the 5,354-window test split under each Start cap (absolute support annotated).}
-\label{fig:dataset-composition}
-\end{figure*}
+\caption{Test-set label composition under each Start cap. Counts are window--resource pairs over 5,354 windows $\times$ 15 targets ($80{,}310$ pairs); parentheses give the share of all pairs.}
+\label{tab:dataset-labels}
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}lrrr@{}}
+\toprule
+Start cap & Upcoming & Ongoing & No-event \\
+\midrule
+$\leq5$ & 336 (0.42\%) & 766 (0.95\%) & 79,208 (98.63\%) \\
+$\leq10$ & 604 (0.75\%) & 768 (0.96\%) & 78,938 (98.29\%) \\
+$\leq15$ & 708 (0.88\%) & 770 (0.96\%) & 78,832 (98.16\%) \\
+\bottomrule
+\end{tabular*}
+\end{table}
 
 \subsubsection{Baseline methods}
 
@@ -991,7 +1002,7 @@ The temporal outputs extend event identification into a forecast of how long a r
 \begin{figure*}[t]
 \centering
 \includegraphics[width=0.96\textwidth]{../figures/fig_range_response.pdf}
-\caption{Grouped comparison of (a)~Report F1, (b)~station-level Upcoming recall, and (c)~detected-event duration MAE. Each model row contains three distinct onset-cap settings; the shaded row identifies PHGST-DP. Baseline values have the provisional status stated in Section~\ref{sec:comparison-overview}.}
+\caption{Grouped bar comparison of (a)~Report F1, (b)~station-level Upcoming recall, and (c)~detected-event duration MAE across Start caps. The shaded row identifies PHGST-DP. Baseline values have the provisional status stated in Section~\ref{sec:comparison-overview}.}
 \label{fig:baseline-comparison}
 \end{figure*}
 

@@ -139,7 +139,7 @@
 \shorttitle{PHGST-DP for dynamic bottleneck prediction}
 \shortauthors{Yuxiao Tian}
 
-\title [mode = title]{PHGST-DP: A process-informed heterogeneous-graph spatiotemporal Transformer with delayed propagation for dynamic bottleneck prediction in manufacturing}
+\title [mode = title]{Process-informed heterogeneous graph learning with delayed propagation for dynamic bottleneck prediction in manufacturing}
 
 \author[1]{Yuxiao Tian}[]
 \author[1]{Xiao Li}[]
@@ -485,7 +485,7 @@ $\mathcal{D}\leftarrow\varnothing$\;
     append $(X_t,O_t,Y_t^{\mathrm{evt}},c_{t-1},\ell_t,r_{t-1})$ to $\mathcal{D}$\;
   }
 }
-\Return $\mathcal{D}$ \tcp*{$r$ provides context but never defines bottleneck ground truth}
+\Return $\mathcal{D}$\;
 \end{algorithm*}
 
 \subsubsection{Cause and order-level targets}
@@ -588,7 +588,7 @@ split $\mathcal{E}$ by episode into $\mathcal{E}_{\mathrm{tr}},\mathcal{E}_{\mat
 construct causal samples with Algorithm~\ref{alg:targets} independently inside each episode\;
 fit all feature/target scalers on $\mathcal{E}_{\mathrm{tr}}$; reuse them unchanged for $\mathcal{E}_{\mathrm{val}}$ and $\mathcal{E}_{\mathrm{te}}$\;
 obtain $(A,M^{G},M^{S},E_{\mathrm{lap}})$ from Algorithm~\ref{alg:graph-masks} and $K^{P}$ from Algorithm~\ref{alg:pattern-bank}\;
-freeze every data-derived structural quantity before neural-parameter optimization\;
+freeze every data-derived structural quantity before neural-parameter optimization \tcp*{masks and prototypes stay fixed}
 \BlankLine
 \textbf{Stage 2: curriculum learning of shared representations and event-related heads}\;
 initialize $\theta$ from the documented prefix-supervised checkpoint\;
@@ -603,7 +603,7 @@ initialize $\theta$ from the documented prefix-supervised checkpoint\;
     retain the checkpoint--threshold pair that passes the precision/recall gates and maximizes station F1\;
   }
 }
-freeze the selected stage-1 parameters and threshold as $(\theta^{\star},\tau^{\star})$\;
+freeze the selected stage-1 parameters and threshold as $(\theta^{\star},\tau^{\star})$ \tcp*{event reports locked hereafter}
 \BlankLine
 \textbf{Stage 3: remaining-time specialization without changing event reports}\;
 freeze the encoder and all event, occupancy, and cause heads\;
@@ -615,7 +615,7 @@ freeze $\psi^{\star}$; do not retune $\tau^{\star}$\;
 \BlankLine
 \textbf{Stage 4: held-out evaluation after all choices are frozen}\;
 run Algorithm~\ref{alg:phgst-predict} on $\mathcal{E}_{\mathrm{te}}$ using $(\theta^{\star},\psi^{\star},\tau^{\star})$\;
-\Return frozen models, threshold, and held-out reports\;
+\Return frozen models, threshold, and held-out reports \tcp*{test episodes never re-enter selection}
 \end{algorithm*}
 
 \subsection{Data preparation and graph instantiation}
@@ -813,8 +813,8 @@ construct causal length-$3$ queue patches $P$ and project the fixed activity-pat
 \textbf{Stage 2: delay-pattern-conditioned spatiotemporal encoding}\;
 \For{$l\leftarrow 1$ \KwTo $5$}{
   $H_T\leftarrow\mathrm{Attn}_{T}(H^{(l-1)})$\;
-  $C^{P}\leftarrow\mathrm{softmax}(Q^{P}(P)K^{P}(K^{P})^{\top}/\sqrt{d_h})V^{P}(K^{P})$\;
-  $H_G\leftarrow\mathrm{Attn}_{G}(H^{(l-1)},M^{G};\,\text{geographic keys}+C^{P})$\;
+  $C^{P}\leftarrow\mathrm{softmax}(Q^{P}(P)K^{P}(K^{P})^{\top}/\sqrt{d_h})V^{P}(K^{P})$ \tcp*{queue query vs.\ activity prototypes}
+  $H_G\leftarrow\mathrm{Attn}_{G}(H^{(l-1)},M^{G};\,\text{geographic keys}+C^{P})$ \tcp*{delay-aware geographic mixing}
   $H_S\leftarrow\mathrm{Attn}_{S}(H^{(l-1)},M^{S})$\;
   $\widetilde H^{(l)}\leftarrow H^{(l-1)}+\mathrm{Proj}[H_T;H_G;H_S]$\;
   $H^{(l)}\leftarrow\widetilde H^{(l)}+\mathrm{FFN}(\widetilde H^{(l)})$\;
@@ -824,7 +824,7 @@ construct causal length-$3$ queue patches $P$ and project the fixed activity-pat
 $z_n\leftarrow H^{(5)}_{t-1,n}+E_{\mathrm{regime}}(r_{t-1,n})$ for the station-event branch\;
 fuse local queue/stall and neighbourhood precursor evidence into $z_n$\;
 \ForEach{$n\in\mathcal{S}$}{
-  $(a^{\mathrm{cont}}_n,a^{\mathrm{onset}}_n)\leftarrow(f_{\mathrm{cont}}(z_n),f_{\mathrm{onset}}(z_n))$\;
+  $(a^{\mathrm{cont}}_n,a^{\mathrm{onset}}_n)\leftarrow(f_{\mathrm{cont}}(z_n),f_{\mathrm{onset}}(z_n))$ \tcp*{continuation vs.\ new-onset scores}
   $(\pi^{s}_n,\hat d_n,\hat p_n)\leftarrow(\mathrm{softmax}(f_s(z_n)),\mathrm{softplus}(f_d(z_n)),\mathrm{softplus}(f_p(z_n)))$\;
 }
 $\hat O_t\leftarrow\sigma(f_O(H^{(5)}))$; pool nodes and order progress into $u_t$; set $(\hat c_t,\hat\ell_t)\leftarrow(f_c(u_t),f_{\psi}(u_t))$\;
@@ -989,9 +989,9 @@ Raw records use logical simulation time at one-second resolution and include res
 
 \zhpara{原始记录采用分辨率为一秒的逻辑仿真时间，包括资源状态转换、工件路线与完成时间、缓冲区变化、运输任务、物料库存及扰动日志。聚合流程先重建资源状态区间，再将其对齐到互不重叠的六十秒窗口。加工、阻塞、饥饿与停机时长按状态区间与窗口的重叠部分累计，活动率和不可用率由相应时长除以窗口长度得到；队列特征统计等待工件数及其等待时间，缓冲区占用取窗口内记录值的均值，无更新时沿用前值，增长率由窗口起止库存差除以窗口长度得到。工艺与运输关联进一步提供上下游状态比例、路径延迟、入站等待和物料短缺传播信息。}
 
-All windows share a fixed resource ordering. Each node has 21 operational channels, a five-dimensional resource-type encoding, and one labour-saturation channel, forming a $38\times27$ feature matrix per window. The export routine fills absent numeric entries with zero and recomputes labour saturation from worker activity. Episodes are retained after all ten workpieces have completed; runs containing a deadlock reset are excluded. A run-stratified, episode-level split gives 140/28/36 training/validation/test episodes out of 204 complete episodes. Sliding samples use 30 historical windows and a 20-window future grid, with a one-window stride and no crossing of episode boundaries. The resulting splits contain 20,826/4,331/5,354 forecast windows (Figure~\ref{fig:dataset-composition}); feature standardization is fitted on the training histories and applied to validation and test inputs. The comparison protocol specifies these same 5,354 test-window identities for all five models.
+All windows share a fixed resource ordering. Each node has 21 operational channels, a five-dimensional resource-type encoding, and one labour-saturation channel, forming a $38\times27$ feature matrix per window. The export routine fills absent numeric entries with zero and recomputes labour saturation from worker activity. Episodes are retained after all ten workpieces have completed; runs containing a deadlock reset are excluded. A run-stratified, episode-level split gives 140/28/36 training/validation/test episodes out of 204 complete episodes. Sliding samples use 30 historical windows and a 20-window future grid, with a one-window stride and no crossing of episode boundaries. The resulting splits contain 20,826/4,331/5,354 forecast windows (Table~\ref{tab:exp-dataset}); feature standardization is fitted on the training histories and applied to validation and test inputs. The comparison protocol specifies these same 5,354 test-window identities for all five models. Table~\ref{tab:dataset-labels} reports the Upcoming, Ongoing, and no-event composition of the test window--resource pairs under each Start cap.
 
-\zhpara{各窗口采用固定的资源顺序。每个节点包含二十一个运行特征、五维资源类型编码和一个人员饱和度特征，构成每窗口 $38\times27$ 的特征矩阵。导出流程将缺失数值填零，并根据人员活动重新计算人员饱和度。数据保留十件工件全部完成的 episode，剔除含死锁重置的运行。二百零四个完整 episode 按运行组分层、以 episode 为单位划分为 140/28/36 个训练、验证和测试 episode。滑动样本包含三十个历史窗口与二十个未来窗口，步长为一个窗口，历史与目标均在各自 episode 内构建。最终得到 20,826/4,331/5,354 个预测窗口（图~\ref{fig:dataset-composition}）；特征标准化参数由训练历史拟合，并应用于验证与测试输入。比较协议为五种模型统一规定主实验的同一批 5,354 个测试窗口。}
+\zhpara{各窗口采用固定的资源顺序。每个节点包含二十一个运行特征、五维资源类型编码和一个人员饱和度特征，构成每窗口 $38\times27$ 的特征矩阵。导出流程将缺失数值填零，并根据人员活动重新计算人员饱和度。数据保留十件工件全部完成的 episode，剔除含死锁重置的运行。二百零四个完整 episode 按运行组分层、以 episode 为单位划分为 140/28/36 个训练、验证和测试 episode。滑动样本包含三十个历史窗口与二十个未来窗口，步长为一个窗口，历史与目标均在各自 episode 内构建。最终得到 20,826/4,331/5,354 个预测窗口（表~\ref{tab:exp-dataset}）；特征标准化参数由训练历史拟合，并应用于验证与测试输入。比较协议为五种模型统一规定主实验的同一批 5,354 个测试窗口。表~\ref{tab:dataset-labels}给出各 Start cap 下测试窗口—资源对的 Upcoming、Ongoing 与无事件构成。}
 
 Operational-state rules combine processing activity, queue buildup, starvation, and resource-coupling indicators into resource-level bottleneck labels. Process-cause targets are derived from the corresponding operating evidence; the test set supports transport delay, material shortage, upstream starvation, and queue buildup. Workpiece completion records provide the order-level target: the time from the forecast origin until all ten workpieces have finished.
 
@@ -1022,12 +1022,23 @@ Report matching & Three-window onset tolerance \\
 \end{tabularx}
 \end{table}
 
-\begin{figure*}[t]
+\begin{table}[t]
 \centering
-\includegraphics[width=0.96\textwidth]{figures/fig_dataset_composition.pdf}
-\caption{Dataset composition. (a)--(a$^\prime$) Episode and window counts for the train/validation/test split. (b)~Share of Upcoming, Ongoing, and no-event window--resource pairs on the 5,354-window test split under each Start cap (absolute support annotated).}
-\label{fig:dataset-composition}
-\end{figure*}
+\caption{Test-set label composition under each Start cap. Counts are window--resource pairs over 5,354 windows $\times$ 15 targets ($80{,}310$ pairs); parentheses give the share of all pairs.}
+\label{tab:dataset-labels}
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}lrrr@{}}
+\toprule
+Start cap & Upcoming & Ongoing & No-event \\
+\midrule
+$\leq5$ & 336 (0.42\%) & 766 (0.95\%) & 79,208 (98.63\%) \\
+$\leq10$ & 604 (0.75\%) & 768 (0.96\%) & 78,938 (98.29\%) \\
+$\leq15$ & 708 (0.88\%) & 770 (0.96\%) & 78,832 (98.16\%) \\
+\bottomrule
+\end{tabular*}
+\end{table}
 
 \subsubsection{Baseline methods}
 
@@ -1155,7 +1166,7 @@ The temporal outputs extend event identification into a forecast of how long a r
 \begin{figure*}[t]
 \centering
 \includegraphics[width=0.96\textwidth]{figures/fig_range_response.pdf}
-\caption{Grouped comparison of (a)~Report F1, (b)~station-level Upcoming recall, and (c)~detected-event duration MAE. Each model row contains three distinct onset-cap settings; the shaded row identifies PHGST-DP. Baseline values have the provisional status stated in Section~\ref{sec:comparison-overview}.}
+\caption{Grouped bar comparison of (a)~Report F1, (b)~station-level Upcoming recall, and (c)~detected-event duration MAE across Start caps. The shaded row identifies PHGST-DP. Baseline values have the provisional status stated in Section~\ref{sec:comparison-overview}.}
 \label{fig:baseline-comparison}
 \end{figure*}
 
@@ -1355,6 +1366,8 @@ Cross-resource information is most closely associated with advance warning. PHGS
 \label{fig:key-device-entity}
 \end{figure*}
 
+\input{experiments/tables/ch5_attention_resources.tex}
+
 \subsubsection{Process-informed supervision analysis}\label{sec:supervision-analysis}
 
 Process-informed supervision connects the event representation to production meaning. The analysis focuses on event and state reporting under the complete supervision configuration, cause accuracy under a matched training budget, and alignment between process-informed label rankings and intervention-sensitive resources. These experiments answer different questions and are therefore interpreted separately.
@@ -1523,6 +1536,8 @@ NoPattern & & 61.6\% & 60.1\% & 42.7\% & 39.6\% & 16.3\% & 57.3\% & 11.06 \\
 \end{tabular*}
 \end{table*}
 
+\input{experiments/tables/ch5_attention_temporal.tex}
+
 \subsubsection{Decoder and training components}\label{sec:decoder-training}
 
 The decoder and training comparisons examine two requirements of advance warning: distinguishing new events from continuing events and maintaining sensitivity to distant onsets. NoSplit replaces the continuation and onset heads with one shared head. NoFarBoost uses the configuration without far-onset weighting, together with the earlier false-alarm penalty and report-F1 checkpoint criterion. Table~\ref{tab:decoder-ablation} reports the resulting operating points.
@@ -1573,6 +1588,14 @@ Separating onset and continuation decisions gives PHGST-DP Upcoming recall of $0
 \label{fig:key-device-struct-mech}
 \end{figure*}
 
+\paragraph*{Joint evidence across prediction tasks.}
+The complete results in Tables~\ref{tab:complete-1-1}--\ref{tab:complete-5-2} connect PHGST-DP's early-warning capability to temporal estimation, heterogeneous-resource coverage, and process interpretation. The retained model maintains upcoming-event recognition as the admissible onset range expands, while several observation- or interaction-restricted configurations retain high ongoing recall but lose emerging events. This distinction supports the use of cross-resource precursor information rather than relying only on an already constrained station. The timing and cause results further identify what the integrated representation contributes beyond a binary alarm. All configurations and both station-matched and strict-report definitions are retained so that these conclusions can be assessed under a consistent metric definition. Remaining-time specialization is compared with Full-S1, whose event and cause heads are identical to the retained model.
+
+\zhpara{表~\ref{tab:complete-1-1}--\ref{tab:complete-5-2}将 PHGST-DP 的提前预警能力与时间估计、异构资源覆盖及过程解释联系起来。完整模型在扩大允许起点范围后仍保持对新发事件的识别；若干观测或交互受限配置虽然保持较高的进行中事件召回，却难以覆盖正在形成的约束。这种差异支持利用跨资源前驱信息，而非仅依据工位已经受限后的状态进行判断。时间与原因指标进一步说明，联合表示所提供的信息超出了二元报警。下表保留全部配置，并明确区分工位匹配与严格报告口径；剩余时间专项训练以事件和原因头保持一致的 Full-S1 为参照。}
+
+\input{experiments/tables/ch5_complete_ablation.tex}
+\clearpage
+
 \subsection{Case study and process traceability}
 
 The case study shows how an event report follows bottleneck onset, persistence, and recovery on a production resource. The selected roller-bed CNC pipe-intersection cutting machine (\texttt{num02}) contributes 301 event-positive window--resource pairs in the test set. Device and episode selection follows a fixed rule: among devices with at least the median event count, select the device with the most events in one episode (ties resolved by PHGST-DP one-step F1), then select its episode with the most and longest bottleneck segments. The resulting episode, \texttt{n10\_human1.0\_\_episode\_03}, contains an approximately 8-min bottleneck and a 49-min bottleneck, with the duration target capped at the 20-min prediction horizon. PHGST-DP detects both intervals and tracks their recovery (Figure~\ref{fig:key-device-main}). The short event is reported about 1~min in advance with a 10--11~min duration estimate; the long event's onset is aligned, and its declining duration is followed. The capped portion is predicted at 13--17~min, and state mismatches occur at onset and recovery boundaries (1--2 windows each). The trace illustrates how the report combines event notification with a continuously updated duration estimate.
@@ -1622,6 +1645,14 @@ On the full Start$\leq5$ test split, support is uneven across the 15 targets (Fi
 Process-cause outputs link a predicted event to interpretable production symptoms: transport delay, material shortage, upstream starvation, and queue buildup. The labels encode process-rule evidence, so the explanation is an association with observed operating conditions. Quantitative evaluation covers these four supported classes (Section~\ref{sec:comparison-cause}); blocked-downstream and high-utilization classes have zero test support. Together with the event and state traces, these outputs provide a resource, a time interval, and a process context for reviewing a predicted constraint.
 
 \zhpara{过程原因输出将预测事件关联到可解释的生产现象：运输延迟、物料短缺、上游饥饿和队列积压。标签编码过程规则证据，因此解释表达的是事件与观测运行条件之间的关联。量化评价覆盖这四个有支持类别（第~\ref{sec:comparison-cause}节），下游阻塞和高利用率类别的测试支持为零。结合事件与状态轨迹，这些输出为审视预测约束提供了资源、时间区间和过程上下文。}
+
+\input{experiments/tables/ch5_attention_prediction.tex}
+
+\paragraph*{Resource-level coverage.}
+Tables~\ref{tab:complete-6-1}--\ref{tab:complete-6-2} retain the individual resource counts and errors behind the case analysis. They show which machines and handling resources contribute to the aggregate result, while distinguishing zero-support resources from measured prediction failures.
+\zhpara{表~\ref{tab:complete-6-1}--\ref{tab:complete-6-2}保留案例分析对应的逐资源计数和误差，使总体表现能够追溯到具体机器与搬运资源，并将没有正例支持的资源与已测得的预测失误区分开。}
+\input{experiments/tables/ch5_complete_device.tex}
+\clearpage
 
 \subsection{Prediction quality and computational cost}\label{sec:efficiency}
 
