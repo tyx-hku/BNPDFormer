@@ -27,37 +27,62 @@ from matplotlib.patches import Patch
 from matplotlib import patheffects as pe
 from PIL import Image
 
+from paper_plot_style import LABEL_SIZE, LEGEND_SIZE, TICK_SIZE, TITLE_SIZE, apply as apply_paper_style
+
 ROOT = Path(__file__).resolve().parent.parent
 FIG = ROOT / "figures"
 TRUE_CSV = ROOT / "experiments/data/key_device_main_aligned.csv"
 TRUE_COLOR = "black"
-PRED_COLOR = "#E5887B"
+# Research palette card: steel / light blue / yellow / coral / olive.
+METHOD_PRED = {
+    "PHGST-DP": "#46788E",
+    "XGBoost": "#78B7C9",
+    "LSTM": "#F6E093",
+    "BTGCN": "#E58B7B",
+    "BSTAN": "#97B319",
+}
 
 
 def load_true_duration() -> tuple[np.ndarray, np.ndarray]:
-    """Authoritative GT for the shared key-device episode; continuous, no pixel gaps.
+    """Authoritative GT on absolute ``t_index`` (30..260) for PNG-aligned redraws."""
+    window, _t_index, true_dur, _pred = load_main_aligned()
+    return window + 30.0, true_dur
 
-    X uses ``t_index`` (30..260), matching the archived eval PNG axes and the
-    pixel-recovered prediction traces. The CSV ``window`` column is
-    ``t_index - 30`` and must not be mixed with those series.
+
+def load_main_aligned() -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Per-window CSV for the shared key-device episode.
+
+    ``window`` is the paper display index (``t_index - 30``, range 0..230).
     """
     with TRUE_CSV.open(encoding="utf-8") as fh:
         rows = list(csv.DictReader(fh))
     window = np.array([float(r["window"]) for r in rows])
-    x = np.array([float(r["t_index"]) for r in rows])
-    y = np.array([float(r["true_dur"]) for r in rows])
-    assert len(x) == 231 and np.array_equal(window, np.arange(231))
-    assert np.array_equal(x, window + 30.0)
-    return x, y
+    t_index = np.array([float(r["t_index"]) for r in rows])
+    true_dur = np.array([float(r["true_dur"]) for r in rows])
+    pred_dur = np.array([float(r["pred_dur"]) for r in rows])
+    assert len(window) == 231 and np.array_equal(window, np.arange(231))
+    assert np.array_equal(t_index, window + 30.0)
+    return window, t_index, true_dur, pred_dur
 
+
+def tindex_to_window_series(
+    x_tindex: np.ndarray, y: np.ndarray, n_windows: int = 231
+) -> tuple[np.ndarray, np.ndarray]:
+    """Map PNG-calibrated ``t_index`` traces onto integer display windows."""
+    windows = np.arange(n_windows, dtype=float)
+    x_w = np.asarray(x_tindex, dtype=float) - 30.0
+    y = np.asarray(y, dtype=float)
+    out = np.full(n_windows, np.nan)
+    for i, w in enumerate(windows):
+        m = np.isfinite(y) & (x_w >= w - 0.5) & (x_w < w + 0.5)
+        if m.any():
+            out[i] = float(np.nanmedian(y[m]))
+    return windows, out
+
+apply_paper_style()
 plt.rcParams.update(
     {
-        "font.family": "serif",
-        "font.serif": ["Times New Roman", "Times", "DejaVu Serif", "serif"],
-        "font.size": 10,
         "axes.linewidth": 1.0,
-        "pdf.fonttype": 42,
-        "ps.fonttype": 42,
         "savefig.bbox": "tight",
         "savefig.pad_inches": 0.03,
     }
@@ -237,11 +262,18 @@ START_STYLES = {
 }
 
 
-def _style_trace_ax(ax, xlabel: bool = True) -> None:
-    ax.set_xlim(20, 270)
+def _style_trace_ax(
+    ax,
+    *,
+    xlabel: bool = True,
+    ylabel: bool = True,
+    xlim: tuple[float, float] = (0, 150),
+) -> None:
+    ax.set_xlim(*xlim)
     ax.set_ylim(-0.8, 21)
     ax.set_yticks([0, 5, 10, 15, 20])
-    ax.set_ylabel("Bottleneck duration (min)")
+    if ylabel:
+        ax.set_ylabel("Bottleneck duration (min)")
     if xlabel:
         ax.set_xlabel("Window index (60 s)")
     ax.spines["top"].set_visible(False)
@@ -253,13 +285,12 @@ def _style_trace_ax(ax, xlabel: bool = True) -> None:
     ax.grid(alpha=0.3, lw=0.6)
 
 
-def _plot_true(ax) -> None:
-    true_x, true_y = load_true_duration()
+def _plot_true_window(ax, window: np.ndarray, true_dur: np.ndarray) -> None:
     (true_line,) = ax.plot(
-        true_x, true_y, color=TRUE_COLOR, lw=2.0, label="True", zorder=5,
+        window, true_dur, color=TRUE_COLOR, lw=1.35, label="True", zorder=5,
         solid_capstyle="round", solid_joinstyle="round",
     )
-    true_line.set_path_effects([pe.Stroke(linewidth=3.4, foreground="white"), pe.Normal()])
+    true_line.set_path_effects([pe.Stroke(linewidth=2.3, foreground="white"), pe.Normal()])
 
 
 def _extract_colored(
@@ -267,6 +298,7 @@ def _extract_colored(
     series: dict[str, tuple[np.ndarray, str]],
     legend: tuple[int, int, int, int],
 ) -> dict[str, tuple[np.ndarray, np.ndarray]]:
+    """Recover series on the archived PNG ``t_index`` axis (labels 50..250)."""
     box = spine_box(im)
     x_map = calibrate_x(im, box, [50, 100, 150, 200, 250])
     y_map = calibrate_y(im, box, [20, 17.5, 15, 12.5, 10, 7.5, 5, 2.5, 0])
@@ -278,51 +310,93 @@ def _extract_colored(
 
 
 def redraw_entity() -> None:
-    # Original rasters are extraction sources; outputs overwrite figures/*.
+    """Side-by-side entity/start traces on relative window index 0..150.
+
+    True and PHGST-DP (Start≤5) come from ``key_device_main_aligned.csv``.
+    Other arms are recovered from the archived eval PNGs (``t_index`` axis),
+    then remapped to ``window = t_index - 30`` and drawn from that series.
+    """
+    window, _t_index, true_dur, pred_dur = load_main_aligned()
+
     im_ent = np.array(Image.open(ROOT / "experiments/data/key_device_entity_source.png").convert("RGB"))
     im_start = np.array(Image.open(ROOT / "experiments/data/key_device_start_source.png").convert("RGB"))
     legend = (1250, 1970, 80, 215)
-    ent = _extract_colored(im_ent, ENTITY_SERIES, legend)
-    start = _extract_colored(im_start, START_SERIES, legend)
+    ent_t = _extract_colored(im_ent, ENTITY_SERIES, legend)
+    start_t = _extract_colored(im_start, START_SERIES, legend)
 
-    fig, axes = plt.subplots(2, 1, figsize=(10.0, 6.2), sharex=True)
-    # (a) entity ablations, Start≤5
+    # Remap ablation / start-cap PNG traces onto the CSV window grid.
+    ent_w: dict[str, tuple[np.ndarray, np.ndarray]] = {
+        "PHGST-DP": (window, pred_dur),
+    }
+    for name in ("MachineOnly", "NoCross", "NoInfo"):
+        ent_w[name] = tindex_to_window_series(*ent_t[name])
+
+    start_w: dict[str, tuple[np.ndarray, np.ndarray]] = {
+        "Start$\\leq5$": (window, pred_dur),
+    }
+    for name in ("Start$\\leq10$", "Start$\\leq15$"):
+        start_w[name] = tindex_to_window_series(*start_t[name])
+
+    # Persist the window-indexed series used for the figure.
+    series_csv = ROOT / "experiments/data/key_device_entity_series.csv"
+    with series_csv.open("w", encoding="utf-8", newline="") as fh:
+        fields = [
+            "window", "true_dur", "PHGST-DP", "MachineOnly", "NoCross", "NoInfo",
+            "Start_le5", "Start_le10", "Start_le15",
+        ]
+        writer = csv.DictWriter(fh, fieldnames=fields, lineterminator="\n")
+        writer.writeheader()
+        def _cell(v: float) -> str:
+            return "" if not np.isfinite(v) else f"{float(v):.6g}"
+
+        for i, w in enumerate(window):
+            writer.writerow(
+                {
+                    "window": int(w),
+                    "true_dur": _cell(true_dur[i]),
+                    "PHGST-DP": _cell(pred_dur[i]),
+                    "MachineOnly": _cell(ent_w["MachineOnly"][1][i]),
+                    "NoCross": _cell(ent_w["NoCross"][1][i]),
+                    "NoInfo": _cell(ent_w["NoInfo"][1][i]),
+                    "Start_le5": _cell(pred_dur[i]),
+                    "Start_le10": _cell(start_w["Start$\\leq10$"][1][i]),
+                    "Start_le15": _cell(start_w["Start$\\leq15$"][1][i]),
+                }
+            )
+
+    fig, axes = plt.subplots(1, 2, figsize=(7.2, 3.15), sharey=True)
     ax = axes[0]
-    _plot_true(ax)
+    _plot_true_window(ax, window, true_dur)
     for name, (_, color) in ENTITY_SERIES.items():
-        x, y = ent[name]
+        x, y = ent_w[name]
         ax.plot(x, y, color=color, lw=1.45 if name == "PHGST-DP" else 1.2,
                 ls=ENTITY_STYLES[name], label=name, zorder=2)
-    _style_trace_ax(ax, xlabel=False)
-    ax.set_title("(a) Multi-entity ablations (Start$\\leq5$)", loc="left", fontsize=10)
-    ax.legend(loc="upper right", fontsize=8, frameon=False, ncol=2)
+    _style_trace_ax(ax, xlabel=True, ylabel=True, xlim=(0, 150))
+    ax.set_title("(a) Multi-entity ablations (Start$\\leq5$)", loc="left", fontsize=TITLE_SIZE)
+    ax.legend(loc="upper left", fontsize=LEGEND_SIZE, frameon=False, ncol=1)
 
-    # (b) Full model across Start caps, same device/episode
     ax = axes[1]
-    _plot_true(ax)
+    _plot_true_window(ax, window, true_dur)
     for name, (_, color) in START_SERIES.items():
-        x, y = start[name]
+        x, y = start_w[name]
         ax.plot(x, y, color=color, lw=1.45 if name == "Start$\\leq5$" else 1.2,
                 ls=START_STYLES[name], label=name, zorder=2)
-    _style_trace_ax(ax, xlabel=True)
-    ax.set_title(
-        "(b) PHGST-DP under Start$\\leq5/10/15$ (same device and episode)",
-        loc="left",
-        fontsize=10,
-    )
-    ax.legend(loc="upper right", fontsize=8, frameon=False, ncol=2)
+    _style_trace_ax(ax, xlabel=True, ylabel=False, xlim=(0, 150))
+    ax.set_title("(b) PHGST-DP under Start$\\leq5/10/15$", loc="left", fontsize=TITLE_SIZE)
+    ax.legend(loc="upper left", fontsize=LEGEND_SIZE, frameon=False, ncol=1)
+    ax.tick_params(labelleft=False)
 
     fig.suptitle(
         "num02_rollerbedCNCPipeIntersectionCuttingMachine_ws0 | "
         "n10_human1.0__episode_03",
-        fontsize=9,
-        y=1.01,
+        fontsize=TITLE_SIZE,
+        y=1.02,
     )
-    fig.tight_layout()
+    fig.tight_layout(w_pad=0.6)
     fig.savefig(FIG / "key_device_entity.pdf")
     fig.savefig(FIG / "key_device_entity.png", dpi=200)
     plt.close(fig)
-    print("[redraw] key_device_entity (entity + start panels)")
+    print(f"[redraw] key_device_entity (window 0..150; series -> {series_csv.name})")
 
 
 # --------------------------------------------------------------------------- #
@@ -351,40 +425,69 @@ TN, TP, ORANGE = (242, 242, 242), (34, 123, 113), (242, 97, 33)
 def redraw_state_map() -> None:
     im = np.array(Image.open(ROOT / "experiments/data/all_devices_state_main_source.png").convert("RGB"))
     left, right, top, bottom = spine_box(im)
-    rows, cols = len(DEVICES), 231
-    rh, cw = (bottom - top) / rows, (right - left) / cols
-    code = np.zeros((rows, cols), dtype=int)
-    for r in range(rows):
+    # Gantry and transport-robot rows are blank in this episode and are omitted.
+    kept = [i for i, name in enumerate(DEVICES) if not name.startswith(("gantry", "robot"))]
+    labels = [DEVICES[i] for i in kept]
+    rows_src, cols = len(DEVICES), 231
+    rh, cw = (bottom - top) / rows_src, (right - left) / cols
+    code = np.zeros((len(kept), cols), dtype=int)
+    for row, r in enumerate(kept):
         for c in range(cols):
             px = tuple(int(v) for v in im[int(top + (r + 0.5) * rh), int(left + (c + 0.5) * cw)])
-            code[r, c] = min(range(3), key=lambda k: np.linalg.norm(np.array(px) - np.array((TN, TP, ORANGE)[k])))
+            code[row, c] = min(range(3), key=lambda k: np.linalg.norm(np.array(px) - np.array((TN, TP, ORANGE)[k])))
     n_tp, n_orange = int((code == 1).sum()), int((code == 2).sum())
     f1 = 2 * n_tp / max(2 * n_tp + n_orange, 1)
-    print(f"[redraw] state map cells TP={n_tp} FP+FN={n_orange} F1={f1:.3f}")
+    print(f"[redraw] state map rows={len(kept)} TP={n_tp} FP+FN={n_orange} F1={f1:.3f}")
 
-    cmap = ListedColormap(["#f2f2f2", "#97B319", "#E5887B", "#E5887B"])
-    fig, ax = plt.subplots(figsize=(11, 0.35 * rows + 1.6))
+    # Palette: TN gray; TP light blue; FP/FN red. The source stores FP and FN
+    # as one colour, so green is not assigned to a separate class.
+    tn_c, tp_c, err_c = "#D0D0D0", "#78B7C9", "#E58B7B"
+    cmap = ListedColormap([tn_c, tp_c, err_c])
+    # Relative window index (t_index - 30); single-column layout.
+    short = [
+        name.replace("num00_rotaryPipeAutomaticW_", "weld_")
+        .replace("num01_weldingRobot_", "weldRobot_")
+        .replace("num02_rollerbedCNCPipeInte_", "cutting_")
+        .replace("num04_groovingMachineLarge_", "groove_")
+        .replace("num08_workbench_", "bench_")
+        for name in labels
+    ]
+    fig, ax = plt.subplots(figsize=(3.35, 3.05))
     ax.imshow(
-        code, aspect="auto", cmap=cmap, vmin=0, vmax=3, interpolation="nearest",
-        extent=[29.5, 260.5, rows - 0.5, -0.5],
+        code, aspect="auto", cmap=cmap, vmin=0, vmax=2, interpolation="nearest",
+        extent=[-0.5, 230.5, len(kept) - 0.5, -0.5],
     )
-    ax.set_yticks(range(rows))
-    ax.set_yticklabels(DEVICES, fontsize=7)
-    ax.set_xlabel("window index (60 s)")
-    ax.legend(
+    ax.set_xlim(0, 150)
+    ax.set_yticks(range(len(kept)))
+    ax.set_yticklabels(short, fontsize=TICK_SIZE)
+    ax.set_xlabel("Window index (60 s)", fontsize=LABEL_SIZE)
+    ax.tick_params(axis="x", labelsize=TICK_SIZE)
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+    ax.set_title(f"n10_human1.0__episode_03 | F1={f1:.3f} ↑", loc="left", fontsize=TITLE_SIZE)
+    fig.legend(
         handles=[Patch(color=c, label=l) for c, l in
-                 zip(["#f2f2f2", "#97B319", "#E5887B", "#E5887B"], ["TN", "TP", "FP", "FN"])],
-        loc="upper center", bbox_to_anchor=(0.5, 1.12), ncol=4, fontsize=8, frameon=False,
+                 zip([tn_c, tp_c, err_c], ["TN", "TP", "FP/FN"])],
+        loc="upper center", bbox_to_anchor=(0.58, 1.02), ncol=3,
+        fontsize=LEGEND_SIZE, frameon=False, handlelength=1.1, columnspacing=0.9,
     )
-    ax.set_title(
-        f"12_3_start5 | n10_human1.0__episode_03 | next-window bottleneck state, F1={f1:.3f}",
-        fontsize=9, pad=22,
-    )
-    fig.tight_layout()
-    fig.savefig(FIG / "all_devices_state_main.pdf")
-    fig.savefig(FIG / "all_devices_state_main.png", dpi=200)
+    fig.tight_layout(rect=(0, 0, 1, 0.94))
+    for stem, dpi in (("all_devices_state_main.pdf", None), ("all_devices_state_main.png", 200)):
+        dest = FIG / stem
+        tmp = FIG / f"_{stem}.new"
+        fig.savefig(tmp, dpi=dpi, format=stem.split(".")[-1])
+        try:
+            dest.unlink(missing_ok=True)
+            tmp.replace(dest)
+        except OSError:
+            # Fall back if the destination is locked by a PDF viewer.
+            alt = FIG / f"{stem}.new"
+            if alt.exists():
+                alt.unlink()
+            tmp.replace(alt)
+            print(f"[warn] could not replace {dest.name}; wrote {alt.name}")
     plt.close(fig)
-    print("[redraw] all_devices_state_main")
+    print("[redraw] all_devices_state_main (single-column, window 0..150)")
 
 
 # --------------------------------------------------------------------------- #
@@ -395,6 +498,13 @@ BASELINES = {
     "LSTM": "key_device_b3_aligned.png",
     "BTGCN": "key_device_b4_aligned.png",
     "BSTAN": "key_device_b5_aligned.png",
+}
+# Crops recovered from the archived multi-panel PDF when the per-model PNGs are absent.
+BASELINE_CROPS = {
+    "XGBoost": "experiments/data/key_device_b_XGBoost.png",
+    "LSTM": "experiments/data/key_device_b_LSTM.png",
+    "BTGCN": "experiments/data/key_device_b_BTGCN.png",
+    "BSTAN": "experiments/data/key_device_b_BSTAN.png",
 }
 
 
@@ -446,64 +556,103 @@ def _extract_baseline(png: Path) -> dict[str, tuple[np.ndarray, np.ndarray, str]
 
 
 def redraw_models_aligned() -> None:
+    """Single-column overlay: (a) state and (b) duration for five methods."""
     with (ROOT / "experiments/data/key_device_main_aligned.csv").open(encoding="utf-8") as fh:
         rows = list(csv.DictReader(fh))
     phgst = {k: np.array([float(r[k]) for r in rows]) for k in rows[0]}
-    baselines = {name: _extract_baseline(FIG / png) for name, png in BASELINES.items()}
+    baselines = {}
+    for name, png in BASELINES.items():
+        path = FIG / png
+        if not path.exists():
+            path = ROOT / BASELINE_CROPS[name]
+        baselines[name] = _extract_baseline(path)
+    x = phgst["window"]
+    methods = ("PHGST-DP", "XGBoost", "LSTM", "BTGCN", "BSTAN")
+    state_pred = {
+        "PHGST-DP": phgst["pred_state"],
+        **{name: baselines[name]["state"][1] for name in BASELINES},
+    }
+    dur_pred = {
+        "PHGST-DP": phgst["pred_dur"],
+        **{name: baselines[name]["dur"][1] for name in BASELINES},
+    }
 
-    fig = plt.figure(figsize=(7.2, 9.47))
-    outer = fig.add_gridspec(3, 2, hspace=0.55, wspace=0.16,
-                             left=0.085, right=0.985, top=0.94, bottom=0.045)
+    # Match Figure 6 (key_device_entity): same canvas and open-frame style.
+    fig, axes = plt.subplots(1, 2, figsize=(7.2, 3.15), sharex=False)
 
-    def draw_pair(cell, title, true_s, pred_s, true_d, pred_d, pred_color, *, zoom=False):
-        sub = cell.subgridspec(2, 1, hspace=0.35, height_ratios=[1, 1.45])
-        state, dur = fig.add_subplot(sub[0]), fig.add_subplot(sub[1])
-        x = np.arange(len(true_s))
-        for ax in (state, dur):
-            if zoom:
-                ax.set_xlim(20, 115)
-                ax.set_xticks([20, 40, 60, 80, 100, 115])
-            else:
-                ax.set_xlim(-11.5, 241.5)
-                ax.set_xticks([0, 50, 100, 150, 200])
-                if zoom is False and title.startswith("PHGST"):
-                    ax.axvspan(20, 115, facecolor="#efefef", edgecolor="none", zorder=0)
-            ax.grid(alpha=0.22, linewidth=0.55)
-            ax.set_axisbelow(True)
-            ax.tick_params(labelsize=7.2)
-        state.step(x, true_s, where="post", color=TRUE_COLOR, lw=1.05)
-        state.step(x, pred_s, where="post", color=pred_color, lw=0.95, ls="--")
-        state.set_ylim(-0.07, 1.07)
-        state.set_yticks([0, 1])
-        state.set_ylabel("State", fontsize=7.5, labelpad=2)
-        state.set_title(title, fontsize=8.8, pad=4)
-        dur.plot(x, true_d, color=TRUE_COLOR, lw=1.05)
-        dur.plot(x, pred_d, color=pred_color, lw=0.95, ls="--")
-        dur.set_ylim(-1, 21)
-        dur.set_yticks([0, 5, 10, 15, 20])
-        dur.set_ylabel("Duration (min)", fontsize=7.5, labelpad=2)
-        dur.set_xlabel("Window (60 s)", fontsize=7.5, labelpad=3)
+    def _open_frame(ax: plt.Axes) -> None:
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.spines["bottom"].set_color("#9AA3A8")
+        ax.spines["left"].set_color("#9AA3A8")
+        ax.tick_params(colors="#333333", labelsize=TICK_SIZE)
+        ax.grid(alpha=0.3, lw=0.6)
+        ax.set_axisbelow(True)
 
-    w = phgst["window"]
-    draw_pair(outer[0, 0], "PHGST-DP: full trajectory",
-              phgst["true_state"], phgst["pred_state"], phgst["true_dur"], phgst["pred_dur"], PRED_COLOR)
-    draw_pair(outer[0, 1], "PHGST-DP: event detail",
-              phgst["true_state"], phgst["pred_state"], phgst["true_dur"], phgst["pred_dur"], PRED_COLOR, zoom=True)
-    cells = [(outer[1, 0], "XGBoost"), (outer[1, 1], "LSTM"),
-             (outer[2, 0], "BTGCN"), (outer[2, 1], "BSTAN")]
-    for cell, name in cells:
-        b = baselines[name]
-        draw_pair(cell, name, phgst["true_state"], b["state"][1],
-                  phgst["true_dur"], b["dur"][1], PRED_COLOR)
-    fig.legend(
-        handles=[Line2D([], [], color=TRUE_COLOR, lw=1.1, label="True"),
-                 Line2D([], [], color=PRED_COLOR, lw=1.0, ls="--", label="Predicted")],
-        loc="upper center", ncol=2, frameon=False, fontsize=7.5, bbox_to_anchor=(0.5, 1.0),
+    ax = axes[0]
+    ax.step(x, phgst["true_state"], where="post", color=TRUE_COLOR, lw=1.35, label="True", zorder=5)
+    for name in methods:
+        ax.step(
+            x, state_pred[name], where="post",
+            color=METHOD_PRED[name], lw=1.45 if name == "PHGST-DP" else 1.2,
+            ls="--", label=name, zorder=2,
+        )
+    ax.set_xlim(0, 150)
+    ax.set_ylim(-0.08, 1.08)
+    ax.set_yticks([0, 1])
+    ax.set_ylabel("State", fontsize=LABEL_SIZE)
+    ax.set_xlabel("Window index (60 s)", fontsize=LABEL_SIZE)
+    ax.set_title("(a) Next-window state", loc="left", fontsize=TITLE_SIZE)
+    _open_frame(ax)
+
+    ax = axes[1]
+    (true_line,) = ax.plot(
+        x, phgst["true_dur"], color=TRUE_COLOR, lw=1.35, label="True", zorder=5,
+        solid_capstyle="round", solid_joinstyle="round",
     )
-    fig.savefig(FIG / "key_device_models_aligned.pdf", facecolor="white")
-    fig.savefig(FIG / "key_device_models_aligned.png", dpi=300, facecolor="white")
+    true_line.set_path_effects([pe.Stroke(linewidth=2.3, foreground="white"), pe.Normal()])
+    for name in methods:
+        ax.plot(
+            x, dur_pred[name],
+            color=METHOD_PRED[name], lw=1.45 if name == "PHGST-DP" else 1.2,
+            ls="--", label=name, zorder=2,
+        )
+    ax.set_xlim(0, 150)
+    ax.set_ylim(-0.8, 21)
+    ax.set_yticks([0, 5, 10, 15, 20])
+    ax.set_ylabel("Duration (min)", fontsize=LABEL_SIZE)
+    ax.set_xlabel("Window index (60 s)", fontsize=LABEL_SIZE)
+    ax.set_title("(b) Duration", loc="left", fontsize=TITLE_SIZE)
+    _open_frame(ax)
+
+    axes[1].legend(
+        handles=[Line2D([], [], color=TRUE_COLOR, lw=1.4, label="True")]
+        + [Line2D([], [], color=METHOD_PRED[name], lw=1.25, ls="--", label=name) for name in methods],
+        loc="upper right",
+        ncol=1,
+        frameon=False,
+        fontsize=LEGEND_SIZE,
+        handlelength=1.5,
+        labelspacing=0.2,
+        borderaxespad=0.25,
+        handletextpad=0.35,
+    )
+    fig.tight_layout(w_pad=0.6)
+    for stem, dpi in (("key_device_models_aligned.pdf", None), ("key_device_models_aligned.png", 300)):
+        dest = FIG / stem
+        tmp = FIG / f"_{stem}.new"
+        fig.savefig(tmp, dpi=dpi, format=stem.split(".")[-1], facecolor="white")
+        try:
+            dest.unlink(missing_ok=True)
+            tmp.replace(dest)
+        except OSError:
+            alt = FIG / f"{stem}.new"
+            if alt.exists():
+                alt.unlink()
+            tmp.replace(alt)
+            print(f"[warn] could not replace {dest.name}; wrote {alt.name}")
     plt.close(fig)
-    print("[redraw] key_device_models_aligned")
+    print("[redraw] key_device_models_aligned (overlay, full-width, research palette)")
 
 
 if __name__ == "__main__":

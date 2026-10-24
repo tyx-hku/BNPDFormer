@@ -26,11 +26,26 @@ PALETTE = {
     "coral": "#E58B7B",
     "yellow_green": "#97B319",
 }
-# Same-hue pair (#78B7C9 → #46788E) transitions cleanly; yellow→blue midtones look muddy.
-# Near-white low end keeps zero cells readable without leaving the blue family.
+# Same-hue pair transitions cleanly; yellow→blue midtones look muddy.
+# Extra stops stretch mid-range contrast for nearly uniform attention matrices.
 CMAP_SEQUENTIAL = LinearSegmentedColormap.from_list(
     "research_sequential",
-    ["#F4FAFC", PALETTE["light_blue"], PALETTE["deep_teal"]],
+    ["#F7FBFC", "#D6EAF1", "#9ECBDA", PALETTE["light_blue"], "#5A93A8", PALETTE["deep_teal"], "#2F5464"],
+)
+# Longer near-white ramp for nearly uniform absolute attention (e.g. temporal maps).
+# Position stops keep most of the scale pale so mid-range structure stays readable.
+CMAP_SEQUENTIAL_LIGHT = LinearSegmentedColormap.from_list(
+    "research_sequential_light",
+    [
+        (0.00, "#FFFFFF"),
+        (0.20, "#F7FBFC"),
+        (0.40, "#E8F4F8"),
+        (0.55, "#D0E8F0"),
+        (0.70, "#A8D0DE"),
+        (0.82, PALETTE["light_blue"]),
+        (0.92, "#5A93A8"),
+        (1.00, PALETTE["deep_teal"]),
+    ],
 )
 CMAP_DIVERGING = LinearSegmentedColormap.from_list(
     "research_diverging",
@@ -58,30 +73,42 @@ CONDITION_TITLES = {
 
 
 def style() -> None:
+    from paper_plot_style import LABEL_SIZE, TICK_SIZE, TITLE_SIZE, apply as apply_paper_style
+    apply_paper_style()
     matplotlib.rcParams.update(
         {
-            "font.family": "serif",
-            "font.serif": ["Times New Roman", "Times", "DejaVu Serif"],
-            "font.size": 9,
-            "axes.titlesize": 10,
-            "axes.labelsize": 9,
-            "xtick.labelsize": 7,
-            "ytick.labelsize": 7,
+            "font.size": LABEL_SIZE,
+            "axes.labelsize": LABEL_SIZE,
+            "axes.titlesize": TITLE_SIZE,
+            "xtick.labelsize": TICK_SIZE,
+            "ytick.labelsize": TICK_SIZE,
             "axes.linewidth": 0.8,
             "figure.dpi": 150,
             "savefig.dpi": 600,
             "savefig.bbox": "tight",
             "savefig.pad_inches": 0.04,
-            "pdf.fonttype": 42,
-            "ps.fonttype": 42,
-            "svg.fonttype": "none",
         }
     )
 
 
 def save(fig: plt.Figure, out_dir: Path, stem: str) -> None:
+    out_dir.mkdir(parents=True, exist_ok=True)
     for suffix in ("pdf", "png", "svg"):
-        fig.savefig(out_dir / f"{stem}.{suffix}", dpi=600 if suffix == "png" else None)
+        dest = out_dir / f"{stem}.{suffix}"
+        tmp = out_dir / f"_{stem}_{suffix}.tmp"
+        try:
+            fig.savefig(tmp, dpi=600 if suffix == "png" else None, format=suffix)
+            try:
+                dest.unlink(missing_ok=True)
+                tmp.replace(dest)
+            except OSError:
+                alt = out_dir / f"{stem}.{suffix}.new"
+                if alt.exists():
+                    alt.unlink()
+                tmp.replace(alt)
+                print(f"[warn] could not replace {dest.name}; wrote {alt.name}")
+        except OSError as exc:
+            print(f"[warn] skip {dest.name}: {exc}")
     plt.close(fig)
 
 
@@ -101,6 +128,12 @@ def heatmap(
     group_boundaries: list[int] | None = None,
     annotate: bool = False,
     tick_step: int = 1,
+    xlabel: str | None = "Attended resource",
+    ylabel: str | None = "Query resource",
+    *,
+    tick_fontsize: float | None = None,
+    label_fontsize: float | None = None,
+    title_fontsize: float | None = None,
 ):
     image = ax.imshow(
         matrix,
@@ -111,15 +144,25 @@ def heatmap(
         aspect="equal",
         interpolation="nearest",
     )
-    ax.set_title(title, pad=5)
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+    ax.set_title(title, pad=4 if title_fontsize else 6, fontsize=title_fontsize)
     if labels is not None:
         ticks = np.arange(0, len(labels), max(1, tick_step))
         ax.set_xticks(ticks)
         ax.set_yticks(ticks)
-        ax.set_xticklabels([labels[i] for i in ticks], rotation=90)
-        ax.set_yticklabels([labels[i] for i in ticks])
-        ax.set_xlabel("Attended resource")
-        ax.set_ylabel("Query resource")
+        tick_kw = {"rotation": 90}
+        if tick_fontsize is not None:
+            tick_kw["fontsize"] = tick_fontsize
+        ax.set_xticklabels([labels[i] for i in ticks], **tick_kw)
+        ax.set_yticklabels(
+            [labels[i] for i in ticks],
+            fontsize=tick_fontsize if tick_fontsize is not None else None,
+        )
+        if xlabel:
+            ax.set_xlabel(xlabel, fontsize=label_fontsize)
+        if ylabel:
+            ax.set_ylabel(ylabel, fontsize=label_fontsize)
     for boundary in group_boundaries or []:
         ax.axhline(boundary - 0.5, color="white", lw=0.8)
         ax.axvline(boundary - 0.5, color="white", lw=0.8)
@@ -129,7 +172,8 @@ def heatmap(
             for j in range(matrix.shape[1]):
                 value = matrix[i, j]
                 color = "white" if abs(value) > 0.55 * scale else "black"
-                ax.text(j, i, f"{value:.2f}", ha="center", va="center", fontsize=7, color=color)
+                from paper_plot_style import ANNOT_SIZE
+                ax.text(j, i, f"{value:.2f}", ha="center", va="center", fontsize=ANNOT_SIZE, color=color)
     return image
 
 
@@ -203,7 +247,8 @@ def main() -> None:
     }
 
     # Figure 2: absolute attention by operating condition.
-    fig, axes = plt.subplots(2, 3, figsize=(12.6, 8.0), constrained_layout=True)
+    fig, axes = plt.subplots(2, 3, figsize=(7.2, 5.1), constrained_layout=True)
+    fig.set_constrained_layout_pads(h_pad=0.10, w_pad=0.04, hspace=0.18, wspace=0.06)
     for row, kind in enumerate(("geo", "sem")):
         for col, condition in enumerate(CONDITIONS):
             image = heatmap(
@@ -226,7 +271,8 @@ def main() -> None:
     }
     delta_max = max(float(np.abs(array).max()) for array in deltas.values())
     norm = TwoSlopeNorm(vmin=-delta_max, vcenter=0.0, vmax=delta_max)
-    fig, axes = plt.subplots(2, 2, figsize=(8.7, 7.6), constrained_layout=True)
+    fig, axes = plt.subplots(2, 2, figsize=(6.8, 6.3), constrained_layout=True)
+    fig.set_constrained_layout_pads(h_pad=0.10, w_pad=0.04, hspace=0.18, wspace=0.06)
     for row, kind in enumerate(("geo", "sem")):
         for col, condition in enumerate(("upcoming", "ongoing")):
             image = heatmap(
@@ -241,32 +287,49 @@ def main() -> None:
     fig.colorbar(image, ax=axes, fraction=0.025, pad=0.02, label="Attention-weight change")
     save(fig, args.out_dir, "fig03_resource_attention_change")
 
-    # Figure 4: temporal attention has no resource-labelled axis and is unchanged.
-    temporal = {condition: data[f"start5_temporal_{condition}"] for condition in CONDITIONS}
+    # Figure 4: temporal attention — (a) normal, (b) upcoming, (c) upcoming−normal.
+    # Ongoing is omitted so the absolute maps can be larger and easier to read.
+    temporal = {condition: data[f"start5_temporal_{condition}"] for condition in ("normal", "upcoming")}
     temporal_delta = data["start5_temporal_upcoming_minus_normal"]
-    vmax_temporal = max(float(array.max()) for array in temporal.values())
+    # Span the colormap over the displayed value range so low cells stay near white
+    # instead of sitting in the dark half of a 0--vmax scale.
+    abs_stack = np.stack([temporal["normal"], temporal["upcoming"]])
+    vmin_temporal = float(np.percentile(abs_stack, 5))
+    vmax_temporal = float(np.percentile(abs_stack, 95))
+    if vmax_temporal <= vmin_temporal:
+        vmin_temporal = float(abs_stack.min())
+        vmax_temporal = float(abs_stack.max())
     delta_temporal_max = float(np.abs(temporal_delta).max())
-    fig, axes = plt.subplots(1, 4, figsize=(14.2, 3.5), constrained_layout=True)
-    time_labels = [str(i + 1) if i % 3 == 0 else "" for i in range(temporal["normal"].shape[0])]
-    for col, condition in enumerate(CONDITIONS):
+    fig, axes = plt.subplots(1, 3, figsize=(7.2, 2.9), constrained_layout=True)
+    n_steps = temporal["normal"].shape[0]
+    time_labels = [str(i + 1) for i in range(n_steps)]
+    for col, condition in enumerate(("normal", "upcoming")):
         image = heatmap(
             axes[col],
             temporal[condition],
             time_labels,
             f"({chr(97 + col)}) {CONDITION_TITLES[condition]}",
-            vmin=0.0,
+            cmap=CMAP_SEQUENTIAL_LIGHT,
+            vmin=vmin_temporal,
             vmax=vmax_temporal,
+            xlabel="Attended history step",
+            ylabel="Query history step" if col == 0 else None,
+            tick_step=5,
         )
-        axes[col].set_xlabel("Attended history step")
-        axes[col].set_ylabel("Query history step")
-    fig.colorbar(image, ax=axes[:3], fraction=0.022, pad=0.018, label="Attention weight")
+    fig.colorbar(image, ax=axes[:2], fraction=0.046, pad=0.02, label="Attention weight")
     temporal_norm = TwoSlopeNorm(vmin=-delta_temporal_max, vcenter=0.0, vmax=delta_temporal_max)
     image = heatmap(
-        axes[3], temporal_delta, time_labels, "(d) Upcoming - normal", cmap=CMAP_DIVERGING, norm=temporal_norm
+        axes[2],
+        temporal_delta,
+        time_labels,
+        "(c) Upcoming - normal",
+        cmap=CMAP_DIVERGING,
+        norm=temporal_norm,
+        xlabel="Attended history step",
+        ylabel=None,
+        tick_step=5,
     )
-    axes[3].set_xlabel("Attended history step")
-    axes[3].set_ylabel("Query history step")
-    fig.colorbar(image, ax=axes[3], fraction=0.046, pad=0.025, label="Change")
+    fig.colorbar(image, ax=axes[2], fraction=0.046, pad=0.02, label="Change")
     save(fig, args.out_dir, "fig04_temporal_attention_states")
 
     # Figure 5: layer-wise upcoming attention.
@@ -275,7 +338,8 @@ def main() -> None:
     layer_sem = [filter_square(data[f"start5_sem_upcoming_layer{i}"], keep) for i in range(1, depth + 1)]
     vmax_geo = max(float(array.max()) for array in layer_geo)
     vmax_sem = max(float(array.max()) for array in layer_sem)
-    fig, axes = plt.subplots(2, depth, figsize=(15.2, 6.1), constrained_layout=True)
+    fig, axes = plt.subplots(2, depth, figsize=(7.5, 4.4), constrained_layout=True)
+    fig.set_constrained_layout_pads(h_pad=0.10, w_pad=0.03, hspace=0.18, wspace=0.05)
     for layer in range(depth):
         geo_image = heatmap(
             axes[0, layer], layer_geo[layer], labels, f"Geo layer {layer + 1}",
@@ -299,7 +363,8 @@ def main() -> None:
         kind: max(float(type_arrays[(kind, condition)].max()) for condition in CONDITIONS)
         for kind in ("geo", "sem")
     }
-    fig, axes = plt.subplots(2, 3, figsize=(10.4, 6.5), constrained_layout=True)
+    fig, axes = plt.subplots(2, 3, figsize=(7.2, 5.1), constrained_layout=True)
+    fig.set_constrained_layout_pads(h_pad=0.10, w_pad=0.04, hspace=0.18, wspace=0.06)
     for row, kind in enumerate(("geo", "sem")):
         for col, condition in enumerate(CONDITIONS):
             image = heatmap(
@@ -315,6 +380,7 @@ def main() -> None:
     save(fig, args.out_dir, "fig06_entity_type_attention")
 
     # Figure 7: horizon-specific signed changes.
+    # Same 2×3 form as fig02/fig05: geographic row (a,c,e), semantic row (b,d,f).
     horizon_keys = (("Startlt5", "Start<=5"), ("Startlt10", "Start<=10"), ("Startlt15", "Start<=15"))
     horizon = {
         (title, kind): filter_square(data[f"{key}_{kind}_upcoming_minus_normal"], keep)
@@ -323,42 +389,72 @@ def main() -> None:
     }
     horizon_max = max(float(np.abs(array).max()) for array in horizon.values())
     horizon_norm = TwoSlopeNorm(vmin=-horizon_max, vcenter=0.0, vmax=horizon_max)
-    fig, axes = plt.subplots(3, 2, figsize=(8.7, 10.8), constrained_layout=True)
-    for row, (_, title) in enumerate(horizon_keys):
-        for col, kind in enumerate(("geo", "sem")):
+    fig, axes = plt.subplots(2, 3, figsize=(7.2, 5.3), constrained_layout=True)
+    fig.set_constrained_layout_pads(h_pad=0.10, w_pad=0.04, hspace=0.18, wspace=0.06)
+    # Panel letters keep the prior a/c/e (geo) and b/d/f (sem) identities.
+    panel_letters = {"geo": ("a", "c", "e"), "sem": ("b", "d", "f")}
+    for row, kind in enumerate(("geo", "sem")):
+        for col, (_, title) in enumerate(horizon_keys):
+            letter = panel_letters[kind][col]
             image = heatmap(
                 axes[row, col],
                 horizon[(title, kind)],
                 labels,
-                f"({chr(97 + row * 2 + col)}) {title} {kind}: upcoming - normal",
+                f"({letter}) {title} {kind}: upcoming - normal",
                 cmap=CMAP_DIVERGING,
                 norm=horizon_norm,
                 group_boundaries=group_boundaries,
+                ylabel="Query resource" if col == 0 else None,
             )
     fig.colorbar(image, ax=axes, fraction=0.018, pad=0.018, label="Attention-weight change")
     save(fig, args.out_dir, "fig07_horizon_attention_change")
 
-    # Figure 8: prediction maps for the displayed non-buffer resources.
-    t_index = data["prediction_t_index"]
+    # Figure 8: prediction maps; single-column stack with larger axis text.
+    # Rebuild on relative windows 0--200 from the original t_index series
+    # (absolute indices start at 30); do not zoom-crop a wider canvas.
+    t_index = np.asarray(data["prediction_t_index"])
+    t0 = int(t_index.min())
+    t_rel_full = t_index - t0
+    col_keep = np.flatnonzero((t_rel_full >= 0) & (t_rel_full <= 200))
+    t_rel = t_rel_full[col_keep]
     prediction_matrices = (
-        (data["prediction_truth"][keep], "(a) Future bottleneck ground truth", CMAP_BINARY),
-        (data["prediction_probability"][keep], "(b) Predicted bottleneck probability", CMAP_SEQUENTIAL),
-        (data["prediction_absolute_error"][keep], "(c) Absolute probability error", CMAP_ERROR),
+        (data["prediction_truth"][keep][:, col_keep], "(a) Ground truth", CMAP_BINARY),
+        (data["prediction_probability"][keep][:, col_keep], "(b) Predicted probability", CMAP_SEQUENTIAL),
+        (data["prediction_absolute_error"][keep][:, col_keep], "(c) Absolute error", CMAP_ERROR),
     )
-    fig, axes = plt.subplots(3, 1, figsize=(12.0, 6.4), sharex=True, constrained_layout=True)
+    fig, axes = plt.subplots(3, 1, figsize=(3.35, 5.9), sharex=True, constrained_layout=True)
+    fig.set_constrained_layout_pads(h_pad=0.08, w_pad=0.02, hspace=0.12, wspace=0.02)
+    x0, x1 = float(t_rel[0]) - 0.5, float(t_rel[-1]) + 0.5
     for ax, (matrix, title, cmap) in zip(axes, prediction_matrices):
-        image = ax.imshow(matrix, aspect="auto", interpolation="nearest", cmap=cmap, vmin=0.0, vmax=1.0)
-        ax.set_yticks(np.arange(len(labels)))
-        ax.set_yticklabels(labels)
-        ax.set_ylabel("Resource")
-        ax.set_title(title, loc="left")
+        image = ax.imshow(
+            matrix,
+            aspect="auto",
+            interpolation="nearest",
+            cmap=cmap,
+            vmin=0.0,
+            vmax=1.0,
+            extent=(x0, x1, len(labels) - 0.5, -0.5),
+        )
+        ax.set_yticks(np.arange(0, len(labels), 2))
+        ax.set_yticklabels([labels[i] for i in range(0, len(labels), 2)])
+        ax.tick_params(axis="y", labelsize=7, pad=1.5, length=2, width=0.6)
+        from paper_plot_style import LABEL_SIZE, TITLE_SIZE
+        ax.set_ylabel("Resource", fontsize=LABEL_SIZE)
+        ax.set_title(title, loc="left", pad=2, fontsize=TITLE_SIZE)
+        ax.set_xlim(0.0, 200.0)
+        for spine in ax.spines.values():
+            spine.set_visible(False)
         for boundary in group_boundaries:
-            ax.axhline(boundary - 0.5, color="white", lw=0.7)
-        fig.colorbar(image, ax=ax, fraction=0.018, pad=0.012)
-    tick_pos = np.linspace(0, len(t_index) - 1, min(10, len(t_index)), dtype=int)
-    axes[2].set_xticks(tick_pos)
-    axes[2].set_xticklabels([str(t_index[i]) for i in tick_pos])
-    axes[2].set_xlabel("Test-window index (60 s)")
+            ax.axhline(boundary - 0.5, color="white", lw=0.8)
+        colorbar = fig.colorbar(image, ax=ax, fraction=0.045, pad=0.02)
+        colorbar.ax.tick_params(labelsize=7, length=2, width=0.6)
+        colorbar.outline.set_visible(False)
+    tick_vals = [0, 50, 100, 150, 200]
+    axes[2].set_xticks(tick_vals)
+    axes[2].set_xticklabels([str(v) for v in tick_vals])
+    axes[2].tick_params(axis="x", labelsize=7, length=2.5, width=0.6)
+    from paper_plot_style import LABEL_SIZE as _LABEL_SIZE
+    axes[2].set_xlabel("Test-window index (60 s)", fontsize=_LABEL_SIZE)
     save(fig, args.out_dir, "fig08_prediction_heatmaps")
 
     print(f"Wrote eight heatmap groups for {len(labels)} displayed non-buffer resources to {args.out_dir}")

@@ -1,0 +1,13 @@
+arm,start_cap_min,far_recall_pct,type_hmean_pct
+Full,5,,50.5
+Full,10,,53.0
+Full,15,43.3,53.6
+NoGroup,5,,43.2
+NoGroup,10,,45.2
+NoGroup,15,19.2,46.9
+NoCross,5,,39.6
+NoCross,10,,37.1
+NoCross,15,6.7,36.5
+NoGraph,5,,38.4
+NoGraph,10,,37.6
+NoGraph,15,0.0,36.0

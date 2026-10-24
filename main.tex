@@ -133,8 +133,8 @@
 \let\WriteBookmarks\relax
 \def\floatpagepagefraction{1}
 \def\textpagefraction{.001}
-\shorttitle{PHGST-DP for dynamic bottleneck prediction}
-\shortauthors{Yuxiao Tian}
+\shorttitle{Process-informed heterogeneous graph learning with delayed propagation for dynamic bottleneck prediction in manufacturing}
+\shortauthors{Yuxiao Tian et al.}
 
 \title [mode = title]{Process-informed heterogeneous graph learning with delayed propagation for dynamic bottleneck prediction in manufacturing}
 
@@ -1210,7 +1210,7 @@ Order-completion prediction connects local bottleneck forecasts to the progress 
 
 \begin{table*}[t]
 \centering
-\caption{Order-completion remaining-time MAE (min, lower is better). PHGST-DP uses its final remaining-time head. Best/second-best styling and provisional baseline status follow Table~\ref{tab:comparison-main}.}
+\caption{Order-completion remaining-time MAE (min, lower is better). PHGST-DP uses its final remaining-time head; Full-S1 is the internal stage-1 reference before remaining-time fine-tuning. Best/second-best styling among the five compared models and provisional baseline status follow Table~\ref{tab:comparison-main}.}
 \label{tab:comparison-remain}
 \scriptsize
 \setlength{\tabcolsep}{3.2pt}
@@ -1220,6 +1220,7 @@ Order-completion prediction connects local bottleneck forecasts to the progress 
 Model & Start $\leq5$ & Start $\leq10$ & Start $\leq15$ \\
 \midrule
 PHGST-DP & \underline{9.600} & \underline{9.270} & \underline{8.910} \\
+Full-S1 (before fine-tuning) & 10.930 & 11.210 & 9.720 \\
 XGBoost & \textbf{5.231} & \textbf{5.231} & \textbf{5.231} \\
 LSTM & 10.593 & 10.607 & 9.009 \\
 BTGCN & 19.343 & 18.102 & 12.829 \\
@@ -1228,9 +1229,9 @@ BSTAN & 14.704 & 13.850 & 13.557 \\
 \end{tabular*}
 \end{table*}
 
-The existing head-specific fine-tuning further establishes how completion-time estimation can be improved while the event and cause outputs remain fixed. Relative to the stage-1 reference, MAE decreases by approximately $12\%/17\%/8\%$ to the values in Table~\ref{tab:comparison-remain}; the largest absolute gains occur in early production (Section~\ref{sec:decoder-training}). The order-level head therefore adds progress information to the resource-level warning and can be specialized without changing the bottleneck report's event and explanatory outputs.
+The Full-S1 row makes the contribution of head-specific fine-tuning explicit while the event and cause outputs remain fixed. Relative to this stage-1 reference, MAE decreases by approximately $12\%/17\%/8\%$ to the PHGST-DP values in Table~\ref{tab:comparison-remain}; the largest absolute gains occur in early production (Section~\ref{sec:decoder-training}). The order-level head therefore adds progress information to the resource-level warning and can be specialized without changing the bottleneck report's event and explanatory outputs.
 
-\zhpara{已有的剩余时间头专项微调进一步展示了在保持事件与原因输出固定时改善完成时间估计的途径。相对于第一阶段模型，MAE 下降约 $12\%/17\%/8\%$，达到表~\ref{tab:comparison-remain}所示结果，最大的绝对收益出现在生产早期（第~\ref{sec:decoder-training}节）。因此，订单级预测头在资源级预警之外补充进度信息，并能够在保持瓶颈事件及解释输出的同时进行专项优化。}
+\zhpara{Full-S1 行直接展示了在保持事件与原因输出固定时，剩余时间头专项微调所带来的变化。相对于该第一阶段参照，PHGST-DP 的 MAE 下降约 $12\%/17\%/8\%$，达到表~\ref{tab:comparison-remain}所示结果，最大的绝对收益出现在生产早期（第~\ref{sec:decoder-training}节）。因此，订单级预测头在资源级预警之外补充进度信息，并能够在保持瓶颈事件及解释输出的同时进行专项优化。}
 
 \subsection{Ablation study}
 
@@ -1274,42 +1275,49 @@ This experiment examines the value of observing heterogeneous resources and exch
 
 \begin{table*}[t]
 \centering
-\caption{Ablation of the heterogeneous graph, grouped embedding, and multi-entity information. Dur.\ MAE is the union duration MAE (min; lower is better), which penalizes misses and false alarms. Within each Start cap, bold marks the best value and underline marks second-best. NoInfo and MachineOnly observe a smaller event pool (955/1,225/1,331 instead of 1,102/1,372/1,478 true events).}
+\caption{Ablation of the heterogeneous graph, grouped embedding, and multi-entity information. Type hmean is the harmonic mean of machine, gantry, and AGV occupancy F1; Dur.\ MAE is the union duration MAE (min; lower is better). Within each Start cap, bold marks the best value and underline marks second-best. NoInfo and MachineOnly observe a smaller event pool and have zero type hmean because some resource types are outside their prediction scope.}
 \label{tab:entity-ablation-new}
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
 \renewcommand{\arraystretch}{1.05}
 \begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}llrrrrr@{}}
 \toprule
-Arm & Start cap & F1-score & Upcoming R & Ongoing R & State F1 (1-step) & Dur.\ MAE \\
+Arm & Start cap & F1-score & Upcoming R & Type hmean & State F1 (1-step) & Dur.\ MAE \\
 \midrule
-Full & $\leq5$ & \textbf{80.4\%} & \textbf{54.2\%} & \underline{93.7\%} & \textbf{88.3\%} & \textbf{4.17} \\
-NoGraph &  & \underline{74.6\%} & 10.4\% & 93.0\% & \underline{87.3\%} & 5.48 \\
-NoGroup &  & 75.3\% & \underline{33.3\%} & \textbf{94.1\%} & 83.5\% & \underline{5.11} \\
-NoCross &  & 71.6\% & 22.0\% & 90.7\% & 81.2\% & 5.28 \\
-NoInfo &  & 64.4\% & 4.9\% & 89.9\% & 69.9\% & 6.66 \\
-MachineOnly &  & 65.0\% & 3.3\% & 90.3\% & 70.9\% & 6.51 \\
+Full & $\leq5$ & \textbf{80.4\%} & \textbf{54.2\%} & \textbf{50.5\%} & \textbf{88.3\%} & \textbf{4.17} \\
+NoGraph &  & \underline{74.6\%} & 10.4\% & 38.4\% & \underline{87.3\%} & 5.48 \\
+NoGroup &  & 75.3\% & \underline{33.3\%} & \underline{43.2\%} & 83.5\% & \underline{5.11} \\
+NoCross &  & 71.6\% & 22.0\% & 39.6\% & 81.2\% & 5.28 \\
+NoInfo &  & 64.4\% & 4.9\% & 0.0\% & 69.9\% & 6.66 \\
+MachineOnly &  & 65.0\% & 3.3\% & 0.0\% & 70.9\% & 6.51 \\
 \midrule
-Full & $\leq10$ & \textbf{77.8\%} & \textbf{53.5\%} & \underline{93.9\%} & \textbf{89.2\%} & \textbf{4.38} \\
-NoGraph &  & \underline{64.9\%} & 6.5\% & 91.1\% & \underline{84.4\%} & 6.46 \\
-NoGroup &  & 65.1\% & \underline{48.5\%} & \textbf{94.9\%} & 82.6\% & \underline{6.05} \\
-NoCross &  & 57.1\% & 20.7\% & 89.6\% & 75.9\% & 6.60 \\
-NoInfo &  & 54.4\% & 2.1\% & 89.6\% & 68.4\% & 7.57 \\
-MachineOnly &  & 55.9\% & 1.4\% & 90.1\% & 70.8\% & 7.40 \\
+Full & $\leq10$ & \textbf{77.8\%} & \textbf{53.5\%} & \textbf{53.0\%} & \textbf{89.2\%} & \textbf{4.38} \\
+NoGraph &  & \underline{64.9\%} & 6.5\% & 37.6\% & \underline{84.4\%} & 6.46 \\
+NoGroup &  & 65.1\% & \underline{48.5\%} & \underline{45.2\%} & 82.6\% & \underline{6.05} \\
+NoCross &  & 57.1\% & 20.7\% & 37.1\% & 75.9\% & 6.60 \\
+NoInfo &  & 54.4\% & 2.1\% & 0.0\% & 68.4\% & 7.57 \\
+MachineOnly &  & 55.9\% & 1.4\% & 0.0\% & 70.8\% & 7.40 \\
 \midrule
-Full & $\leq15$ & \textbf{76.8\%} & \textbf{53.7\%} & \textbf{93.0\%} & \textbf{90.0\%} & \textbf{4.43} \\
-NoGraph &  & \underline{61.2\%} & 3.7\% & 89.2\% & \underline{86.5\%} & 6.57 \\
-NoGroup &  & 60.4\% & \underline{43.2\%} & \underline{92.7\%} & 81.9\% & \underline{6.34} \\
-NoCross &  & 51.4\% & 31.1\% & 89.7\% & 76.0\% & 6.77 \\
-NoInfo &  & 44.1\% & 21.8\% & 92.2\% & 59.6\% & 7.66 \\
-MachineOnly &  & 53.4\% & 2.1\% & 91.2\% & 70.6\% & 7.46 \\
+Full & $\leq15$ & \textbf{76.8\%} & \textbf{53.7\%} & \textbf{53.6\%} & \textbf{90.0\%} & \textbf{4.43} \\
+NoGraph &  & \underline{61.2\%} & 3.7\% & 36.0\% & \underline{86.5\%} & 6.57 \\
+NoGroup &  & 60.4\% & \underline{43.2\%} & \underline{46.9\%} & 81.9\% & \underline{6.34} \\
+NoCross &  & 51.4\% & 31.1\% & 36.5\% & 76.0\% & 6.77 \\
+NoInfo &  & 44.1\% & 21.8\% & 0.0\% & 59.6\% & 7.66 \\
+MachineOnly &  & 53.4\% & 2.1\% & 0.0\% & 70.6\% & 7.46 \\
 \bottomrule
 \end{tabular*}
 \end{table*}
 
-Cross-resource information is most closely associated with advance warning. PHGST-DP's Upcoming recall is $0.542/0.535/0.537$, compared with $0.049/0.021/0.218$ for NoInfo and $0.033/0.014/0.021$ for MachineOnly. Ongoing recall stays near or above $0.89$ across these configurations, locating the principal difference in the recognition of emerging constraints. The full model also covers non-machine targets: at Start$\leq5$, gantry F1 is $0.811$, compared with $0.082$ for NoInfo and $0$ for MachineOnly. NoGraph records Upcoming recall of $0.104/0.065/0.037$, and NoCross lies between the observation-restricted configurations and PHGST-DP. NoGroup records Upcoming recall of $0.333/0.485/0.432$ with precision $0.605/0.567$ at the longer caps, consistent with grouped embedding helping distinguish precursors from false alarms. The device traces in Figure~\ref{fig:key-device-entity} connect these differences to event persistence: PHGST-DP identifies both intervals about 5~min before NoInfo and MachineOnly, whose duration estimates remain at 6--8~min during the 20-min target segment; NoCross reaches 14~min before decaying to about 8~min.
+Cross-resource information is most closely associated with advance warning. PHGST-DP's Upcoming recall is $0.542/0.535/0.537$, compared with $0.049/0.021/0.218$ for NoInfo and $0.033/0.014/0.021$ for MachineOnly. At Start$\leq15$, strict report recall for events beginning more than 10~min ahead is $0.433$ for Full, compared with $0.192$ for NoGroup, $0.067$ for NoCross, and $0$ for NoGraph (Figure~\ref{fig:cross-resource-evidence}a). The resource-type hmean remains $0.505$--$0.536$ for Full but falls to $0.360$--$0.384$ for NoGraph and $0.365$--$0.396$ for NoCross across the three caps (Figure~\ref{fig:cross-resource-evidence}b). Together, the two views associate cross-resource structure with both distant-event coverage and balanced performance across machine, gantry, and AGV targets. The device traces in Figure~\ref{fig:key-device-entity} connect these aggregate differences to event persistence: PHGST-DP identifies both intervals about 5~min before NoInfo and MachineOnly, whose duration estimates remain at 6--8~min during the 20-min target segment; NoCross reaches 14~min before decaying to about 8~min.
 
-\zhpara{跨资源信息与提前预警的联系最为突出。PHGST-DP 的 Upcoming 召回率为 $0.542/0.535/0.537$，NoInfo 为 $0.049/0.021/0.218$，MachineOnly 为 $0.033/0.014/0.021$；这些配置的 Ongoing 召回率均在 $0.89$ 左右或更高，主要差异集中在对正在形成的约束的识别。完整模型还覆盖非机器目标：Start$\leq5$ 下龙门 F1 为 $0.811$，NoInfo 为 $0.082$，MachineOnly 为 $0$。NoGraph 的 Upcoming 召回率为 $0.104/0.065/0.037$，NoCross 介于受限观测配置与 PHGST-DP 之间。NoGroup 的 Upcoming 召回率为 $0.333/0.485/0.432$，较长范围下精确率为 $0.605/0.567$，与分组嵌入有助于区分前驱信号和误报的作用相一致。图~\ref{fig:key-device-entity} 将这些差异对应到事件持续过程：PHGST-DP 对两个区间的识别比 NoInfo 和 MachineOnly 早约五分钟，后两者在二十分钟目标区间内的持续时间估计保持在 6--8 分钟；NoCross 达到十四分钟后衰减至约八分钟。}
+\zhpara{跨资源信息与提前预警的联系最为突出。PHGST-DP 的 Upcoming 召回率为 $0.542/0.535/0.537$，NoInfo 为 $0.049/0.021/0.218$，MachineOnly 为 $0.033/0.014/0.021$。Start$\leq15$ 下，对十分钟以后才开始事件的严格报告召回率，Full 为 $0.433$，NoGroup 为 $0.192$，NoCross 为 $0.067$，NoGraph 为 $0$（图~\ref{fig:cross-resource-evidence}a）。三个起点范围内，Full 的资源类型调和平均保持在 $0.505$--$0.536$，NoGraph 降至 $0.360$--$0.384$，NoCross 降至 $0.365$--$0.396$（图~\ref{fig:cross-resource-evidence}b）。两组结果共同表明，跨资源结构与远期事件覆盖以及机器、龙门和 AGV 目标上的均衡表现相关。图~\ref{fig:key-device-entity}进一步将这些总体差异对应到事件持续过程：PHGST-DP 对两个区间的识别比 NoInfo 和 MachineOnly 早约五分钟，后两者在二十分钟目标区间内的持续时间估计保持在 6--8 分钟；NoCross 达到十四分钟后衰减至约八分钟。}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.88\textwidth]{figures/fig_cross_resource_evidence.pdf}
+\caption{Cross-resource evidence from the structural ablations. (a)~Strict report recall for upcoming events beginning more than 10~min ahead at Start$\leq15$. (b)~Harmonic mean of machine, gantry, and AGV occupancy F1 across Start caps. Only the four structural arms with the common event pool are shown; the comparisons are configuration-level associations under the training schedules in Table~\ref{tab:ablation-arms}.}
+\label{fig:cross-resource-evidence}
+\end{figure*}
 
 \begin{figure*}[t]
 \centering
@@ -1354,23 +1362,25 @@ NoCluster & & 53.7\% & 37.3\% & 81.9\% & 6.65 & 2.30 \\
 \end{tabular*}
 \end{table*}
 
-Cause supervision provides a direct gain in process interpretation under matched training conditions (Table~\ref{tab:matched-cause}). With Ops labels, a common data split, Start$\leq5$, seed 42, random initialization, and a 50-epoch budget, adding the cause head raises cause accuracy from $19.5\%$ to $89.5\%$. The corresponding training logs show that station identification remains at a similar level, so the measured benefit is localized to the explanatory output.
+Cause supervision provides a direct gain in process interpretation under matched training conditions (Table~\ref{tab:matched-cause}). With Ops labels, a common data split, Start$\leq5$, seed 42, random initialization, and a 50-epoch budget, logged cause accuracy rises from $19.5\%$ to $89.5\%$, and the separately selected cause accuracy and macro recall rise from $25.2\%/25.5\%$ to $92.2\%/93.7\%$. Logged station F1 remains near $73\%$, so the measured benefit is localized to the explanatory output.
 
-\zhpara{统一训练条件下，原因监督直接提升了过程解释能力（表~\ref{tab:matched-cause}）。固定 Ops 标签、数据划分、Start$\leq5$、seed 42、随机初始化和五十个 epoch 的预算后，加入原因头使原因准确率由 $19.5\%$ 升至 $89.5\%$；相应训练日志中的工位识别水平保持接近，因此实测收益主要位于解释输出。}
+\zhpara{统一训练条件下，原因监督直接提升了过程解释能力（表~\ref{tab:matched-cause}）。固定 Ops 标签、数据划分、Start$\leq5$、seed 42、随机初始化和五十个 epoch 的预算后，日志原因准确率由 $19.5\%$ 升至 $89.5\%$，另行选定的原因准确率与宏召回由 $25.2\%/25.5\%$ 升至 $92.2\%/93.7\%$；日志工位 F1 仍接近 $73\%$，因此实测收益主要位于解释输出。}
 
 \begin{table}[t]
 \centering
-\caption{Cause accuracy in the matched-budget cause-supervision study at Start$\leq5$ (seed 42; 50 epochs).}
+\caption{Matched-budget cause-supervision study at Start$\leq5$ (seed 42; 50 epochs). Values are percentages. Logged metrics come from the training export; selected cause metrics use a separately chosen operating point and are not interchanged with the logged values.}
 \label{tab:matched-cause}
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
 \renewcommand{\arraystretch}{1.08}
-\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}lr@{}}
+\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}lrr@{}}
 \toprule
-Configuration & Cause accuracy \\
+Metric & Backbone & +Cause \\
 \midrule
-Backbone & 19.5\% \\
-+Cause & \textbf{89.5\%} \\
+Logged station F1 & 73.5\% & 73.3\% \\
+Logged cause acc. & 19.5\% & \textbf{89.5\%} \\
+Selected cause acc. & 25.2\% & \textbf{92.2\%} \\
+Selected cause macro recall & 25.5\% & \textbf{93.7\%} \\
 \bottomrule
 \end{tabular*}
 \end{table}
@@ -1408,29 +1418,29 @@ These exploratory estimates support production sensitivity as a distinct dimensi
 
 \subsubsection{Delay-pattern conditioning}
 
-Delay-pattern conditioning supports warnings that precede the visible bottleneck state. PHGST-DP records Upcoming recall of $0.542/0.535/0.537$, compared with $0.167/0.278/0.427$ for NoPattern, which retains the graph and attention branches while disabling the matching of recent patches to clustered pattern keys (Table~\ref{tab:delay-ablation-new}). For events starting more than 10~min ahead, strict report recall is $0.433$ versus $0.163$. This distance-resolved result is consistent with the role of historical patterns in representing delayed propagation. Queue-buildup cause recall is $0.984$ for PHGST-DP at Start$\leq5$, compared with $0.145$ for NoPattern; NoPattern records $0.476/0.573$ at the longer caps. The stage-1 remaining-time reference also records MAE $10.93/11.21/9.72$~min, compared with $18.62/13.35/11.06$~min for NoPattern, linking temporal context to order-progress estimation.
+Delay-pattern conditioning supports warnings that precede the visible bottleneck state. PHGST-DP records Upcoming recall of $0.542/0.535/0.537$, compared with $0.167/0.278/0.427$ for NoPattern, which retains the graph and attention branches while disabling the matching of recent patches to clustered pattern keys (Table~\ref{tab:delay-ablation-new}). For events starting more than 10~min ahead, strict report recall is $0.433$ versus $0.163$. This distance-resolved result is consistent with the role of historical patterns in representing delayed propagation. Cause macro recall is $0.967/0.965/0.978$ for Full and $0.734/0.805/0.850$ for NoPattern; the largest class-level contrast is queue buildup, with recall $0.984$ versus $0.145$ at Start$\leq5$. The stage-1 remaining-time reference also records MAE $10.93/11.21/9.72$~min, compared with $18.62/13.35/11.06$~min for NoPattern, linking temporal context to order-progress estimation.
 
-\zhpara{延迟模式条件化支持在可见瓶颈状态形成之前发出预警。PHGST-DP 的 Upcoming 召回率为 $0.542/0.535/0.537$，NoPattern 为 $0.167/0.278/0.427$；后者保留工厂图和注意力分支，关闭近期片段与聚类模式键的匹配（表~\ref{tab:delay-ablation-new}）。对于十分钟以后才开始的事件，严格报告召回率为 $0.433$ 对 $0.163$，这一距离分解结果与历史模式用于表征延迟传播的作用一致。Start$\leq5$ 下，PHGST-DP 的队列积压原因召回率为 $0.984$，NoPattern 为 $0.145$；NoPattern 在较长范围下为 $0.476/0.573$。第一阶段模型的剩余时间 MAE 为 $10.93/11.21/9.72$ 分钟，NoPattern 为 $18.62/13.35/11.06$ 分钟，进一步将时间上下文与订单进度估计联系起来。}
+\zhpara{延迟模式条件化支持在可见瓶颈状态形成之前发出预警。PHGST-DP 的 Upcoming 召回率为 $0.542/0.535/0.537$，NoPattern 为 $0.167/0.278/0.427$；后者保留工厂图和注意力分支，关闭近期片段与聚类模式键的匹配（表~\ref{tab:delay-ablation-new}）。对于十分钟以后才开始的事件，严格报告召回率为 $0.433$ 对 $0.163$，这一距离分解结果与历史模式用于表征延迟传播的作用一致。Full 的原因宏平均召回率为 $0.967/0.965/0.978$，NoPattern 为 $0.734/0.805/0.850$；其中差异最大的队列积压类别在 Start$\leq5$ 下为 $0.984$ 对 $0.145$。第一阶段模型的剩余时间 MAE 为 $10.93/11.21/9.72$ 分钟，NoPattern 为 $18.62/13.35/11.06$ 分钟，进一步将时间上下文与订单进度估计联系起来。}
 
 \begin{table*}[t]
 \centering
-\caption{Ablation of delay-pattern conditioning. $R_{\mathrm{up,rep}}$ is strict report recall within the stated onset-distance bin. Remain MAE (min) is compared with the stage-1 model, which, like the ablation, has no remaining-time fine-tuning.}
+\caption{Ablation of delay-pattern conditioning. $R_{\mathrm{up,rep}}$ is strict report recall within the stated onset-distance bin; Cause Macro R is macro recall over the four supported process-cause classes. Remain MAE (min) is compared with the stage-1 model, which, like the ablation, has no remaining-time fine-tuning.}
 \label{tab:delay-ablation-new}
 \scriptsize
-\setlength{\tabcolsep}{3.5pt}
+\setlength{\tabcolsep}{2.6pt}
 \renewcommand{\arraystretch}{1.08}
-\begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}llrrrrrr@{}}
+\begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}llrrrrrrr@{}}
 \toprule
-Arm & Start cap & F1-score & Upcoming R & $R_{\mathrm{up,rep}}^{6\text{--}10}$ & $R_{\mathrm{up,rep}}^{>10}$ & Queue R & Remain MAE \\
+Arm & Start cap & F1-score & Upcoming R & $R_{\mathrm{up,rep}}^{6\text{--}10}$ & $R_{\mathrm{up,rep}}^{>10}$ & Queue R & Cause Macro R & Remain MAE \\
 \midrule
-Full (stage 1) & $\leq5$ & \textbf{80.4\%} & \textbf{54.2\%} & --- & --- & \textbf{98.4\%} & \textbf{10.93} \\
-NoPattern & & 74.5\% & 16.7\% & --- & --- & 14.5\% & 18.62 \\
+Full (stage 1) & $\leq5$ & \textbf{80.4\%} & \textbf{54.2\%} & --- & --- & \textbf{98.4\%} & \textbf{96.7\%} & \textbf{10.93} \\
+NoPattern & & 74.5\% & 16.7\% & --- & --- & 14.5\% & 73.4\% & 18.62 \\
 \midrule
-Full (stage 1) & $\leq10$ & \textbf{77.8\%} & \textbf{53.5\%} & \textbf{46.6\%} & --- & \textbf{98.4\%} & \textbf{11.21} \\
-NoPattern & & 58.8\% & 27.8\% & 14.9\% & --- & 47.6\% & 13.35 \\
+Full (stage 1) & $\leq10$ & \textbf{77.8\%} & \textbf{53.5\%} & \textbf{46.6\%} & --- & \textbf{98.4\%} & \textbf{96.5\%} & \textbf{11.21} \\
+NoPattern & & 58.8\% & 27.8\% & 14.9\% & --- & 47.6\% & 80.5\% & 13.35 \\
 \midrule
-Full (stage 1) & $\leq15$ & \textbf{76.8\%} & \textbf{53.7\%} & \textbf{52.2\%} & \textbf{43.3\%} & \textbf{98.4\%} & \textbf{9.72} \\
-NoPattern & & 60.1\% & 42.7\% & 39.6\% & 16.3\% & 57.3\% & 11.06 \\
+Full (stage 1) & $\leq15$ & \textbf{76.8\%} & \textbf{53.7\%} & \textbf{52.2\%} & \textbf{43.3\%} & \textbf{98.4\%} & \textbf{97.8\%} & \textbf{9.72} \\
+NoPattern & & 60.1\% & 42.7\% & 39.6\% & 16.3\% & 57.3\% & 85.0\% & 11.06 \\
 \bottomrule
 \end{tabular*}
 \end{table*}
@@ -1498,12 +1508,11 @@ Head-specific stage-2 fine-tuning reduces overall order remaining-time MAE by $1
 \label{fig:key-device-struct-mech}
 \end{figure*}
 
-\paragraph*{Joint evidence across prediction tasks.}
-The complete results in Tables~\ref{tab:complete-1-2}--\ref{tab:complete-5-2} connect PHGST-DP's early-warning capability to temporal estimation, heterogeneous-resource coverage, and process interpretation. The retained model maintains upcoming-event recognition as the admissible onset range expands, while several observation- or interaction-restricted configurations retain high ongoing recall but lose emerging events. This distinction supports the use of cross-resource precursor information rather than relying only on an already constrained station. The timing and cause results further identify what the integrated representation contributes beyond a binary alarm. All configurations use the same onset-qualified F1-score definition, with additional onset-tolerance results retained for sensitivity analysis. Remaining-time specialization is compared with Full-S1, whose event and cause heads are identical to the retained model.
+\paragraph*{Supplementary development diagnostics.}
+One non-test diagnostic is retained for transparency. Appendix~\ref{app:checkpoint-validation} records validation event metrics at the selected checkpoints (Table~\ref{tab:checkpoint-validation-event}). These values document model selection and are not used as held-out evidence of PHGST-DP superiority.
 
-\zhpara{表~\ref{tab:complete-1-2}--\ref{tab:complete-5-2}将 PHGST-DP 的提前预警能力与时间估计、异构资源覆盖及过程解释联系起来。完整模型在扩大允许起点范围后仍保持对新发事件的识别；若干观测或交互受限配置虽然保持较高的进行中事件召回，却难以覆盖正在形成的约束。这种差异支持利用跨资源前驱信息，而非仅依据工位已经受限后的状态进行判断。时间与原因指标进一步说明，联合表示所提供的信息超出了二元报警。下表中的全部配置采用统一的起点约束 F1-score 定义，并保留不同起点容差下的敏感性结果；剩余时间专项训练以事件和原因头保持一致的 Full-S1 为参照。}
+\zhpara{为保证过程透明性，补充材料保留一项非测试集诊断。附录~\ref{app:checkpoint-validation}记录所选 checkpoint 的验证集事件指标（表~\ref{tab:checkpoint-validation-event}）。该内容用于记录模型选择，不作为 PHGST-DP 在留出测试集上具有优势的证据。}
 
-\input{experiments/tables/ch5_complete_ablation.tex}
 \clearpage
 
 \subsection{Case study and process traceability}
@@ -1519,25 +1528,25 @@ The case study shows how an event report follows bottleneck onset, persistence, 
 \label{fig:key-device-main}
 \end{figure*}
 
-Figure~\ref{fig:key-device-baselines} places PHGST-DP at the upper left and the four baselines below, with an independent state--duration pair for each model on the same device and episode. The upper-right pair enlarges windows 20--115, shaded in the full trajectory, to show the short and long bottleneck intervals and their recovery boundaries. Both views retain the same vertical scales and window indices. Black solid lines show the targets and dashed lines show predictions; all panels count windows from the same first forecast window after the 30-window history. PHGST-DP maintains continuous state coverage over both bottleneck intervals and follows the duration decline towards recovery. The baseline panels make differences in state continuity and duration tracking visible on the same trajectory. The aggregate event and temporal results are reported in Table~\ref{tab:comparison-main}.
+Figure~\ref{fig:key-device-baselines} places PHGST-DP at the upper left and the four baselines below, with an independent state--duration pair for each model on the same device and episode. The upper-right pair enlarges windows 20--115, shaded in the full trajectory, to show the short and long bottleneck intervals and their recovery boundaries. Both views retain the same vertical scales and window indices. Black solid lines show the targets. Dashed predictions use one colour per method: mid-blue for PHGST-DP, red for XGBoost, yellow for LSTM, green for BTGCN, and purple for BSTAN. All panels count windows from the same first forecast window after the 30-window history. PHGST-DP maintains continuous state coverage over both bottleneck intervals and follows the duration decline towards recovery. The baseline panels make differences in state continuity and duration tracking visible on the same trajectory. The aggregate event and temporal results are reported in Table~\ref{tab:comparison-main}.
 
-\zhpara{图~\ref{fig:key-device-baselines}将 PHGST-DP 放在左上方，四个基线排列在下方，在同一设备与 episode 上为各模型独立展示一组状态—持续时间子图。右上方放大完整轨迹中以灰色标出的第 20--115 个窗口，展示短、长瓶颈区间及其恢复边界；两种视图保持相同的纵轴尺度与窗口编号。黑色实线表示真实值，虚线表示预测值；全部子图均从三十窗口历史之后的首个预测窗口开始计数。PHGST-DP 在两个瓶颈区间内保持连续的状态覆盖，并跟踪持续时间向恢复阶段的下降。基线子图使同一轨迹上的状态连续性与持续时间跟踪差异得到直观呈现。整体事件与时间指标见表~\ref{tab:comparison-main}。}
+\zhpara{图~\ref{fig:key-device-baselines}将 PHGST-DP 放在左上方，四个基线排列在下方，在同一设备与 episode 上为各模型独立展示一组状态—持续时间子图。右上方放大完整轨迹中以灰色标出的第 20--115 个窗口，展示短、长瓶颈区间及其恢复边界；两种视图保持相同的纵轴尺度与窗口编号。黑色实线表示真实值；虚线预测按方法分色：PHGST-DP 为中蓝，XGBoost 为红，LSTM 为黄，BTGCN 为绿，BSTAN 为紫。全部子图均从三十窗口历史之后的首个预测窗口开始计数。PHGST-DP 在两个瓶颈区间内保持连续的状态覆盖，并跟踪持续时间向恢复阶段的下降。基线子图使同一轨迹上的状态连续性与持续时间跟踪差异得到直观呈现。整体事件与时间指标见表~\ref{tab:comparison-main}。}
 
 \begin{figure*}[p]
 \centering
 \includegraphics[width=0.96\textwidth,height=0.90\textheight,keepaspectratio]{figures/key_device_models_aligned.pdf}
-\caption{Key-device case for PHGST-DP (upper left), XGBoost, LSTM, BTGCN, and BSTAN on \texttt{num02}, episode \texttt{n10\_human1.0\_\_episode\_03}, Start$\leq5$. Each model has an independent pair: next-window state above and duration over the next 20~min below. Black solid: true; dashed: predicted. The upper-right pair enlarges windows 20--115 (shaded at upper left), using the same vertical scales. Window zero follows the 30-window history.}
+\caption{Key-device case for PHGST-DP (upper left), XGBoost, LSTM, BTGCN, and BSTAN on \texttt{num02}, episode \texttt{n10\_human1.0\_\_episode\_03}, Start$\leq5$. Each model has an independent pair: next-window state above and duration over the next 20~min below. Black solid: true. Dashed predictions are coloured by method. The upper-right pair enlarges windows 20--115 (shaded at upper left), using the same vertical scales. Window zero follows the 30-window history.}
 \label{fig:key-device-baselines}
 \end{figure*}
 
-The all-resource view connects these local traces to coordinated production-state prediction. Figure~\ref{fig:all-devices-main} covers all 15 targets in the same episode, which contains 64 positive bottleneck cells, the highest count among test episodes. PHGST-DP recovers every positive cell of the cutting machine and second welding station (\texttt{num00\_weld\_ws1}), with episode-level State F1 $0.941$. Olive cells denote true positives; coral cells denote false positives and false negatives. The corresponding F1 values are $0.855$ for NoInfo, $0.832$ for NoCluster, and $0.901$ for NoGraph. NoInfo and NoCluster omit the welding-station interval, while NoGraph fragments it. The full model's continuous coverage across both resources illustrates the joint role of resource information, supervision, and graph structure in the production-state report.
+The all-resource view connects these local traces to coordinated production-state prediction. Figure~\ref{fig:all-devices-main} shows the seven machine and workbench targets in the same episode. That episode contains 64 positive bottleneck cells, the highest count among test episodes, and all of them fall on these machines. PHGST-DP recovers every positive cell of the cutting machine and second welding station (\texttt{num00\_weld\_ws1}), with episode-level State F1 $0.941$. Light-blue cells denote true positives; red cells denote false positives and false negatives. The corresponding F1 values are $0.855$ for NoInfo, $0.832$ for NoCluster, and $0.901$ for NoGraph. NoInfo and NoCluster omit the welding-station interval, while NoGraph fragments it. The full model's continuous coverage across both resources illustrates the joint role of resource information, supervision, and graph structure in the production-state report.
 
-\zhpara{全资源视图将局部轨迹扩展为协同生产状态预测。图~\ref{fig:all-devices-main} 覆盖同一 episode 的十五个目标资源；该 episode 含 64 个正例瓶颈格子，为测试 episode 中最多。PHGST-DP 覆盖切割机和第二焊接工位（\texttt{num00\_weld\_ws1}）的全部正例格子，episode 级 State F1 为 $0.941$。橄榄绿表示真阳性，珊瑚色表示假阳性与假阴性。NoInfo、NoCluster 和 NoGraph 的对应 F1 为 $0.855$、$0.832$ 和 $0.901$；NoInfo 与 NoCluster 漏报焊接工位区间，NoGraph 将其切分为片段。完整模型对两个资源的连续覆盖，直观呈现了资源信息、监督与图结构在生产状态报告中的共同作用。}
+\zhpara{全资源视图将局部轨迹扩展为协同生产状态预测。图~\ref{fig:all-devices-main}给出同一 episode 的七个机器与工作台目标。该 episode 含 64 个正例瓶颈格子，为测试 episode 中最多，且全部落在这些机器上。PHGST-DP 覆盖切割机和第二焊接工位（\texttt{num00\_weld\_ws1}）的全部正例格子，episode 级 State F1 为 $0.941$。浅蓝色表示真阳性，红色表示假阳性与假阴性。NoInfo、NoCluster 和 NoGraph 的对应 F1 为 $0.855$、$0.832$ 和 $0.901$；NoInfo 与 NoCluster 漏报焊接工位区间，NoGraph 将其切分为片段。完整模型对两个资源的连续覆盖，直观呈现了资源信息、监督与图结构在生产状态报告中的共同作用。}
 
 \begin{figure*}[t]
 \centering
 \includegraphics[width=0.96\textwidth]{figures/all_devices_state_main.pdf}
-\caption{All-device next-window state map for the retained PHGST-DP on the representative episode (olive: true positive; coral: false positive and false negative). The source render does not separate false positives from false negatives, so both are shown in coral.}
+\caption{Next-window state map for the seven machine and workbench targets of the retained PHGST-DP on the representative episode (gray: true negative; light blue: true positive; red: false positive and false negative). Gantry and transport-robot rows are omitted. The source render does not separate false positives from false negatives, so both are shown in red.}
 \label{fig:all-devices-main}
 \end{figure*}
 
@@ -1559,8 +1568,8 @@ Process-cause outputs link a predicted event to interpretable production symptom
 \input{experiments/tables/ch5_attention_prediction.tex}
 
 \paragraph*{Resource-level coverage.}
-Tables~\ref{tab:complete-6-1}--\ref{tab:complete-6-2} retain the individual resource counts and errors behind the case analysis. They show which machines and handling resources contribute to the aggregate result, while distinguishing zero-support resources from measured prediction failures.
-\zhpara{表~\ref{tab:complete-6-1}--\ref{tab:complete-6-2}保留案例分析对应的逐资源计数和误差，使总体表现能够追溯到具体机器与搬运资源，并将没有正例支持的资源与已测得的预测失误区分开。}
+Table~\ref{tab:complete-6-1} retains the individual resource counts, F1-score, and duration errors behind the case analysis. It shows which machines and handling resources contribute to the aggregate result; \texttt{robot\_2} and \texttt{robot\_3} have zero true events and are omitted.
+\zhpara{表~\ref{tab:complete-6-1}保留案例分析对应的逐资源计数、F1-score 与持续时间误差，使总体表现能够追溯到具体机器与搬运资源；\texttt{robot\_2} 与 \texttt{robot\_3} 无真实事件，故不列入。}
 \input{experiments/tables/ch5_complete_device.tex}
 \clearpage
 
@@ -1684,6 +1693,15 @@ NoFarBoost & \textbf{81.9\%} & \textbf{54.5\%} & \textbf{4.03} & \underline{75.2
 \end{table}
 
 \clearpage
+\section{Checkpoint validation metrics}\label{app:checkpoint-validation}
+
+Table~\ref{tab:checkpoint-validation-event} lists validation event metrics at the checkpoints selected for reporting. These scores support model selection and are not held-out test comparisons.
+
+\zhpara{表~\ref{tab:checkpoint-validation-event}列出用于报告的各 checkpoint 验证集事件指标。这些分数用于支持模型选择，不是留出测试集上的优劣比较。}
+
+\input{experiments/tables/ch5_checkpoint_validation.tex}
+
+\clearpage
 \section{Absolute resource-attention matrices}\label{app:absolute-attention}
 
 Figure~\ref{fig:attn-states} retains the absolute resource-attention averages underlying the signed redistribution plot in Figure~\ref{fig:attn-change}. For readability, both figures display the same 20 non-buffer resources and omit the 18 buffer rows and columns without renormalizing the retained weights. The stable geographic stripes and sparse semantic blocks dominate the absolute scale, while the condition-specific changes are easier to inspect after subtracting the normal-state average. These attention values describe learned associations and do not establish causal effects.
@@ -1694,6 +1712,19 @@ Figure~\ref{fig:attn-states} retains the absolute resource-attention averages un
 \includegraphics[width=0.92\textwidth,height=0.64\textheight,keepaspectratio]{figures/attention_heatmaps/fig02_resource_attention_states.pdf}
 \captionof{figure}{Absolute geographic (upper row) and semantic (lower row) resource attention under normal, upcoming and ongoing conditions. The matrices display 20 machine, gantry, human and AGV nodes; 18 buffer nodes are omitted without renormalization. Start cap 5 min; 96 selected samples per condition; averages cover history steps, heads and layers. Mixed-disturbance supplementary analysis (\texttt{dense\_i1\_mix}, seed 42); not the retained \texttt{dense\_i1} evaluation.}
 \label{fig:attn-states}
+\end{center}
+
+\clearpage
+\section{Complete layer-wise attention matrices}\label{app:layerwise-attention}
+
+Figure~\ref{fig:attn-layers-all} retains the complete encoder-layer view underlying the selected layers shown in Figure~\ref{fig:attn-layers}. All five layers use common within-branch scales, so geographic and semantic redistribution can be inspected without interpreting attention magnitude as layer accuracy or causal contribution.
+
+\zhpara{图~\ref{fig:attn-layers-all}保留正文图~\ref{fig:attn-layers}所对应的完整编码层结果。五层在各自分支内部使用统一色标，可用于检查地理与语义注意力随层级的分配差异，但注意力大小不能解释为层级准确率或因果贡献。}
+
+\begin{center}
+\includegraphics[width=0.98\textwidth,height=0.74\textheight,keepaspectratio]{figures/attention_heatmaps/fig05_layerwise_upcoming_attention.pdf}
+\captionof{figure}{Complete geographic (upper row) and semantic (lower row) attention across encoder layers 1--5 for upcoming samples. Each row uses a common scale across all five layers; the two branches have separate scales. Start cap 5 min, 96 samples. Mixed-disturbance supplementary analysis (\texttt{dense\_i1\_mix}, seed 42); not the retained \texttt{dense\_i1} evaluation.}
+\label{fig:attn-layers-all}
 \end{center}
 \clearpage
 \twocolumn

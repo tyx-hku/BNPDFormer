@@ -18,20 +18,24 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib import font_manager
 from matplotlib.lines import Line2D
 from matplotlib.ticker import FixedLocator, FuncFormatter, MultipleLocator, NullLocator
+
+from paper_plot_style import LABEL_SIZE, LEGEND_SIZE, TICK_SIZE, TITLE_SIZE, apply as apply_paper_style
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "experiments/data/efficiency_comparison_5090_2026-10-24.csv"
 MODELS = ("PHGST-DP", "XGBoost", "LSTM", "BTGCN", "BSTAN")
+# Palette card: steel / light blue / pale yellow / coral / olive.
+# Marker shape is shared; colour alone identifies the model.
 STYLES = {
-    "PHGST-DP": ("#46788E", "o"),
-    "XGBoost": ("#97B319", "s"),
-    "LSTM": ("#E58B7B", "^"),
-    "BTGCN": ("#78B7C9", "D"),
-    "BSTAN": ("#C4A35A", "v"),
+    "PHGST-DP": "#46788E",
+    "XGBoost": "#97B319",
+    "LSTM": "#E58B7B",
+    "BTGCN": "#78B7C9",
+    "BSTAN": "#F6E093",
 }
+MARKER_AREA = {"PHGST-DP": 110, "default": 86}
 
 
 def read_manuscript_f1() -> dict[tuple[int, str], float]:
@@ -58,26 +62,8 @@ def read_manuscript_f1() -> dict[tuple[int, str], float]:
 
 
 def main() -> None:
-    font_dir = Path("/System/Library/Fonts/Supplemental")
-    for path in font_dir.glob("Times New Roman*.ttf"):
-        font_manager.fontManager.addfont(str(path))
-    plt.rcParams.update({
-        "font.family": "serif",
-        "font.serif": ["Times New Roman", "Times", "DejaVu Serif"],
-        "font.size": 10,
-        "axes.labelsize": 10,
-        "axes.titlesize": 11,
-        "xtick.labelsize": 9,
-        "ytick.labelsize": 9,
-        "axes.spines.top": False,
-        "axes.spines.right": False,
-        "axes.linewidth": 0.7,
-        "pdf.fonttype": 42,
-        "ps.fonttype": 42,
-        "svg.fonttype": "none",
-        "text.color": "#243028",
-        "axes.labelcolor": "#243028",
-    })
+    apply_paper_style()
+    plt.rcParams["axes.linewidth"] = 0.7
     with DATA.open(encoding="utf-8", newline="") as fh:
         rows = list(csv.DictReader(fh))
     expected = {(cap, model) for cap in (5, 10, 15) for model in MODELS}
@@ -95,21 +81,21 @@ def main() -> None:
         writer.writerows(rows)
 
     fig, axes = plt.subplots(1, 3, figsize=(7.5, 2.85), sharex=True, sharey=True)
-    fig.subplots_adjust(left=0.075, right=0.985, bottom=0.23, top=0.77, wspace=0.17)
+    fig.subplots_adjust(left=0.075, right=0.985, bottom=0.23, top=0.82, wspace=0.17)
     for i, (ax, cap) in enumerate(zip(axes, (5, 10, 15))):
         subset = [row for row in rows if int(row["start_cap_min"]) == cap]
         for row in subset:
             name = row["model"]
-            color, marker = STYLES[name]
+            color = STYLES[name]
             x, y = float(row["report_p50_ms"]), row["report_f1"]
-            ax.scatter(x, y, s=55 if name == "PHGST-DP" else 39,
-                       c=color, marker=marker, edgecolors="white", linewidths=0.6,
+            ax.scatter(x, y, s=MARKER_AREA.get(name, MARKER_AREA["default"]),
+                       c=color, marker="o", edgecolors="white", linewidths=0.7,
                        zorder=4)
             if name == "PHGST-DP":
                 ax.annotate(f"{y:.3f}", (x, y), xytext=(-8, 7),
                             textcoords="offset points", ha="right", va="bottom",
-                            color=color, fontsize=10, fontweight="bold")
-        ax.set_title(f"({chr(97 + i)}) Start $\\leq$ {cap} min", pad=9)
+                            color=color, fontsize=LABEL_SIZE, fontweight="bold")
+        ax.set_title(f"({chr(97 + i)}) Start $\\leq$ {cap} min", fontsize=TITLE_SIZE, pad=6)
         ax.set_xscale("log")
         ax.set_xlim(0.4, 100)
         ax.set_ylim(0.40, 0.90)
@@ -120,22 +106,39 @@ def main() -> None:
         ax.grid(color="#E2E4E4", lw=0.55, zorder=0)
         ax.tick_params(length=3, width=0.6)
     axes[0].set_ylabel("F1-score")
-    fig.supxlabel("Report latency p50 (ms, log scale)", y=0.06, fontsize=10)
-    handles = [Line2D([], [], color=STYLES[name][0], marker=STYLES[name][1],
-                      ls="none", markersize=6,
-                      label=name)
+    fig.supxlabel("Report latency p50 (ms, log scale)", y=0.06, fontsize=LABEL_SIZE)
+    handles = [Line2D([], [], color=STYLES[name], marker="o",
+                      ls="none", markersize=7, markeredgecolor="white",
+                      markeredgewidth=0.6, label=name)
                for name in MODELS]
-    fig.legend(handles=handles, loc="upper center", ncol=5, frameon=False,
-               bbox_to_anchor=(0.51, 1.01), handletextpad=0.35,
-               columnspacing=1.2, fontsize=10)
+    fig.legend(
+        handles=handles, loc="upper center", ncol=5, frameon=False,
+        bbox_to_anchor=(0.51, 1.02), handletextpad=0.35,
+        columnspacing=1.0, fontsize=LEGEND_SIZE,
+    )
     out = ROOT / "figures/fig_quality_cost"
     for ext in ("pdf", "svg", "png"):
-        fig.savefig(out.with_suffix(f".{ext}"), dpi=300, facecolor="white")
+        dest = out.with_suffix(f".{ext}")
+        tmp = out.with_suffix(f".{ext}.tmp")
+        try:
+            fig.savefig(tmp, dpi=300, facecolor="white", format=ext)
+            try:
+                dest.unlink(missing_ok=True)
+                tmp.replace(dest)
+            except OSError:
+                alt = out.with_suffix(f".{ext}.new")
+                if alt.exists():
+                    alt.unlink()
+                tmp.replace(alt)
+                print(f"[warn] could not replace {dest.name}; wrote {alt.name}")
+        except OSError as exc:
+            print(f"[warn] skip {dest.name}: {exc}")
     svg = out.with_suffix(".svg")
-    svg.write_text(
-        "\n".join(line.rstrip() for line in svg.read_text(encoding="utf-8").splitlines()) + "\n",
-        encoding="utf-8",
-    )
+    if svg.is_file():
+        svg.write_text(
+            "\n".join(line.rstrip() for line in svg.read_text(encoding="utf-8").splitlines()) + "\n",
+            encoding="utf-8",
+        )
     plt.close(fig)
     print(f"Wrote {out}.pdf/.svg/.png and {joined}")
 

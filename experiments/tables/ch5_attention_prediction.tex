@@ -3,7 +3,7 @@ Figure~\ref{fig:attn-prediction} extends the single-resource trajectory to a sup
 \zhpara{图~\ref{fig:attn-prediction}将单资源轨迹扩展到补充混合扰动episode \texttt{n10\_mix\_all1.0\_\_episode\_03}。该episode按瓶颈活动度自动选择，展示五分钟混合扰动checkpoint的二百四十一个采样测试窗口。三幅图依次保留未来事件标签、预测概率及绝对概率误差，既显示已标注区间的覆盖，也保留无对应正标签资源上的概率响应与覆盖不足。概率图不同于阈值化后的运行报告；显示的二十行包括十五个正式预测目标及五个人员上下文节点，为提高可读性省略十八个缓冲区行。因此，该图用于定位补充模型与标签的一致或偏离位置，不作为保留 \texttt{dense\_i1} 模型的总体性能证据。}
 \begin{figure*}[p]
 \centering
-\includegraphics[width=0.98\textwidth,height=0.78\textheight,keepaspectratio]{figures/attention_heatmaps/fig08_prediction_heatmaps.pdf}
+\includegraphics[width=0.98\textwidth,height=0.86\textheight,keepaspectratio]{figures/attention_heatmaps/fig08_prediction_heatmaps.pdf}
 \caption{Future-event labels, predicted probabilities and absolute probability errors for the automatically selected high-activity episode \texttt{n10\_mix\_all1.0\_\_episode\_03}. Rows show 20 non-buffer resources and columns 241 sampled test windows; the 18 buffer rows are omitted, and the figure is not a thresholded 15-target report map. Start cap 5 min. Mixed-disturbance supplementary analysis (\texttt{dense\_i1\_mix}, seed 42); not the retained \texttt{dense\_i1} evaluation.}
 \label{fig:attn-prediction}
 \end{figure*}

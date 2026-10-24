@@ -119,25 +119,9 @@ N_STATIONS = 15
 
 
 def _style() -> None:
-    plt.rcParams.update({
-        "font.family": "serif",
-        "font.serif": ["Times New Roman", "Times", "DejaVu Serif", "serif"],
-        "font.size": 9,
-        "axes.labelsize": 9,
-        "axes.titlesize": 9,
-        "xtick.labelsize": 8,
-        "ytick.labelsize": 8,
-        "axes.linewidth": 0.8,
-        "axes.spines.top": False,
-        "axes.spines.right": False,
-        "pdf.fonttype": 42,
-        "ps.fonttype": 42,
-        "svg.fonttype": "none",
-        "text.color": INK,
-        "axes.labelcolor": INK,
-        "xtick.color": INK,
-        "ytick.color": INK,
-    })
+    from paper_plot_style import apply as apply_paper_style
+    apply_paper_style(INK)
+    plt.rcParams["axes.linewidth"] = 0.8
 
 
 def _read_csv(path: Path) -> list[dict[str, str]]:
@@ -162,12 +146,27 @@ def _write_csv(path: Path, rows: list[dict]) -> None:
 
 def _save(fig: plt.Figure, stem: str) -> None:
     FIG.mkdir(parents=True, exist_ok=True)
-    base = FIG / stem
-    fig.savefig(base.with_suffix(".pdf"), bbox_inches="tight", pad_inches=0.03)
-    fig.savefig(base.with_suffix(".svg"), bbox_inches="tight", pad_inches=0.03)
-    fig.savefig(base.with_suffix(".png"), dpi=600, bbox_inches="tight", pad_inches=0.03)
+    for suffix, dpi in (("pdf", None), ("svg", None), ("png", 600)):
+        dest = FIG / f"{stem}.{suffix}"
+        tmp = FIG / f"_{stem}_{suffix}.tmp"
+        fig.savefig(
+            tmp,
+            dpi=dpi,
+            format=suffix,
+            bbox_inches="tight",
+            pad_inches=0.03,
+        )
+        try:
+            dest.unlink(missing_ok=True)
+            tmp.replace(dest)
+        except OSError:
+            alt = FIG / f"{stem}.{suffix}.new"
+            if alt.exists():
+                alt.unlink()
+            tmp.replace(alt)
+            print(f"[warn] could not replace {dest.name}; wrote {alt.name}")
     plt.close(fig)
-    print(f"[plot] wrote {base.with_suffix('.pdf')}")
+    print(f"[plot] wrote {FIG / (stem + '.pdf')}")
 
 
 def _f(row: dict[str, str], key: str) -> float:
@@ -283,18 +282,37 @@ def plot_range_response() -> None:
     """Grouped horizontal bars for three discrete onset-cap settings."""
     from matplotlib.patches import Patch
     from matplotlib.ticker import PercentFormatter
-    from matplotlib import font_manager
-    for path in Path("/System/Library/Fonts/Supplemental").glob("Times New Roman*.ttf"):
-        font_manager.fontManager.addfont(str(path))
     _style()
-    rows = _read_csv(DATA / "comparison_by_output_2026-10-24.csv")
-    values = {(r["model"], int(r["start_cap"])): r for r in rows}
-    _write_csv(PLOT_DATA / "range_response.csv", rows)
+    # Prefer archived comparison export, then cached plot CSV, then MAIN table.
+    comparison_csv = DATA / "comparison_by_output_2026-10-24.csv"
+    cached = PLOT_DATA / "range_response.csv"
+    if comparison_csv.is_file():
+        rows = _read_csv(comparison_csv)
+        values = {(r["model"], int(r["start_cap"])): r for r in rows}
+        _write_csv(cached, rows)
+    elif cached.is_file():
+        rows = _read_csv(cached)
+        values = {(r["model"], int(r["start_cap"])): r for r in rows}
+    else:
+        rows = []
+        values = {}
+        for model, by_cap in MAIN.items():
+            for cap, metrics_row in by_cap.items():
+                row = {
+                    "model": model,
+                    "start_cap": cap,
+                    "report_f1": metrics_row["report_f1"],
+                    "upcoming": metrics_row["upcoming"],
+                    "dur_mae": metrics_row["dur_mae"],
+                }
+                rows.append(row)
+                values[(model, cap)] = row
+        _write_csv(cached, rows)
     models = ("PHGST-DP", "XGBoost", "LSTM", "BTGCN", "BSTAN")
     metrics = (
-        ("report_f1", "(a) F1-score", "Higher is better", (0.0, 0.90)),
-        ("upcoming", "(b) Upcoming recall", "Higher is better", (0.0, 0.65)),
-        ("dur_mae", "(c) Duration MAE", "Minutes · lower is better", (0.0, 4.4)),
+        ("report_f1", "(a) F1-score ↑", "", (0.0, 0.90)),
+        ("upcoming", "(b) Upcoming recall ↑", "", (0.0, 0.65)),
+        ("dur_mae", "(c) Duration MAE ↓", "Minutes", (0.0, 4.4)),
     )
     # Palette light blue / coral / yellow for Start ≤5 / 10 / 15.
     colors = (LIGHT, CORAL, YELLOW)
@@ -313,10 +331,10 @@ def plot_range_response() -> None:
         ax.set_xlim(limits)
         ax.set_ylim(len(models) - 0.55, -0.55)
         ax.set_yticks(y)
-        ax.set_yticklabels(models, fontsize=10)
-        ax.tick_params(axis="y", length=0, pad=6)
-        ax.set_title(title, loc="left", fontsize=11, pad=9)
-        ax.set_xlabel(xlabel, fontsize=9, labelpad=8)
+        ax.set_yticklabels(models, fontsize=8)
+        ax.tick_params(axis="y", length=0, pad=4)
+        ax.set_title(title, loc="left", fontsize=8, pad=6)
+        ax.set_xlabel(xlabel, fontsize=8, labelpad=6)
         ax.spines["left"].set_visible(False)
         if key != "dur_mae":
             ax.xaxis.set_major_formatter(PercentFormatter(xmax=1, decimals=0))
@@ -325,9 +343,11 @@ def plot_range_response() -> None:
     axes[0].get_yticklabels()[0].set_fontweight("bold")
     handles = [Patch(facecolor=c, edgecolor="none", label=f"Start ≤ {cap} min")
                for cap, c in zip(STARTS, colors)]
-    fig.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.55, 1.0),
-               ncol=3, frameon=False, fontsize=10, handletextpad=0.4)
-    fig.subplots_adjust(left=0.13, right=0.99, bottom=0.19, top=0.79, wspace=0.20)
+    fig.legend(
+        handles=handles, loc="upper center", ncol=3, frameon=False, fontsize=7,
+        bbox_to_anchor=(0.55, 1.01), handletextpad=0.4, columnspacing=1.0,
+    )
+    fig.subplots_adjust(left=0.13, right=0.99, bottom=0.16, top=0.86, wspace=0.20)
     _save(fig, "fig_range_response")
     svg = FIG / "fig_range_response.svg"
     if svg.is_file():
@@ -399,7 +419,7 @@ def plot_delay_distance(events: dict) -> None:
     _save(fig, "fig_delay_distance")
 
 
-def plot_remain_finetuning_matrix(summary: dict) -> None:
+def plot_remain_finetuning_matrix(summary: dict | None = None) -> None:
     """Stage-1 → stage-2 remaining-time MAE by production phase."""
     metrics = (
         ("Overall", "remain_mae"),
@@ -410,35 +430,45 @@ def plot_remain_finetuning_matrix(summary: dict) -> None:
     stage1 = np.zeros((len(STARTS), len(metrics)))
     stage2 = np.zeros_like(stage1)
     rows_out = []
-    for i, start in enumerate(STARTS):
-        source_stage1 = RUNS["Stage1"].format(s=start)
-        source_stage2 = RUNS["Full"].format(s=start)
-        for j, (phase, key) in enumerate(metrics):
-            before = _f(summary[source_stage1], key)
-            after = _f(summary[source_stage2], key)
-            stage1[i, j] = before
-            stage2[i, j] = after
-            rows_out.append({
-                "arm": "Full",
-                "start_cap": start,
-                "phase": phase,
-                "stage1_mae": before,
-                "stage2_mae": after,
-                "absolute_drop": before - after,
-                "percent_drop": 100.0 * (before - after) / before,
-                "source_stage1": source_stage1,
-                "source_stage2": source_stage2,
-            })
-
-    published = {
-        5: (10.925976792778325, 9.601598876066781),
-        10: (11.213109243704304, 9.268456968835453),
-        15: (9.716936303467548, 8.90945713298286),
-    }
-    for i, start in enumerate(STARTS):
-        assert abs(stage1[i, 0] - published[start][0]) < 1e-9
-        assert abs(stage2[i, 0] - published[start][1]) < 1e-9
-    _write_csv(PLOT_DATA / "remain_dumbbell_full.csv", rows_out)
+    cached = PLOT_DATA / "remain_dumbbell_full.csv"
+    if summary is not None:
+        for i, start in enumerate(STARTS):
+            source_stage1 = RUNS["Stage1"].format(s=start)
+            source_stage2 = RUNS["Full"].format(s=start)
+            for j, (phase, key) in enumerate(metrics):
+                before = _f(summary[source_stage1], key)
+                after = _f(summary[source_stage2], key)
+                stage1[i, j] = before
+                stage2[i, j] = after
+                rows_out.append({
+                    "arm": "Full",
+                    "start_cap": start,
+                    "phase": phase,
+                    "stage1_mae": before,
+                    "stage2_mae": after,
+                    "absolute_drop": before - after,
+                    "percent_drop": 100.0 * (before - after) / before,
+                    "source_stage1": source_stage1,
+                    "source_stage2": source_stage2,
+                })
+        published = {
+            5: (10.925976792778325, 9.601598876066781),
+            10: (11.213109243704304, 9.268456968835453),
+            15: (9.716936303467548, 8.90945713298286),
+        }
+        for i, start in enumerate(STARTS):
+            assert abs(stage1[i, 0] - published[start][0]) < 1e-9
+            assert abs(stage2[i, 0] - published[start][1]) < 1e-9
+        _write_csv(cached, rows_out)
+    else:
+        if not cached.is_file():
+            raise FileNotFoundError(f"missing remain dumbbell cache: {cached}")
+        by_key = {(int(r["start_cap"]), r["phase"]): r for r in _read_csv(cached)}
+        for i, start in enumerate(STARTS):
+            for j, (phase, _) in enumerate(metrics):
+                row = by_key[(start, phase)]
+                stage1[i, j] = float(row["stage1_mae"])
+                stage2[i, j] = float(row["stage2_mae"])
 
     reduction = stage1 - stage2
     cmap = LinearSegmentedColormap.from_list(
@@ -460,19 +490,19 @@ def plot_remain_finetuning_matrix(summary: dict) -> None:
             text_color = "white" if drop >= 2.35 else INK
             ax.text(
                 j, i - 0.10, f"{before:.2f} → {after:.2f}",
-                ha="center", va="center", fontsize=8.2, color=text_color,
+                ha="center", va="center", fontsize=7.0, color=text_color,
             )
             ax.text(
                 j, i + 0.19, f"{arrow}{abs(drop):.2f} min ({pct_text})",
-                ha="center", va="center", fontsize=7.5, fontweight="bold",
+                ha="center", va="center", fontsize=6.5, fontweight="bold",
                 color=text_color,
             )
 
     ax.set_xticks(np.arange(len(metrics)))
-    ax.set_xticklabels([name for name, _ in metrics])
+    ax.set_xticklabels([name for name, _ in metrics], fontsize=7.5)
     ax.xaxis.tick_top()
     ax.set_yticks(np.arange(len(STARTS)))
-    ax.set_yticklabels([f"Start ≤{start}" for start in STARTS])
+    ax.set_yticklabels([f"Start ≤{start}" for start in STARTS], fontsize=7.5)
     ax.tick_params(which="both", length=0, pad=5)
     ax.set_xticks(np.arange(-0.5, len(metrics), 1), minor=True)
     ax.set_yticks(np.arange(-0.5, len(STARTS), 1), minor=True)
@@ -480,14 +510,14 @@ def plot_remain_finetuning_matrix(summary: dict) -> None:
     for spine in ax.spines.values():
         spine.set_visible(False)
     ax.set_title(
-        "Stage 1 → Stage 2 remaining-time MAE (min; lower is better)",
-        loc="left", pad=10, fontsize=9,
+        "Stage 1 → Stage 2 remaining-time MAE (min) ↓",
+        loc="left", pad=10, fontsize=7.5,
     )
 
     colorbar = fig.colorbar(image, ax=ax, fraction=0.032, pad=0.035)
-    colorbar.set_label("MAE reduction (min)", fontsize=8)
+    colorbar.set_label("MAE reduction (min)", fontsize=6.5)
     colorbar.set_ticks([-0.2, 0.0, 1.0, 2.0, 3.0])
-    colorbar.ax.tick_params(labelsize=7, length=2)
+    colorbar.ax.tick_params(labelsize=6.5, length=2)
     colorbar.outline.set_linewidth(0.5)
     fig.subplots_adjust(left=0.13, right=0.91, top=0.76, bottom=0.08)
     _save(fig, "fig_remain_dumbbell")
@@ -495,7 +525,7 @@ def plot_remain_finetuning_matrix(summary: dict) -> None:
 
 def plot_label_dots(labels: dict) -> None:
     """Fig 5-8: Cleveland dot plot for five label methods."""
-    methods = ["Active Period", "Utilization", "Ops", "Queue-Wait", "TPM"]
+    methods = ["Active Period", "Utilization", "PHGST", "Queue-Wait", "TPM"]
     sep = {row["method"]: row for row in labels["separability"]["metrics"]}
     panels = [
         ("macro_f1", "Macro-F1 ↑", True),
@@ -538,7 +568,7 @@ def plot_label_dots(labels: dict) -> None:
 
 def plot_cause_recall(labels: dict) -> None:
     """Fig 5-9: per-class cause recall + macro-F1 ranking."""
-    methods = ["Active Period", "Utilization", "Ops", "Queue-Wait", "TPM"]
+    methods = ["Active Period", "Utilization", "PHGST", "Queue-Wait", "TPM"]
     cause = {row["method"]: row for row in labels["cause_comparison"]["metrics"]}
     classes = [
         ("transport_delay", "Transport delay"),
@@ -550,7 +580,7 @@ def plot_cause_recall(labels: dict) -> None:
         "Active Period": dict(color=STEEL, marker="o", filled=True),
         "Queue-Wait": dict(color=OLIVE, marker="s", filled=True),
         "Utilization": dict(color=LIGHT, marker="^", filled=False),
-        "Ops": dict(color=CORAL, marker="D", filled=False),
+        "PHGST": dict(color=CORAL, marker="D", filled=False),
         "TPM": dict(color="#C4A35A", marker="v", filled=False),
     }
     rows = []
@@ -606,7 +636,115 @@ def plot_cause_recall(labels: dict) -> None:
 
 def plot_per_device_box() -> None:
     """Fig 5-10: per-device F1-score and Duration MAE by resource type."""
-    raw = _read_csv(PER_DEVICE)
+    cached = PLOT_DATA / "per_device_start5.csv"
+    if PER_DEVICE.is_file():
+        raw = _read_csv(PER_DEVICE)
+    elif cached.is_file():
+        # Rebuild the boxplot from the previously exported per-device table.
+        cached_rows = _read_csv(cached)
+        groups = ["Machine", "Gantry", "AGV"]
+        by_group: dict[str, list[dict]] = {g: [] for g in groups}
+        no_support = []
+        for row in cached_rows:
+            support = int(float(row["support"])) if row.get("support") not in ("", None) else 0
+            if support <= 0 or row.get("f1") in ("", None):
+                no_support.append(row.get("short") or row.get("device") or "")
+                continue
+            by_group[row["type"]].append({
+                "short": row["short"],
+                "f1": float(row["f1"]),
+                "mae": float(row["dur_mae_union"]),
+            })
+        _style()
+        from matplotlib import patheffects as pe
+        fig, axes = plt.subplots(1, 2, figsize=(7.2, 3.2))
+        fill = {"Machine": LIGHT, "Gantry": CORAL, "AGV": YELLOW}
+        point_edge = {"Machine": "#4F8EA2", "Gantry": "#C56A5C", "AGV": "#C9A24A"}
+        from paper_plot_style import LABEL_SIZE, TICK_SIZE, TITLE_SIZE, ANNOT_SIZE
+        label_size = ANNOT_SIZE
+        halo = [pe.withStroke(linewidth=2.8, foreground="white")]
+        side_sign = {"Machine": -1, "Gantry": -1, "AGV": 1}
+        xpos = {"Machine": 0.0, "Gantry": 1.75, "AGV": 3.35}
+
+        def _place_labels(pts, metric, ymin, ymax, min_sep, side):
+            ordered = sorted(pts, key=lambda p: (p[metric], p["short"]))
+            n = len(ordered)
+            if n == 0:
+                return []
+            if n == 1:
+                ly = float(np.clip(ordered[0][metric], ymin, ymax))
+                return [{"name": ordered[0]["short"], "side": side, "y": ordered[0][metric], "ly": ly}]
+            y0 = float(ordered[0][metric])
+            y1 = float(ordered[-1][metric])
+            span = max(y1 - y0, (n - 1) * min_sep)
+            mid = 0.5 * (y0 + y1)
+            start = mid - 0.5 * span
+            if start < ymin:
+                start = ymin
+            if start + span > ymax:
+                start = ymax - span
+            step = span / (n - 1)
+            return [
+                {"name": point["short"], "side": side, "y": point[metric], "ly": start + i * step}
+                for i, point in enumerate(ordered)
+            ]
+
+        panels = (
+            (axes[0], "f1", "F1-score ↑", 0.088, (0.46, 1.04)),
+            (axes[1], "mae", "Union duration MAE (min) ↓", 0.72, (1.15, 6.55)),
+        )
+        for ax, metric, ylabel, min_sep, ylim in panels:
+            positions = [xpos[g] for g in groups]
+            data = [[d[metric] for d in by_group[g]] for g in groups]
+            bp = ax.boxplot(
+                data, positions=positions, widths=0.40, patch_artist=True,
+                showfliers=False, medianprops=dict(color=INK, lw=1.2),
+                whiskerprops=dict(color="#8A9296"), capprops=dict(color="#8A9296"),
+                boxprops=dict(linewidth=0.8, edgecolor="#8A9296"),
+            )
+            for patch, g in zip(bp["boxes"], groups):
+                patch.set_facecolor(fill[g])
+                patch.set_alpha(0.34)
+            y_lo = ylim[0] + 0.03 * (ylim[1] - ylim[0])
+            y_hi = ylim[1] - 0.03 * (ylim[1] - ylim[0])
+            for g in groups:
+                x = xpos[g]
+                pts = by_group[g]
+                for point in pts:
+                    ax.scatter(
+                        [x], [point[metric]], s=38, color=fill[g], zorder=3,
+                        edgecolors=point_edge[g], linewidths=0.55,
+                    )
+                for rec in _place_labels(pts, metric, y_lo, y_hi, min_sep, side_sign[g]):
+                    lx = x + rec["side"] * 0.36
+                    ax.annotate(
+                        "",
+                        xy=(x, rec["y"]),
+                        xytext=(lx, rec["ly"]),
+                        arrowprops=dict(arrowstyle="-", color="#B8C0C4", lw=0.55, shrinkA=0, shrinkB=0),
+                        zorder=2,
+                    )
+                    ax.text(
+                        lx, rec["ly"], rec["name"],
+                        fontsize=label_size, va="center",
+                        ha="left" if rec["side"] > 0 else "right",
+                        color=INK, zorder=4, path_effects=halo,
+                    )
+            ax.set_xlim(-1.25, 4.45)
+            ax.set_ylim(*ylim)
+            ax.set_xticks(positions)
+            ax.set_xticklabels(groups, fontsize=LABEL_SIZE)
+            ax.set_ylabel(ylabel, fontsize=LABEL_SIZE)
+            ax.tick_params(axis="y", labelsize=TICK_SIZE)
+            ax.grid(axis="y", color="#E6E1D8", lw=0.5)
+            ax.set_axisbelow(True)
+        axes[0].set_title("(a)", loc="left", fontsize=TITLE_SIZE)
+        axes[1].set_title("(b)", loc="left", fontsize=TITLE_SIZE)
+        fig.tight_layout()
+        _save(fig, "fig_per_device_box")
+        return
+    else:
+        raise FileNotFoundError(f"missing per-device source: {PER_DEVICE} and {cached}")
     short = {
         "num00_rotaryPipeAutomaticWeldingMachine_ws0": "weld0",
         "num00_rotaryPipeAutomaticWeldingMachine_ws1": "weld1",
@@ -615,8 +753,8 @@ def plot_per_device_box() -> None:
         "num04_groovingMachineLarge_ws0": "groove",
         "num08_workbench_ws0": "bench0",
         "num08_workbench_ws1": "bench1",
-        "gantry_0": "g0", "gantry_1": "g1", "gantry_2": "g2", "gantry_3": "g3",
-        "robot_0": "r0", "robot_1": "r1", "robot_2": "r2", "robot_3": "r3",
+        "gantry_0": "gantry0", "gantry_1": "gantry1", "gantry_2": "gantry2", "gantry_3": "gantry3",
+        "robot_0": "AGV0", "robot_1": "AGV1", "robot_2": "AGV2", "robot_3": "AGV3",
     }
     type_map = {"machine": "Machine", "gantry": "Gantry", "transport_robot": "AGV"}
     groups = ["Machine", "Gantry", "AGV"]
@@ -651,40 +789,112 @@ def plot_per_device_box() -> None:
         {k: ("" if v == "" else v) for k, v in r.items()} for r in rows_out
     ])
 
-    fig, axes = plt.subplots(1, 2, figsize=(7.35, 3.55))
-    fill = {"Machine": STEEL, "Gantry": LIGHT, "AGV": OLIVE}
-    for ax, metric, ylabel, lower in (
-        (axes[0], "f1", "F1-score", False),
-        (axes[1], "mae", "Union duration MAE (min)\nlower is better", True),
+    from matplotlib import patheffects as pe
+
+    # Wide, short canvas for the paper float; labels stay on outer equal stacks.
+    from paper_plot_style import LABEL_SIZE, TICK_SIZE, TITLE_SIZE, ANNOT_SIZE
+    fig, axes = plt.subplots(1, 2, figsize=(7.2, 3.2))
+    fill = {"Machine": LIGHT, "Gantry": CORAL, "AGV": YELLOW}
+    point_edge = {"Machine": "#4F8EA2", "Gantry": "#C56A5C", "AGV": "#C9A24A"}
+    label_size = ANNOT_SIZE
+    halo = [pe.withStroke(linewidth=2.8, foreground="white")]
+    # Machine left, Gantry left (into the mid gap), AGV right — no shared corridor.
+    side_sign = {"Machine": -1, "Gantry": -1, "AGV": 1}
+    xpos = {"Machine": 0.0, "Gantry": 1.75, "AGV": 3.35}
+
+    def _place_labels(
+        pts: list[dict],
+        metric: str,
+        ymin: float,
+        ymax: float,
+        min_sep: float,
+        side: int,
     ):
+        ordered = sorted(pts, key=lambda p: (p[metric], p["short"]))
+        n = len(ordered)
+        if n == 0:
+            return []
+        if n == 1:
+            ly = float(np.clip(ordered[0][metric], ymin, ymax))
+            return [{"name": ordered[0]["short"], "side": side, "y": ordered[0][metric], "ly": ly}]
+        y0 = float(ordered[0][metric])
+        y1 = float(ordered[-1][metric])
+        span = max(y1 - y0, (n - 1) * min_sep)
+        mid = 0.5 * (y0 + y1)
+        start = mid - 0.5 * span
+        if start < ymin:
+            start = ymin
+        if start + span > ymax:
+            start = ymax - span
+        step = span / (n - 1)
+        return [
+            {
+                "name": point["short"],
+                "side": side,
+                "y": point[metric],
+                "ly": start + i * step,
+            }
+            for i, point in enumerate(ordered)
+        ]
+
+    panels = (
+        (axes[0], "f1", "F1-score ↑", 0.088, (0.46, 1.04)),
+        (axes[1], "mae", "Union duration MAE (min) ↓", 0.72, (1.15, 6.55)),
+        )
+    for ax, metric, ylabel, min_sep, ylim in panels:
+        positions = [xpos[g] for g in groups]
         data = [[d[metric] for d in by_group[g]] for g in groups]
         bp = ax.boxplot(
-            data, positions=np.arange(len(groups)), widths=0.45, patch_artist=True,
-            showfliers=False, medianprops=dict(color=INK, lw=1.1),
+            data, positions=positions, widths=0.40, patch_artist=True,
+            showfliers=False, medianprops=dict(color=INK, lw=1.2),
             whiskerprops=dict(color="#8A9296"), capprops=dict(color="#8A9296"),
             boxprops=dict(linewidth=0.8, edgecolor="#8A9296"),
         )
         for patch, g in zip(bp["boxes"], groups):
             patch.set_facecolor(fill[g])
-            patch.set_alpha(0.28)
-        rng = np.random.default_rng(42)
-        for gi, g in enumerate(groups):
+            patch.set_alpha(0.34)
+        y_lo = ylim[0] + 0.03 * (ylim[1] - ylim[0])
+        y_hi = ylim[1] - 0.03 * (ylim[1] - ylim[0])
+        for g in groups:
+            x = xpos[g]
             pts = by_group[g]
-            xs = gi + rng.uniform(-0.12, 0.12, size=len(pts))
-            ys = [p[metric] for p in pts]
-            ax.scatter(xs, ys, s=28, color=fill[g], zorder=3, edgecolors="none")
-            for x, y, p in zip(xs, ys, pts):
-                ax.text(x + 0.06, y, p["short"], fontsize=6, va="center", color=INK)
-        ax.set_xticks(range(len(groups)))
-        ax.set_xticklabels(groups)
-        ax.set_ylabel(ylabel)
+            for point in pts:
+                ax.scatter(
+                    [x], [point[metric]], s=38, color=fill[g], zorder=3,
+                    edgecolors=point_edge[g], linewidths=0.55,
+                )
+            for rec in _place_labels(pts, metric, y_lo, y_hi, min_sep, side_sign[g]):
+                lx = x + rec["side"] * 0.36
+                ax.annotate(
+                    "",
+                    xy=(x, rec["y"]),
+                    xytext=(lx, rec["ly"]),
+                    arrowprops=dict(
+                        arrowstyle="-",
+                        color="#B8C0C4",
+                        lw=0.55,
+                        shrinkA=0,
+                        shrinkB=0,
+                    ),
+                    zorder=2,
+                )
+                ax.text(
+                    lx, rec["ly"], rec["name"],
+                    fontsize=label_size, va="center",
+                    ha="left" if rec["side"] > 0 else "right",
+                    color=INK, zorder=4, path_effects=halo,
+                )
+        ax.set_xlim(-1.25, 4.45)
+        ax.set_ylim(*ylim)
+        ax.set_xticks(positions)
+        ax.set_xticklabels(groups, fontsize=LABEL_SIZE)
+        ax.set_ylabel(ylabel, fontsize=LABEL_SIZE)
+        ax.tick_params(axis="y", labelsize=TICK_SIZE)
         ax.grid(axis="y", color="#E6E1D8", lw=0.5)
         ax.set_axisbelow(True)
-    axes[0].set_title("(a)", loc="left")
-    axes[1].set_title("(b)", loc="left")
-    note = "No support (excluded from boxes): " + ", ".join(no_support) if no_support else ""
-    fig.text(0.5, 0.01, note, ha="center", fontsize=7.5, color=INK)
-    fig.tight_layout(rect=(0, 0.05, 1, 1))
+    axes[0].set_title("(a)", loc="left", fontsize=TITLE_SIZE)
+    axes[1].set_title("(b)", loc="left", fontsize=TITLE_SIZE)
+    fig.tight_layout()
     _save(fig, "fig_per_device_box")
 
 
@@ -756,16 +966,23 @@ def write_ablation_table_csv(events: dict, summary: dict) -> None:
 
 def main() -> None:
     _style()
-    events, summary, labels = _load()
+    # Paper floats that can be rebuilt from cached plot CSVs / MAIN table.
     plot_dataset_composition()
     plot_range_response()
-    plot_delay_distance(events)
-    plot_remain_finetuning_matrix(summary)
-    plot_label_dots(labels)
-    plot_cause_recall(labels)
+    plot_remain_finetuning_matrix(None)
     plot_per_device_box()
     plot_latency_stack()
-    write_ablation_table_csv(events, summary)
+    # Optional arms that need full eval exports.
+    try:
+        events, summary, labels = _load()
+    except (FileNotFoundError, KeyError, ValueError) as exc:
+        print(f"[plot] skip eval-dependent figures: {exc}")
+    else:
+        plot_delay_distance(events)
+        plot_remain_finetuning_matrix(summary)
+        plot_label_dots(labels)
+        plot_cause_recall(labels)
+        write_ablation_table_csv(events, summary)
     print("[plot] Ch5 v2 figures complete")
 
 

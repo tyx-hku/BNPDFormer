@@ -16,6 +16,8 @@ import numpy as np
 from matplotlib import patheffects as pe
 from PIL import Image
 
+from paper_plot_style import LABEL_SIZE, LEGEND_SIZE, TICK_SIZE, TITLE_SIZE, apply as apply_paper_style
+
 ROOT = Path(__file__).resolve().parents[1]
 SRC = Path(
     r"D:\Capstone\isaac_factory\source\isaaclab_tasks\isaaclab_tasks"
@@ -26,15 +28,13 @@ OUT = ROOT / "figures"
 
 
 def load_true_duration() -> tuple[np.ndarray, np.ndarray]:
-    """Use ``t_index`` so GT aligns with pixel-recovered ablation traces."""
+    """Ground truth on relative ``window`` (= ``t_index - 30``)."""
     with TRUE_CSV.open(encoding="utf-8") as fh:
         rows = list(csv.DictReader(fh))
     window = np.array([float(r["window"]) for r in rows])
-    x = np.array([float(r["t_index"]) for r in rows])
     y = np.array([float(r["true_dur"]) for r in rows])
-    assert len(x) == 231 and np.array_equal(window, np.arange(231))
-    assert np.array_equal(x, window + 30.0)
-    return x, y
+    assert len(window) == 231 and np.array_equal(window, np.arange(231))
+    return window, y
 
 # Spines and major ticks measured on the 2000x760 export.
 X_TICK_PX, X_TICK_VAL, X_TICK_STEP = 377.5, 50.0, 359.0
@@ -152,54 +152,77 @@ def _extract(im: np.ndarray) -> dict[str, tuple[np.ndarray, np.ndarray]]:
     return out
 
 
-def _draw(series: dict[str, tuple[np.ndarray, np.ndarray]], names: tuple[str, ...], out: Path) -> None:
+def _to_window(x: np.ndarray) -> np.ndarray:
+    """PNG axis is absolute ``t_index``; paper display uses ``window = t_index - 30``."""
+    return np.asarray(x, dtype=float) - 30.0
+
+
+def _style(ax: plt.Axes, *, ylabel: bool) -> None:
+    ax.set_xlim(0, 150)
+    ax.set_ylim(-0.8, 21)
+    ax.set_yticks([0, 5, 10, 15, 20])
+    ax.set_xlabel("Window index (60 s)", fontsize=LABEL_SIZE)
+    if ylabel:
+        ax.set_ylabel("Bottleneck duration (min)", fontsize=LABEL_SIZE)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["bottom"].set_color("#9AA3A8")
+    ax.spines["left"].set_color("#9AA3A8")
+    ax.tick_params(colors="#333333", labelsize=TICK_SIZE)
+    ax.set_axisbelow(True)
+    ax.grid(alpha=0.3, lw=0.6)
+
+
+def _panel(ax: plt.Axes, series: dict[str, tuple[np.ndarray, np.ndarray]], names: tuple[str, ...], title: str, *, ylabel: bool) -> None:
+    x, y = series["True"]
+    (true_line,) = ax.plot(
+        x, y, color="black", lw=1.35, label="True", zorder=5,
+        solid_capstyle="round", solid_joinstyle="round",
+    )
+    true_line.set_path_effects([pe.Stroke(linewidth=2.3, foreground="white"), pe.Normal()])
+    for name in names:
+        xx, yy = series[name]
+        ax.plot(
+            _to_window(xx),
+            yy,
+            color=COLORS[name],
+            lw=1.45 if name in ("NoGraph", "NoCluster") else 1.2,
+            ls=STYLES[name],
+            label=name,
+            zorder=2,
+        )
+    _style(ax, ylabel=ylabel)
+    ax.set_title(title, loc="left", fontsize=TITLE_SIZE)
+    ax.legend(loc="upper left", fontsize=LEGEND_SIZE, frameon=False, ncol=1)
+
+
+def main() -> None:
+    apply_paper_style()
     plt.rcParams.update(
         {
-            "font.family": "serif",
-            "font.serif": ["Times New Roman", "Times", "DejaVu Serif", "serif"],
-            "font.size": 10,
             "axes.linewidth": 1.0,
-            "axes.spines.top": False,
-            "axes.spines.right": False,
-            "pdf.fonttype": 42,
-            "ps.fonttype": 42,
             "savefig.bbox": "tight",
             "savefig.pad_inches": 0.03,
         }
     )
-    fig, ax = plt.subplots(figsize=(7.2, 3.05))
-    x, y = series["True"]
-    (true_line,) = ax.plot(
-        x, y, color="black", lw=2.0, label="True", zorder=5,
-        solid_capstyle="round", solid_joinstyle="round",
+    src = SRC if SRC.exists() else (
+        ROOT / "_isaac_factory/source/isaaclab_tasks/isaaclab_tasks/direct/hc_factory"
+        / "PDFormer/libcity/cache/bottleneck_eval/figures/key_device_struct.png"
     )
-    true_line.set_path_effects([pe.Stroke(linewidth=3.4, foreground="white"), pe.Normal()])
-    for name in names:
-        xx, yy = series[name]
-        ax.plot(xx, yy, color=COLORS[name], lw=1.45, ls=STYLES[name], label=name, zorder=2)
-    ax.set_xlim(20, 270)
-    ax.set_ylim(-0.8, 21)
-    ax.set_xlabel("Window index (60 s)")
-    ax.set_ylabel("Bottleneck duration (min)")
-    ax.set_yticks([0, 5, 10, 15, 20])
-    ax.spines["bottom"].set_color("#9AA3A8")
-    ax.spines["left"].set_color("#9AA3A8")
-    ax.tick_params(colors="#333333")
-    ax.set_axisbelow(True)
-    ax.grid(alpha=0.3, lw=0.6)
-    ax.legend(loc="upper right", fontsize=8, frameon=False, ncol=1)
-    fig.tight_layout()
+    im = np.array(Image.open(src).convert("RGB"))
+    series = _extract(im)
+
+    # Match Figure 6 (key_device_entity): same canvas, panel style, and width.
+    fig, axes = plt.subplots(1, 2, figsize=(7.2, 3.15), sharey=True)
+    _panel(axes[0], series, GRAPH, "(a) Graph ablations", ylabel=True)
+    _panel(axes[1], series, MECH, "(b) Mech. ablations", ylabel=False)
+    axes[1].tick_params(labelleft=False)
+    fig.tight_layout(w_pad=0.6)
+    out = OUT / "key_device_struct_pair.pdf"
     fig.savefig(out)
     fig.savefig(out.with_suffix(".png"), dpi=200)
     plt.close(fig)
     print(f"[plot] wrote {out}")
-
-
-def main() -> None:
-    im = np.array(Image.open(SRC).convert("RGB"))
-    series = _extract(im)
-    _draw(series, GRAPH, OUT / "key_device_struct_graph.pdf")
-    _draw(series, MECH, OUT / "key_device_struct_mech.pdf")
 
 
 if __name__ == "__main__":
