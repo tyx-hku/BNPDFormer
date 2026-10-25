@@ -198,8 +198,8 @@ To address these limitations, we propose the \textbf{Process-Informed Heterogene
 A disturbance-controlled digital production line provides traceable multi-resource trajectories, while process-informed rules and persistence filtering construct sustained bottleneck events and process-cause targets; deterministic cause-aligned regime identifiers provide additional operational context.
 PHGST-DP then combines a heterogeneous process--logistics graph with a delay-pattern module that clusters short temporal patches into recurrent prototypes and uses them to condition cross-resource interaction, thereby associating earlier resource states with later constraints.
 The model jointly reports the bottleneck station, onset, duration, process cause, and remaining order time.
-Experiments demonstrate effective forecasting and timely report generation on the tested hardware.
-These results demonstrate the effectiveness of PHGST-DP under the studied digital-twin conditions and indicate its potential to support early warning and operational decision-making for resource reallocation, material replenishment, equipment maintenance, and logistics coordination.
+On 5,354 held-out windows, event F1-score is $0.804/0.778/0.768$ at 5/10/15-min onset caps; inference remains within the one-minute update interval.
+Results support PHGST-DP under the studied digital-twin conditions and indicate its potential for early warning and resource coordination.
 
 \end{abstract}
 
@@ -236,7 +236,7 @@ The remainder of this paper is organized as follows. Section~\ref{sec:review} re
 \section{Literature review} \label{sec:review}
 %% ========================================================================
 
-\subsection{Dynamic bottleneck prediction: concepts and research questions}
+\subsection{Dynamic bottleneck prediction: concepts and task scope}
 
 A throughput bottleneck is a resource or process that constrains the overall output of a manufacturing system. Skoogh et al.~\cite{subramaniyan2023throughput} show that bottleneck-identification methods differ in both the information they use and how they are operationalized; the appropriate choice depends on the system and on the available data. High utilization, a failure, or a queue at an individual resource can provide useful evidence, but its effect on system throughput must be interpreted together with the other resources and process relations.
 
@@ -555,7 +555,7 @@ Section~\ref{sec:problem} defines the entities, graph relations, and prediction 
 
 \subsubsection{Disturbance-controlled digital production line}
 
-The data-generation environment reconstructs the water-pipe line, resource layout, storage locations, and handling activities in NVIDIA Isaac Sim. At every logical second, the collector records the episode configuration, active disturbance, resource-state transitions, job traces, buffer events, transport tasks, and material inventory. These streams are synchronized by episode and logical time, allowing a downstream event to be traced back through the states that preceded it. Only episodes in which all ten products complete are exported, and episodes containing a deadlock reset are removed.
+The data-generation environment reconstructs the water-pipe line, resource layout, storage locations, and handling activities in NVIDIA Isaac Sim. At every logical second, the collector records the episode configuration, active disturbance, resource-state transitions, job traces, buffer events, transport tasks, and material inventory. These streams are synchronized by episode and logical time, allowing a downstream event to be traced back through the states that preceded it. A known simulator implementation defect can trigger a deadlock reset that is not part of the intended production process and does not represent a physical production condition. Episodes affected by this defect are treated as invalid simulation records and removed; valid episodes are exported after all ten products complete.
 
 Formal single-axis collection activates one disturbance dimension at intensity $I=1.0$ while leaving the other dimensions nominal:
 \begin{itemize}
@@ -565,8 +565,6 @@ Formal single-axis collection activates one disturbance dimension at intensity $
  \item[$\bullet$] \textbf{Material disturbance} temporarily hides flange or elbow kits and introduces additional shortage pulses for selected stock-keeping units.
 \end{itemize}
 The temporary machine, human, and logistics pulses last at least ten logical minutes. This design does not assume that the injected dimension is the final bottleneck cause. Its purpose is to produce traceable perturbations whose operational consequences can emerge at different resources and times.
-
-Mixed two-, three-, and four-dimension episodes are exported as a separate dataset. They are not merged into the retained single-axis dataset because simultaneous shocks change both event prevalence and the attribution problem. This separation permits the main model to be trained on interpretable perturbation trajectories and allows mixed disturbances to be examined later as a distribution-expansion experiment.
 
 \subsubsection{Multi-entity aggregation and target instantiation}
 
@@ -833,7 +831,7 @@ Experiments use \texttt{dense\_i1}, a digital-twin dataset collected from an Isa
 \label{fig:experiment}
 \end{figure*}
 
-The data-generation environment exposes four disturbance dimensions and applies each dimension at three intervention levels (Table~\ref{tab:disturbance-design}). Level~0 changes episode-wide resource capacity before simulation, Level~1 perturbs sampled processing or service behaviour, and Level~2 injects temporary events during production. The platform supports intensity $I\in\{1,2,3\}$; slash-separated values in the table follow this order. The formal \texttt{dense\_i1} collection activates one dimension at a time at $I=1$, while nominal runs keep all dimensions inactive. Mixed two-, three-, and four-dimensional episodes are stored separately and are not merged into the main dataset. This separation makes the injected condition traceable without treating the disturbance dimension itself as the bottleneck or process-cause label.
+The data-generation environment exposes four disturbance dimensions and applies each dimension at three intervention levels (Table~\ref{tab:disturbance-design}). Level~0 changes episode-wide resource capacity before simulation, Level~1 perturbs sampled processing or service behaviour, and Level~2 injects temporary events during production. The platform supports intensity $I\in\{1,2,3\}$; slash-separated values in the table follow this order. The formal \texttt{dense\_i1} collection activates one dimension at a time at $I=1$, while nominal runs keep all dimensions inactive. The injected dimension controls data generation but is not used as the bottleneck or process-cause label.
 
 \begin{table*}[t]
 \centering
@@ -858,7 +856,7 @@ For machine, human, and logistics disturbances, every Level~2 pulse lasts at lea
 
 Raw records use logical simulation time at one-second resolution and include resource-state transitions, workpiece routes and completion times, buffer changes, transport tasks, material inventories, and disturbance logs. The aggregation pipeline reconstructs resource-state intervals and aligns them into non-overlapping 60-s windows. Processing, blockage, starvation, and stoppage durations are accumulated over their overlap with each window; active and unavailable ratios divide the corresponding durations by the window length. Queue features count waiting jobs and summarize their waiting times, while buffer occupancy is averaged over recorded values in the window (carrying forward the preceding value when no update is recorded) and its growth is computed from the difference between the window-end and window-start counts. Process and transport relations supply upstream/downstream state ratios, route delay, inbound waiting, and material-shortage propagation.
 
-All windows share a fixed resource ordering. Each node has 21 operational channels, a five-dimensional resource-type encoding, and one labour-saturation channel, forming a $38\times27$ feature matrix per window. The export routine fills absent numeric entries with zero and recomputes labour saturation from worker activity. Episodes are retained after all ten workpieces have completed; runs containing a deadlock reset are excluded. A run-stratified, episode-level split gives 140/28/36 training/validation/test episodes out of 204 complete episodes. Sliding samples use 30 historical windows and a 20-window future grid, with a one-window stride and no crossing of episode boundaries. The resulting splits contain 20,826/4,331/5,354 forecast windows (Table~\ref{tab:exp-dataset}); feature standardization is fitted on the training histories and applied to validation and test inputs. All main baseline comparisons use a unified re-evaluation on these same 5,354 shared test-window identities rather than scores from an earlier sample set. Table~\ref{tab:dataset-labels} reports the Upcoming, Ongoing, and no-event composition of the test window--resource pairs under each Start cap.
+All windows share a fixed resource ordering. Each node has 21 operational channels, a five-dimensional resource-type encoding, and one labour-saturation channel, forming a $38\times27$ feature matrix per window. The export routine fills absent numeric entries with zero and recomputes labour saturation from worker activity. Each valid episode ends after all ten workpieces have completed. Runs affected by the known simulator deadlock defect are discarded as invalid records rather than interpreted as observations of a production disturbance. A run-stratified, episode-level split gives 140/28/36 training/validation/test episodes from 204 valid episodes. Sliding samples use 30 historical windows and a 20-window future grid, with a one-window stride and no crossing of episode boundaries. The resulting partitions contain 20,826/4,331/5,354 forecast windows (Table~\ref{tab:exp-dataset}); feature standardization is fitted on the training histories and applied unchanged to validation and test inputs. All main baseline comparisons use a unified re-evaluation on the same 5,354 shared test-window identities rather than scores from an earlier sample set. Table~\ref{tab:dataset-labels} reports the Upcoming, Ongoing, and no-event composition of the test window--resource pairs under each Start cap.
 
 Operational-state rules combine processing activity, queue buildup, starvation, and resource-coupling indicators into resource-level bottleneck labels. Process-cause targets are derived from the corresponding operating evidence; the test set supports transport delay, material shortage, upstream starvation, and queue buildup. Workpiece completion records provide the order-level target: the time from the forecast origin until all ten workpieces have finished.
 
@@ -875,7 +873,7 @@ Process-informed labels apply an eight-window persistence rule (Min8) to newly f
 \toprule
 Item & Setting \\
 \midrule
-Dataset & \texttt{dense\_i1}, 204 episodes, 38 resources \\
+Dataset & \texttt{dense\_i1}, 204 valid episodes, 38 resources \\
 Split & 140/28/36 episodes; 20,826/4,331/5,354 windows \\
 Windowing & 60-s windows; 30 historical + 20 future windows \\
 Targets & 15 resources: 7 machines/workbenches, 4 gantries, 4 robots \\
@@ -928,7 +926,7 @@ BSTAN & Graph attention + GRU & Graph-attention predictor \\
 
 \subsubsection{Overall experimental settings and metrics}
 
-PHGST-DP uses five encoder blocks, an 80-dimensional latent representation, eight-dimensional Laplacian positional encoding, $4/2/2$ temporal/geographic/semantic attention heads, a four-hop geographic mask, five semantic neighbours, and 16 length-three pattern keys. AdamW is used with batch size 16, learning rate $5\times10^{-5}$, weight decay $0.05$, cosine decay to $10^{-6}$, and fourfold positive-window oversampling. Training has two stages. Stage~1 learns the bottleneck and cause heads: it is warm-started from an earlier prefix-supervised checkpoint, unfreezes the last five encoder blocks, and runs for at most 100 epochs with patience 40. The three onset caps are trained as a curriculum (Start$\leq5\rightarrow$Start$\leq10\rightarrow$Start$\leq15$). A far-onset enhancement doubles the onset loss for events starting more than 5~min ahead, sets the far-onset positive weight to $9/10/11$ for the three caps, and raises the false-alarm penalty (weights $2.5$ and $2.2$ for ordinary and hard false positives). Stage~2 freezes the encoder and every bottleneck and cause head, adds a per-workpiece rate term to the remaining-time head, and fine-tunes only that head for at most 20 epochs with validation loss as the selection criterion. This stage specializes the order-progress forecast while preserving the event and cause outputs. All runs use seed 42.
+PHGST-DP uses five encoder blocks, an 80-dimensional latent representation, eight-dimensional Laplacian positional encoding, $4/2/2$ temporal/geographic/semantic attention heads, a four-hop geographic mask, five semantic neighbours, and 16 length-three pattern keys. AdamW is used with batch size 16, learning rate $5\times10^{-5}$, weight decay $0.05$, cosine decay to $10^{-6}$, and fourfold positive-window oversampling. Training has two stages. Stage~1 learns the bottleneck and cause heads: it starts from the fixed parameter state reused by every ablation arm, unfreezes the last five encoder blocks, and runs for at most 50 epochs with patience 40. The three onset caps are trained as a curriculum (Start$\leq5\rightarrow$Start$\leq10\rightarrow$Start$\leq15$). A far-onset enhancement doubles the onset loss for events starting more than 5~min ahead, sets the far-onset positive weight to $9/10/11$ for the three caps, and raises the false-alarm penalty (weights $2.5$ and $2.2$ for ordinary and hard false positives). Stage~2 freezes the encoder and every bottleneck and cause head, adds a per-workpiece rate term to the remaining-time head, and fine-tunes only that head for at most 20 epochs with validation loss as the selection criterion. This stage specializes the order-progress forecast while preserving the event and cause outputs. All reported training runs use seed 42; the results are point estimates rather than multi-seed stability estimates. Tables~\ref{tab:shared-training-protocol} and~\ref{tab:model-task-parameters} collect the complete shared protocol and model settings used for the reported Full and ablation comparisons.
 
 The checkpoint and report threshold are selected on the validation split. Candidate thresholds are $\{0.45,\dots,0.90,0.94\}$; selection uses the internal station-identification F1 among candidates satisfying validation report precision $\geq0.80$ and recall $\geq0.70$. This selection score is not reported as a result; the reported event metric is the onset-qualified F1-score defined below. All three onset caps use the selected threshold of $0.94$ for testing.
 
@@ -1044,11 +1042,11 @@ The class-level results show how this explanation covers distinct production sym
 
 \subsection{Ablation study}
 
-The ablation study links predictive performance to three design choices: heterogeneous process--logistics information, process-informed supervision, and delay-pattern conditioning. Nine configurations also examine the decoder and training choices that support advance warning (Table~\ref{tab:ablation-arms}). Dataset, target resources, label rules, and validation-based threshold selection follow the main experiment; the selected threshold is $0.94$ except for NoFarBoost ($0.90/0.88/0.94$). Initialization and training budgets are listed for each arm: the structural variants use up to 50 epochs, while PHGST-DP uses warm-start curriculum training with a 100-epoch budget. These comparisons assess the resulting model configurations; the matched-budget cause-supervision experiment separately isolates the explanatory effect of the cause head. Remaining-time comparisons use the stage-1 reference, before head-specific fine-tuning.
+The ablation study links predictive performance to three design choices: heterogeneous process--logistics information, process-informed supervision, and delay-pattern conditioning. Nine configurations also examine the decoder and training choices that support advance warning (Table~\ref{tab:ablation-arms}). Every ablation comparison, including its Full reference, begins from identical parameter values and uses a 50-epoch budget, the same Start$\leq5\rightarrow$Start$\leq10\rightarrow$Start$\leq15$ curriculum, and the same validation-controlled checkpoint and threshold-selection rule. Dataset, target resources, label rules, and candidate thresholds also follow the same protocol. The common selection procedure yields a threshold of $0.94$ for most arms and $0.90/0.88/0.94$ for NoFarBoost. The matched-budget cause-supervision experiment separately isolates the explanatory effect of the cause head. Remaining-time comparisons use the stage-1 reference, before head-specific fine-tuning.
 
 \begin{table*}[t]
 \centering
-\caption{Ablation arms. ``Scratch'' arms are trained from random initialization for at most 50 epochs; ``curriculum'' arms initialize the Start$\leq10/15$ runs from the preceding cap.}
+\caption{Ablation arms. Every comparison, including the Full reference, begins from identical parameter values and uses the same 50-epoch budget, Start$\leq5\rightarrow$Start$\leq10\rightarrow$Start$\leq15$ curriculum, and validation-controlled model-selection rule.}
 \label{tab:ablation-arms}
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
@@ -1057,20 +1055,20 @@ The ablation study links predictive performance to three design choices: heterog
 \toprule
 Arm & Contribution & Change relative to the retained model & Training \\
 \midrule
-NoGraph & Heterogeneous graph & Self-loop adjacency only; no factory edges & Scratch, 50 ep. \\
-NoGroup & Heterogeneous graph & One linear projection of the 27 channels instead of six semantic groups & Scratch, 50 ep. \\
-NoCross & Heterogeneous graph & Within-type edges only; cross-type semantic attention masked & Scratch, 50 ep. \\
-NoInfo & Heterogeneous graph & Only machines observed; non-machine features and five coupling channels zeroed & Scratch, 50 ep. \\
-MachineOnly & Heterogeneous graph & NoCross and NoInfo combined & Scratch, 50 ep. \\
-NoCluster & Cause/regime components & No cause supervision, deterministic regime fusion, or supervised contrastive regularization & Scratch, 50 ep. \\
-NoPattern & Delay propagation & Delay-aware pattern matching disabled & Scratch $\rightarrow$ curriculum, 50 ep. \\
-NoSplit & Decoder & One shared will head for continuing and new events & Scratch $\rightarrow$ curriculum, 50 ep. \\
-NoFarBoost & Training & Far-onset weighting removed; earlier false-alarm penalty and report-F1 selection & Warm start, 100 ep. \\
+NoGraph & Heterogeneous graph & Self-loop adjacency only; no factory edges & Common protocol, 50 ep. \\
+NoGroup & Heterogeneous graph & One linear projection of the 27 channels instead of six semantic groups & Common protocol, 50 ep. \\
+NoCross & Heterogeneous graph & Within-type edges only; cross-type semantic attention masked & Common protocol, 50 ep. \\
+NoInfo & Heterogeneous graph & Only machines observed; non-machine features and five coupling channels zeroed & Common protocol, 50 ep. \\
+MachineOnly & Heterogeneous graph & NoCross and NoInfo combined & Common protocol, 50 ep. \\
+NoCluster & Cause/regime components & No cause supervision, deterministic regime fusion, or supervised contrastive regularization & Common protocol, 50 ep. \\
+NoPattern & Delay propagation & Delay-aware pattern matching disabled & Common protocol, 50 ep. \\
+NoSplit & Decoder & One shared will head for continuing and new events & Common protocol, 50 ep. \\
+NoFarBoost & Training & Far-onset weighting and enhanced false-alarm penalty removed & Common protocol, 50 ep. \\
 \bottomrule
 \end{tabular*}
 \end{table*}
 
-PHGST-DP preserves event accuracy as the onset range expands (Table~\ref{tab:ablation-grouped}). Most removed components lower F1-score and Upcoming recall and raise union duration error, while NoFarBoost is slightly better at Start$\leq5$ under its own threshold. From Start$\leq5$ to Start$\leq15$, Full F1-score changes from $0.804$ to $0.768$, and union duration MAE from $4.17$ to $4.43$~min. The structural and entity variants exhibit larger changes, with F1 reductions of $0.08$--$0.16$ and MAE increases of $0.8$--$1.5$~min under their listed training configurations. On the delay-pattern question, Upcoming recall holds with Full across caps, whereas NoPattern and NoSplit degrade more sharply, and the $>10$~min strict-report bin rises from $0.240$ (NoFarBoost) to $0.433$ (Full).
+PHGST-DP preserves event accuracy as the onset range expands (Table~\ref{tab:ablation-grouped}). Most removed components lower F1-score and Upcoming recall and raise union duration error, while NoFarBoost is slightly better at Start$\leq5$ at its validation-selected threshold. From Start$\leq5$ to Start$\leq15$, Full F1-score changes from $0.804$ to $0.768$, and union duration MAE from $4.17$ to $4.43$~min. Under the matched initialization, budget, curriculum, and model-selection protocol, the structural and entity variants exhibit larger changes, with F1 reductions of $0.08$--$0.16$ and MAE increases of $0.8$--$1.5$~min. On the delay-pattern question, Upcoming recall holds with Full across caps, whereas NoPattern and NoSplit degrade more sharply, and the $>10$~min strict-report bin rises from $0.240$ (NoFarBoost) to $0.433$ (Full).
 
 \subsubsection{Heterogeneous graph and multi-entity information}
 
@@ -1143,7 +1141,7 @@ Cross-resource information is most closely associated with advance warning. PHGS
 Process-informed supervision connects the event representation to production meaning. The analysis focuses on event and state reporting under the complete supervision configuration, cause accuracy under a matched training budget, and alignment between process-informed label rankings and intervention-sensitive resources. These experiments answer different questions and are therefore interpreted separately.
 
 \paragraph*{(1) Effects of supervision components.}
-The full configuration combines event recognition with process-cause and deterministic regime information. The legacy-named NoCluster comparison retains PHGST event labels and jointly removes cause supervision, history-regime fusion into the event head, and supervised contrastive regularization (Table~\ref{tab:group-ablation}). It does not isolate a k-means component. Across the three onset caps, PHGST-DP records higher event F1, upcoming-event recall, and next-window state F1, together with lower union and detected-event duration errors. This is a configuration-level comparison under the schedules in Table~\ref{tab:ablation-arms}, rather than a single-factor causal estimate; the matched-budget experiment below isolates the explanatory benefit of cause supervision.
+The full configuration combines event recognition with process-cause and deterministic regime information. The legacy-named NoCluster comparison retains PHGST event labels and jointly removes cause supervision, history-regime fusion into the event head, and supervised contrastive regularization (Table~\ref{tab:group-ablation}). It does not isolate a k-means component. Across the three onset caps, PHGST-DP records higher event F1, upcoming-event recall, and next-window state F1, together with lower union and detected-event duration errors under the matched initialization, 50-epoch budget, curriculum, and model-selection protocol. Because NoCluster removes three coupled components, it remains a bundle-level rather than single-factor comparison; the matched-budget experiment below isolates the explanatory benefit of cause supervision.
 
 \begin{table*}[t]
 \centering
@@ -1243,7 +1241,7 @@ NoPattern & & 60.1\% & 42.7\% & 39.6\% & 16.3\% & 57.3\% & 85.0\% & 11.06 \\
 
 \subsubsection{Decoder and training components}\label{sec:decoder-training}
 
-The decoder and training comparisons examine two requirements of advance warning: distinguishing new events from continuing events and maintaining sensitivity to distant onsets. NoSplit replaces the continuation and onset heads with one shared head. NoFarBoost uses the configuration without far-onset weighting, together with the earlier false-alarm penalty and F1-score checkpoint criterion. Table~\ref{tab:decoder-ablation} reports the resulting operating points.
+The decoder and training comparisons examine two requirements of advance warning: distinguishing new events from continuing events and maintaining sensitivity to distant onsets. NoSplit replaces the continuation and onset heads with one shared head, while NoFarBoost removes far-onset weighting and the associated enhanced false-alarm penalty. Both arms retain the common initialization, 50-epoch curriculum, and validation-controlled checkpoint and threshold-selection rule. Table~\ref{tab:decoder-ablation} reports the resulting operating points.
 
 \begin{table*}[t]
 \centering
@@ -1392,7 +1390,7 @@ Process-informed supervision gives the report an interpretable connection to pro
 
 Delay-pattern conditioning connects these heterogeneous observations across time. Matching recent patches to recurrent patterns supplies temporal context to geographic attention, allowing earlier resource states to inform later bottleneck formation. For events starting more than 10~min ahead, strict report recall is $0.433$ for PHGST-DP and $0.163$ for NoPattern (Table~\ref{tab:delay-ablation-new}). Separate onset and continuation decisions further focus warning on resources that are not yet constrained. These results are consistent with the intended role of the delay module: representing precursors whose consequences emerge after a lag. The aligned case traces provide a direct view of how this predictive information appears as an event trajectory.
 
-The digital-twin evaluation establishes this reporting capability for the studied resource layout, product mix, and 20-min prediction horizon. Deployment can build on the same interface by mapping MES, WMS, and transport-dispatch observations to the resource graph and updating the report as new windows arrive. The measurements in Section~\ref{sec:efficiency} show that model-side report generation fits comfortably within the one-minute update interval on the tested hardware. Further validation can extend to end-to-end data and decision latency, missing or delayed observations, additional seeds and layouts, and the scheduling or throughput outcomes of acting on the forecasts. These directions connect the demonstrated predictive capability to its use in production control.
+The digital-twin evaluation establishes this reporting capability only for the studied resource layout, product mix, valid simulation runs, seed 42, and 20-min prediction horizon. Cross-layout, cross-product, and physical-production transfer are not evaluated, and the process rules and graph encode application-specific engineering knowledge rather than a portable manufacturing ontology. Deployment can build on the same interface by mapping MES, WMS, and transport-dispatch observations to the resource graph and updating the report as new windows arrive. The measurements in Section~\ref{sec:efficiency} show that model-side report generation fits comfortably within the one-minute update interval on the tested hardware. Further validation can extend to end-to-end data and decision latency, missing or delayed observations, additional seeds and layouts, and the scheduling or throughput outcomes of acting on the forecasts. These directions connect the demonstrated predictive capability to its use in production control.
 
 \section{Conclusion}\label{sec:conclusion}
 
@@ -1411,9 +1409,68 @@ Across onset caps of 5, 10, and 15~min, PHGST-DP achieves F1-score of $0.804/0.7
 
 This appendix collects complementary numerical tables and the complete attention visualizations that underlie the main-text figures. The materials are intended for cross-checking rather than as a substitute for the primary comparisons in Section~\ref{sec:exp}.
 
+\paragraph{Shared training and evaluation protocol.}
+\label{app:shared-protocol}
+Table~\ref{tab:shared-training-protocol} records the controls held fixed across the reported Full model and ablation arms. Architectural switches listed in Table~\ref{tab:ablation-arms} are the intended differences between arms; initialization, optimization budget, curriculum, validation-based model selection, and held-out evaluation otherwise follow the common protocol below.
+
+\begin{table}[pos=htbp]
+\centering
+\caption{Shared training and evaluation protocol for the Full model and all ablation arms.}
+\label{tab:shared-training-protocol}
+\small
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.10}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+Item & Shared setting \\
+\midrule
+Initialization & Identical initial parameter values for the Full model and every ablation arm \\
+Random seed & 42 \\
+Optimizer & AdamW \\
+Batch size & 16 \\
+Learning rate & $5\times10^{-5}$ initially; cosine decay to $10^{-6}$ \\
+Weight decay & 0.05 \\
+Positive-window sampling & Fourfold oversampling \\
+Maximum training budget & 50 epochs for each Start-cap run \\
+Early stopping & Patience of 40 epochs \\
+Curriculum & Start$\leq5\rightarrow$Start$\leq10\rightarrow$Start$\leq15$ \\
+Checkpoint criterion & Validation station-identification F1 among candidates satisfying report precision $\geq0.80$ and recall $\geq0.70$ \\
+Threshold candidates & $\{0.45,0.50,0.55,0.60,0.65,0.70,0.75,0.80,0.85,0.90,0.94\}$ \\
+Held-out evaluation & The selected checkpoint and threshold are frozen before the shared test episodes are evaluated \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{table}[pos=htbp]
+\centering
+\caption{Shared model, windowing, event, and decoding parameters.}
+\label{tab:model-task-parameters}
+\small
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.10}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+Item & Setting \\
+\midrule
+Temporal resolution & 60~s per window \\
+Input and prediction ranges & 30 historical windows and a 20-window future grid \\
+Prediction targets & 15 resources: seven machines/workbenches, four gantries, and four transport robots \\
+Event construction & Minimum eight-window persistence; one-window internal gap filling \\
+Onset caps and matching tolerance & Start$\leq5/10/15$ windows; three-window onset tolerance \\
+Encoder & Five blocks; 80-dimensional hidden representation \\
+Attention heads & Temporal/geographic/semantic: $4/2/2$ \\
+Graph and semantic context & Four-hop geographic mask; five semantic neighbours \\
+Positional encoding & Eight-dimensional Laplacian encoding \\
+Delay-pattern bank & 16 prototypes; length-three temporal patches \\
+Far-onset enhancement & Onset-loss multiplier 2; positive weights $9/10/11$ for Start$\leq5/10/15$ \\
+False-alarm weighting & 2.5 for ordinary false positives; additional hard-false-positive multiplier 2.2 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
 \paragraph{Grouped ablation overview.}
 \label{app:ablation-grouped}
-Table~\ref{tab:ablation-grouped} reports absolute F1-score, Upcoming recall, and union duration MAE for every ablation arm on the shared 5,354-window test split. The main text discusses these arms by design question; the compact scores are retained here for cross-arm lookup. Training budgets and, for NoInfo and MachineOnly, event pools differ, so the table is a configuration-level comparison rather than a single-factor causal estimate.
+Table~\ref{tab:ablation-grouped} reports absolute F1-score, Upcoming recall, and union duration MAE for every ablation arm on the shared 5,354-window test split. The main text discusses these arms by design question; the compact scores are retained here for cross-arm lookup. All arms begin from identical parameter values and share the same 50-epoch budget, curriculum, and model-selection rule. NoInfo and MachineOnly observe a smaller event pool because some resource types fall outside their prediction scope, so their rows should still be interpreted with that scope difference in mind.
 
 \begin{table}[pos=htbp]
 \centering
