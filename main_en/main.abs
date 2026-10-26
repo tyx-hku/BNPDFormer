@@ -1,11 +1,11 @@
-Dynamic bottleneck prediction can warn manufacturers of emerging throughput constraints and guide resource adjustment before production is disrupted.
-This study addresses not only which resource and station will become the bottleneck, but also when the event will begin, how long it will persist, what observable process condition is associated with it, and how much order-processing time remains.
+Dynamic bottleneck prediction can warn manufacturers of emerging throughput constraints and guide resource adjustment before production is disrupted; timely prediction is therefore urgently needed to secure sufficient lead time for effective intervention.
 Existing studies mainly rely on single-entity data returned by machine or workstation sensors, with limited representation of workers, materials, buffers, and logistics and of their relations.
 This narrow observation scope leads to incomplete factory-graph modelling, reduces prediction accuracy, and makes it difficult to capture disturbances that propagate across resources after a delay.
+A second limitation is the difficulty of constructing reliable bottleneck supervision: positive events are scarce, whereas isolated threshold crossings may conflate transient fluctuations with sustained constraints and obscure their process causes.
 To address these limitations, we propose the \textbf{Process-Informed Heterogeneous-Graph Spatiotemporal Transformer with Delayed Propagation (PHGST-DP)}.
-A disturbance-controlled digital production line provides traceable multi-resource trajectories, while process-informed rules and persistence filtering construct sustained bottleneck events and process-cause targets; deterministic cause-aligned regime identifiers provide additional operational context.
-PHGST-DP then combines a heterogeneous process--logistics graph with a delay-pattern module that clusters short temporal patches into recurrent prototypes and uses them to condition cross-resource interaction, thereby associating earlier resource states with later constraints.
-The model jointly reports the bottleneck station, onset, duration, process cause, and remaining order time.
-On 5,354 held-out windows, event F1-score is $0.804/0.778/0.768$ at 5/10/15-min onset caps; inference remains within the one-minute update interval.
-Results support PHGST-DP under the studied digital-twin conditions and indicate its potential for early warning and resource coordination.
+To address the first limitation, PHGST-DP combines a heterogeneous process--logistics graph with prototype-conditioned delay-aware propagation, linking earlier resource states to constraints that emerge elsewhere after transport, buffering, or service delays.
+To address the second, a disturbance-controlled digital production line provides traceable trajectories; process-informed rules, persistence filtering, and training-only clustering construct sustained event and cause targets and recurrent operating-pattern prototypes.
+In addition, the model jointly outputs bottleneck station, onset, duration, process cause, and remaining order time as a decision-oriented event report.
+Held-out digital-twin experiments demonstrate high bottleneck-prediction accuracy and timely report generation, while ablations support the effectiveness of the proposed components.
+These results support PHGST-DP under the studied digital-twin conditions and indicate its potential for early warning and resource coordination.
 
