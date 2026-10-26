@@ -190,16 +190,16 @@
 \cortext[cor1]{Corresponding author: CI3 Lab, Department of Civil Engineering, Faculty of Engineering, The University of Hong Kong, Pokfulam, Hong Kong, China.}
 
 \begin{abstract}
-Dynamic bottleneck prediction can warn manufacturers of emerging throughput constraints and guide resource adjustment before production is disrupted.
-This study addresses not only which resource and station will become the bottleneck, but also when the event will begin, how long it will persist, what observable process condition is associated with it, and how much order-processing time remains.
+Dynamic bottleneck prediction can warn manufacturers of emerging throughput constraints and guide resource adjustment before production is disrupted; timely prediction is therefore urgently needed to secure sufficient lead time for effective intervention.
 Existing studies mainly rely on single-entity data returned by machine or workstation sensors, with limited representation of workers, materials, buffers, and logistics and of their relations.
 This narrow observation scope leads to incomplete factory-graph modelling, reduces prediction accuracy, and makes it difficult to capture disturbances that propagate across resources after a delay.
+A second limitation is the difficulty of constructing reliable bottleneck supervision: positive events are scarce, whereas isolated threshold crossings may conflate transient fluctuations with sustained constraints and obscure their process causes.
 To address these limitations, we propose the \textbf{Process-Informed Heterogeneous-Graph Spatiotemporal Transformer with Delayed Propagation (PHGST-DP)}.
-A disturbance-controlled digital production line provides traceable multi-resource trajectories, while process-informed rules and persistence filtering construct sustained bottleneck events and process-cause targets; deterministic cause-aligned regime identifiers provide additional operational context.
-PHGST-DP then combines a heterogeneous process--logistics graph with a delay-pattern module that clusters short temporal patches into recurrent prototypes and uses them to condition cross-resource interaction, thereby associating earlier resource states with later constraints.
-The model jointly reports the bottleneck station, onset, duration, process cause, and remaining order time.
-On 5,354 held-out windows, event F1-score is $0.804/0.778/0.768$ at 5/10/15-min onset caps; inference remains within the one-minute update interval.
-Results support PHGST-DP under the studied digital-twin conditions and indicate its potential for early warning and resource coordination.
+To address the first limitation, PHGST-DP combines a heterogeneous process--logistics graph with prototype-conditioned delay-aware propagation, linking earlier resource states to constraints that emerge elsewhere after transport, buffering, or service delays.
+To address the second, a disturbance-controlled digital production line provides traceable trajectories; process-informed rules, persistence filtering, and training-only clustering construct sustained event and cause targets and recurrent operating-pattern prototypes.
+In addition, the model jointly outputs bottleneck station, onset, duration, process cause, and remaining order time as a decision-oriented event report.
+Held-out digital-twin experiments demonstrate high bottleneck-prediction accuracy and timely report generation, while ablations support the effectiveness of the proposed components.
+These results support PHGST-DP under the studied digital-twin conditions and indicate its potential for early warning and resource coordination.
 
 \end{abstract}
 
@@ -220,15 +220,15 @@ Propagation Delay
 \section{Introduction} \label{sec:intro}
 %% ========================================================================
 
-Digital manufacturing systems coordinate machines, workers, materials, buffers, and autonomous handling resources through tightly coupled process and logistics flows. This coupling improves production flexibility, but it also allows a local disturbance to accumulate as work-in-process, interrupt material supply, delay handling services, and eventually constrain throughput at another station. Retrospective bottleneck detection may therefore leave insufficient time for material replenishment, labour reallocation, equipment maintenance, buffer adjustment, or logistics rerouting. Predicting how a constraint forms and propagates across heterogeneous factory resources is essential for converting an emerging disruption into an actionable production warning.
+Digital manufacturing systems coordinate machines, workers, materials, buffers, and autonomous handling resources through tightly coupled process and logistics flows. Digital-twin applications have accordingly begun to combine productivity with worker well-being in simulation-based decision support and to support real-time safety control in human--robot cooperation~\cite{pascual2024development,li2022framework}. This coupling improves production flexibility, but it also allows a local disturbance to accumulate as work-in-process, interrupt material supply, delay handling services, and eventually constrain throughput at another station. Retrospective bottleneck detection may therefore leave insufficient time for material replenishment, labour reallocation, equipment maintenance, buffer adjustment, or logistics rerouting. Predicting how a constraint forms and propagates across heterogeneous factory resources is essential for converting an emerging disruption into an actionable production warning.
 
 A production bottleneck is the resource or process that limits system throughput at a given time~\cite{roser2001practical,subramaniyan2023throughput,tang2024comprehensive}. Its identity and location are not fixed: changes in resource availability, material supply, work-in-process, and operating conditions can cause the bottleneck to migrate during production~\cite{roser2002shifting,lai2021data}. We investigate station-level dynamic bottleneck prediction on a digital-twin shared production line for water-pipe manufacturing. Historical and current observations are used to predict the affected station, event onset and duration, observable process cause, and remaining order time. The objective is not only to identify a future bottleneck, but also to provide a fine-grained and interpretable report that supports timely intervention.
 
 Despite progress in bottleneck prediction, three limitations remain. First, existing studies predominantly model machine or workstation data. Time-series and recurrent methods forecast active periods, blockage, starvation, or bottleneck scores from machine-centred observations~\cite{li2011throughput,subramaniyan2018data,lai2018twolayer,liu2023lstmdam}; graph-based methods further introduce workstation, task, or material-flow relations~\cite{lai2023bstan,yin2025btgcn,ma2023tusb,cen2025dstnn,wu2025knowledge}. Nevertheless, workers, material availability, buffers, gantries, and transport robots are rarely represented together, even though their interactions can determine where and when a throughput constraint appears. Second, bottleneck supervision is difficult to construct. Positive events are scarce in normal operation, and deliberately inducing failures, worker absence, material shortages, or logistics interruption in a physical factory is costly and disruptive. Conventional scalar scores and turning-point indicators derived from utilization, blockage, or starvation~\cite{li2009data,subramaniyan2023throughput,lai2021data,su2022dynamic} can support retrospective analysis, but isolated threshold crossings may confuse transient variation with a sustained constraint and provide limited evidence about the operational cause. This weak separation between normal and bottleneck states complicates learning and reduces the interpretability of model outputs. Third, dynamic bottlenecks exhibit delayed cross-resource propagation. A disturbance may pass through transport and buffering before emerging as blockage or starvation at a downstream station, so the resource where the disturbance originates may differ from the resource that later constrains throughput. Recurrent transmission and local graph aggregation can capture temporal or neighbourhood dependence, but do not explicitly align an earlier cross-resource pattern with its delayed consequence. These limitations motivate a unified approach to heterogeneous observation, process-consistent supervision, and delay-aware prediction.
 
-To address these limitations, we propose \textbf{PHGST-DP}. A disturbance-controlled digital-twin production line provides traceable trajectories of machines, workers, material supply, buffers, gantries, and transport robots without interrupting physical production~\cite{lu2020digital,isaacsim2026,xue2026safe}. These observations are organized as a heterogeneous process--logistics graph: machines and handling resources are represented as interacting entities, while material shortage, buffer occupancy, labour availability, and transport delay provide resource-specific operational context. Process-informed rules combine queue, blockage, starvation, availability, shortage, and logistics evidence with persistence requirements to construct sustained bottleneck events and observable process-cause targets. Deterministic cause-aligned regime identifiers provide additional operational context but do not define the ground truth. Finally, a delay-pattern module is incorporated into a spatiotemporal Transformer adapted from PDFormer~\cite{jiang2023pdformer}. It clusters short temporal patches into recurrent prototypes and uses prototype matching to condition cross-resource attention, enabling earlier resource states to contribute to the prediction of constraints that emerge elsewhere after a lag. The resulting model produces a minute-level report of bottleneck station, onset, duration, observable process cause, and remaining order time.
+To address these limitations, we propose \textbf{PHGST-DP}. Digital twins have been used in manufacturing to monitor, simulate, optimize, and predict product and process behaviour across lifecycle stages~\cite{lo2021digitaltwin}, while production-line studies have integrated online process emulation, equipment-level simulation, and flexible operation~\cite{leng2022digitaltwins}. A disturbance-controlled digital-twin production line provides traceable trajectories of machines, workers, material supply, buffers, gantries, and transport robots without interrupting physical production~\cite{lu2020digital,isaacsim2026,xue2026safe}. These observations are organized as a heterogeneous process--logistics graph: machines and handling resources are represented as interacting entities, while material shortage, buffer occupancy, labour availability, and transport delay provide resource-specific operational context. Our process-informed rules and clustered temporal-pattern construction method combines queue, blockage, starvation, availability, shortage, and logistics evidence with persistence requirements to construct sustained bottleneck events and observable process-cause targets, and summarizes training-only short temporal patches as recurrent operating-pattern prototypes. Deterministic cause-aligned regime identifiers provide additional operational context but do not define the ground truth. A prototype-conditioned delay-aware propagation module in the spatiotemporal Transformer adapted from PDFormer~\cite{jiang2023pdformer} then matches recent patches to the fixed prototypes and conditions cross-resource attention, enabling earlier resource states to contribute to the prediction of constraints that emerge elsewhere after a lag. The resulting model produces a minute-level report of bottleneck station, onset, duration, observable process cause, and remaining order time.
 
-The contributions of this work are summarized as follows. (1) We extend dynamic bottleneck prediction from machine-centred observations to heterogeneous multi-entity factory data. Machines, workers, material-supply states, buffers, gantries, and transport robots are jointly represented with their process and logistics relations, enabling the model to capture bottlenecks arising from production, labour, material, and handling interactions rather than from machine states alone. (2) We develop process-informed supervision and regime conditioning for bottleneck data whose positive events are scarce and weakly separable from normal fluctuations. Resource-specific rules and persistence constraints construct operationally meaningful event and process-cause targets, while deterministic cause-aligned regime identifiers provide structured context to the event predictor. This design preserves a traceable connection between supervision, event formation, and observable production evidence. (3) We propose a delay-aware spatiotemporal Transformer for dynamic bottleneck propagation. Its delay-pattern module clusters short temporal patches into a recurrent prototype bank and uses prototype matching to condition cross-resource interaction, allowing the model to associate an upstream precursor with a downstream constraint that appears after transport, buffering, or service delay.
+The contributions of this work are summarized as follows. (1) We extend dynamic bottleneck prediction from machine-centred observations to heterogeneous multi-entity factory data. Machines, workers, material-supply states, buffers, gantries, and transport robots are jointly represented with their process and logistics relations, enabling the model to capture bottlenecks arising from production, labour, material, and handling interactions rather than from machine states alone. (2) We develop \emph{process-informed rules and clustered temporal-pattern construction} for bottleneck data whose positive events are scarce and weakly separable from normal fluctuations. Resource-specific rules and persistence constraints construct operationally meaningful event and process-cause targets, deterministic cause-aligned regime identifiers provide structured context, and training-only clustering summarizes short temporal patches as recurrent operating-pattern prototypes. This design preserves a traceable connection between event supervision, observable production evidence, and the pattern context supplied to the predictor without treating cluster indices as bottleneck ground truth. (3) We propose a \emph{prototype-conditioned delay-aware propagation module}. It matches recent resource trajectories to the fixed temporal-pattern prototypes and injects the resulting pattern context into cross-resource geographic attention, allowing the model to associate an upstream precursor with a downstream constraint that appears after transport, buffering, or service delay.
 
 The remainder of this paper is organized as follows. Section~\ref{sec:review} reviews bottleneck detection and prediction methods and spatiotemporal graph forecasting. Section~\ref{sec:problem} formulates the station-level dynamic bottleneck prediction problem. Section~\ref{sec:method} presents the disturbance-controlled data pipeline and PHGST-DP architecture. Section~\ref{sec:exp} reports the experimental setup and results.
 
@@ -289,7 +289,7 @@ Third, cross-resource delay effects require further modelling. A production chan
 
 This section defines the prediction problem before introducing the learning method. We first specify the production task and heterogeneous entities, then formalize observations and graph relations, construct operational bottleneck events, and finally define the model input, outputs, and report-level success criterion. This ordering separates what must be predicted from how PHGST-DP performs the prediction.
 
-Figure~\ref{fig:method-framework} gives the end-to-end view of that separation. The upper part specifies the objects formalized in this section: disturbance-controlled multi-entity trajectories, the typed process--logistics graph, and process-informed sustained events. The lower part previews the PHGST-DP encoder and report heads that parameterize the mapping in Section~\ref{sec:method}.
+Figure~\ref{fig:method-framework} gives the end-to-end view of that separation. The upper part specifies the objects formalized in this section: disturbance-controlled multi-entity trajectories, the typed process--logistics graph, and the process-informed rules that construct sustained events. The lower part previews clustered temporal-pattern construction, the prototype-conditioned delay-aware propagation module, and the report heads that parameterize the mapping in Section~\ref{sec:method}.
 
 \begin{figure*}[t]
 \centering
@@ -365,7 +365,7 @@ X_t=\left[x_{\tau,n}\right]_
 \end{equation}
 The future label grid contains $H_{\mathrm{label}}=20$ one-minute windows. Within this grid, the admissible event onset $H_{\mathrm{start}}$ is varied between experimental settings. Separating the label grid from the onset cap allows an event to begin within the warning range while retaining enough future windows to represent its persistence.
 
-\subsubsection{Process-informed bottleneck-event construction}
+\subsubsection{Process-informed rule construction of bottleneck events}
 
 A bottleneck label must distinguish a production-relevant constraint from ordinary activity or travel. For each supervised resource, the implementation first applies a type-dependent rule
 \begin{equation}
@@ -389,7 +389,7 @@ where $w_{t,n}$ indicates that an eligible run exists, $s_{t,n}$ is its onset of
 Algorithm~\ref{alg:targets} consolidates the complete supervision pipeline, from type-dependent state evidence to persistent events, cause targets, regime context, and order-level remaining time. Human and buffer nodes contribute contextual observations but are omitted from station-event decoding because they are not in $\mathcal{S}$.
 
 \begin{algorithm*}[t]
-\caption{Process-informed supervision and regime-context construction.}
+\caption{Process-informed rule supervision and regime-context construction.}
 \label{alg:targets}
 \KwIn{episode trajectories $\mathcal{E}$; resource types $\rho$; supervised set $\mathcal{S}$; $T_{\mathrm{in}}$; $H_{\mathrm{label}}$; $H_{\mathrm{start}}$; $m{=}8$; $g{=}1$}
 \KwOut{causal samples $\mathcal{D}=\{X_t,O_t,Y_t^{\mathrm{evt}},c_t,\ell_t,r_t\}$}
@@ -484,7 +484,7 @@ Occurrence precision, recall, and F1 quantify the coverage and reliability of al
 
 \subsection{Method overview}
 
-PHGST-DP is organized around the three contributions established in Section~\ref{sec:intro}. First, controlled simulation, a heterogeneous factory graph, and grouped embedding integrate machine, human, material-flow, buffer, gantry, and transport evidence. Second, process-informed event construction, cause supervision, and deterministic regime conditioning address scarce, weakly separable supervision while retaining traceability to observable production evidence. Third, short-pattern clustering and prototype-conditioned spatiotemporal attention address delayed propagation. The complete information flow is
+PHGST-DP is organized around the three contributions established in Section~\ref{sec:intro}. First, controlled simulation, a heterogeneous factory graph, and grouped embedding integrate machine, human, material-flow, buffer, gantry, and transport evidence. Second, process-informed rules and clustered temporal-pattern construction produce traceable event and cause supervision, deterministic regime context, and recurrent operating-pattern prototypes. Third, the prototype-conditioned delay-aware propagation module uses those prototypes to organize lagged cross-resource interaction. The complete information flow is
 \begin{equation}
 \begin{aligned}
 \text{simulation}&\rightarrow\text{window/event construction}\\
@@ -493,7 +493,7 @@ PHGST-DP is organized around the three contributions established in Section~\ref
 \end{equation}
 The first two stages create reproducible observations and targets. The latter two parameterize the mapping $f_\theta$ defined in Section~\ref{sec:problem}.
 
-Figure~\ref{fig:model-architecture} presents the PHGST-DP model architecture. The multi-entity history is partitioned into six semantic feature groups and combined with temporal, graph-Laplacian, and node-identity embeddings. Each encoder block separates temporal, geographic, and semantic dependencies; short-pattern prototypes condition the geographic keys so that recurrent precursors can influence cross-resource interaction after a delay. Station-level and graph-level heads then decode occurrence, onset, duration, future occupancy, process cause, and remaining order time.
+Figure~\ref{fig:model-architecture} presents the PHGST-DP model architecture. The multi-entity history is partitioned into six semantic feature groups and combined with temporal, graph-Laplacian, and node-identity embeddings. Clustered temporal-pattern construction supplies a fixed prototype bank, and the prototype-conditioned delay-aware propagation module uses that bank to condition geographic keys so that recurrent precursors can influence cross-resource interaction after a delay. Station-level and graph-level heads then decode occurrence, onset, duration, future occupancy, process cause, and remaining order time.
 
 \begin{figure*}[t]
 \centering
@@ -572,7 +572,7 @@ The second stage converts heterogeneous raw logs into a common resource--time gr
 
 The pipeline instantiates the supervision defined in Section~\ref{sec:problem} from each aggregated episode, producing aligned occurrence, onset, duration, occupancy-grid, prefix, process-cause, and remaining-time targets. The retained configuration derives event targets from operational states rather than the exported bottleneck-score column, preventing the model from solving the task by reproducing an aggregation score.
 
-Three different clustering-related objects are kept conceptually separate. First, the offline aggregation tools can produce station- and window-level $K=8$ k-means descriptors for exploratory regime analysis. Second, the training dataset derives cause-aligned regime identifiers by deterministic rules and can use them for representation conditioning and contrastive regularization. Third, short temporal patches are clustered to create the pattern keys used by geographic attention. Only the third object is an active clustering mechanism in the retained delay module. The offline cluster-prediction loss has weight zero, and no cluster index defines the bottleneck ground truth; event labels are produced only by the process rules and persistence filter above.
+Three different clustering-related objects are kept conceptually separate. First, the offline aggregation tools can produce station- and window-level $K=8$ k-means descriptors for exploratory regime analysis. Second, the training dataset derives cause-aligned regime identifiers by deterministic rules and can use them for representation conditioning and contrastive regularization. Third, the clustered temporal-pattern construction component fits short temporal patches to create the recurrent prototype bank. Only the third object is the active clustering operation claimed in the second contribution; the third contribution begins when the prototype-conditioned delay-aware propagation module matches recent patches to that bank and injects the resulting context into geographic attention. The offline cluster-prediction loss has weight zero, and no cluster index defines the bottleneck ground truth; event labels are produced only by the process rules and persistence filter above.
 
 \subsubsection{Heterogeneous factory graph and attention masks}
 
@@ -596,7 +596,7 @@ For each node, the five nearest trajectories are unmasked in $M^S$; all others a
 
 \subsection{Delay-aware heterogeneous spatiotemporal encoding}
 
-The encoder first preserves the distinct semantics of heterogeneous observations through grouped embedding and then models temporal evolution, graph propagation, and behavioural similarity. Delay-pattern conditioning further links current resource states with recurrent precursor patterns whose effects emerge later in the production process.
+The encoder first preserves the distinct semantics of heterogeneous observations through grouped embedding and then models temporal evolution, graph propagation, and behavioural similarity. The prototype-conditioned delay-aware propagation module further links current resource states with recurrent precursor patterns whose effects emerge later in the production process.
 
 \subsubsection{Grouped heterogeneous state embedding}
 
@@ -618,9 +618,9 @@ E_{\mathrm{time}}+E_{\mathrm{lap}}(G)+E_{\mathrm{node}}.
 \end{equation}
 $E_{\mathrm{time}}$ is sinusoidal, $E_{\mathrm{lap}}$ projects the graph eigenvectors, and $E_{\mathrm{node}}$ is a learned resource-identity embedding. Day-of-week and time-of-day embeddings are disabled because an episode is driven by order progress and disturbances rather than calendar periodicity.
 
-\subsubsection{Pattern-conditioned spatiotemporal encoder}
+\subsubsection{Prototype-conditioned delay-aware propagation module}
 
-The encoder must distinguish three dependencies: evolution of one resource through time, propagation through the process--logistics graph, and similarity between resources that need not be adjacent. Each encoder block therefore allocates separate attention heads to temporal, geographic, and semantic attention. For an attention branch $b\in\{T,G,S\}$,
+The prototype-conditioned delay-aware propagation module must distinguish three dependencies: evolution of one resource through time, propagation through the process--logistics graph, and similarity between resources that need not be adjacent. Each encoder block therefore allocates separate attention heads to temporal, geographic, and semantic attention. For an attention branch $b\in\{T,G,S\}$,
 \begin{equation}
 \mathrm{Attn}_{b}(Q_b,K_b,V_b;M_b)
 =\mathrm{softmax}\!\left(
@@ -629,7 +629,7 @@ The encoder must distinguish three dependencies: evolution of one resource throu
 \end{equation}
 where temporal attention has no cross-node mask, geographic attention uses $M^G$, and semantic attention uses $M^S$.
 
-Delayed propagation is introduced through data-derived short-pattern keys. In the retained implementation, the prototype bank is fitted by applying k-means with sixteen centres to length-three patches of the configured activity channel (\texttt{active\_pct\_s}), whereas online query patches use the first model-output channel (\texttt{queue\_length\_s}). Let $P_{t,n}$ denote a queue query patch and $K^P$ the learned activity-pattern centres. Pattern attention computes
+Clustered temporal-pattern construction supplies the data-derived keys used by the propagation module. In the retained implementation, the prototype bank is fitted by applying k-means with sixteen centres to length-three patches of the configured activity channel (\texttt{active\_pct\_s}), whereas online query patches use the first model-output channel (\texttt{queue\_length\_s}). Let $P_{t,n}$ denote a queue query patch and $K^P$ the learned activity-pattern centres. Prototype matching computes
 \begin{equation}
 C^P_{t,n}=
 \mathrm{softmax}\!\left(
@@ -680,14 +680,14 @@ u_t&=\mathrm{AuxPool}(H_t^{(L)},\text{order state}),\\
 \end{equation}
 The cause head retains ten output indices for checkpoint compatibility, but training and inference are restricted to the four supported report classes. This preserves implementation compatibility without presenting unsupported classes as evaluated predictions.
 
-Algorithm~\ref{alg:phgst-predict} assembles representation, delay-pattern interaction, multi-task prediction, and operational decoding into one complete evaluation of $f_{\theta}$. Pattern centres condition geographic keys inside every block; they are fitted once from training histories and are not recomputed from the current minibatch.
+Algorithm~\ref{alg:phgst-predict} assembles representation, the prototype-conditioned delay-aware propagation module, multi-task prediction, and operational decoding into one complete evaluation of $f_{\theta}$. Pattern centres condition geographic keys inside every block; they are fitted once from training histories and are not recomputed from the current minibatch.
 
 \begin{algorithm*}[t]
 \SetAlFnt{\small}
 \SetAlCapFnt{\small}
 \SetAlCapNameFnt{\small\bfseries}
 \SetInd{0.6em}{1.0em}
-\caption{PHGST-DP delay-aware prediction and operational report generation.}
+\caption{PHGST-DP prediction with the prototype-conditioned delay-aware propagation module.}
 \label{alg:phgst-predict}
 \KwIn{history $X_t$; $A,M^{G},M^{S}$; pattern bank $K^{P}$; regime state $r_{t-1}$; parameters $(\theta,\psi)$; threshold $\tau$; onset cap $H_{\mathrm{start}}$}
 \KwOut{station reports $\widehat{\mathcal{R}}_t$; occupancy $\hat O_t$; cause $\hat c_t$; remaining time $\hat\ell_t$}
@@ -699,7 +699,7 @@ Algorithm~\ref{alg:phgst-predict} assembles representation, delay-pattern intera
 $H^{(0)}\leftarrow\mathrm{mean}_{q}e^{(q)}+E_{\mathrm{time}}+E_{\mathrm{lap}}+E_{\mathrm{node}}$\;
 construct causal length-$3$ queue patches $P$ and project the fixed activity-pattern centres $K^{P}$\;
 \BlankLine
-\textbf{Stage 2: delay-pattern-conditioned spatiotemporal encoding}\;
+\textbf{Stage 2: prototype-conditioned delay-aware propagation module}\;
 \For{$l\leftarrow 1$ \KwTo $5$}{
   $H_T\leftarrow\mathrm{Attn}_{T}(H^{(l-1)})$\;
   $C^{P}\leftarrow\mathrm{softmax}(Q^{P}(P)K^{P}(K^{P})^{\top}/\sqrt{d_h})V^{P}(K^{P})$ \tcp*{queue query vs.\ activity prototypes}
@@ -735,7 +735,7 @@ $\widehat{\mathcal{R}}_t\leftarrow\varnothing$\;
 \Return $\widehat{\mathcal{R}}_t,\hat O_t,\hat c_t,\hat\ell_t$\;
 \end{algorithm*}
 
-To keep the three end-to-end algorithms readable, Algorithms~\ref{alg:graph-masks} and~\ref{alg:pattern-bank} isolate the two reusable preprocessing routines called by Algorithm~\ref{alg:phgst-train}. The first instantiates structural and semantic constraints; the second fits the delay-pattern prototypes. Neither routine reads validation labels or held-out outcomes.
+To keep the three end-to-end algorithms readable, Algorithms~\ref{alg:graph-masks} and~\ref{alg:pattern-bank} isolate the two reusable preprocessing routines called by Algorithm~\ref{alg:phgst-train}. The first instantiates structural and semantic constraints; the second performs the clustered temporal-pattern construction used to fit the prototype bank. Neither routine reads validation labels or held-out outcomes.
 
 \begin{algorithm}[t]
 \caption{Factory graph and attention-mask construction.}
@@ -762,7 +762,7 @@ $E_{\mathrm{lap}}\leftarrow$ first $d_{\mathrm{lap}}$ nontrivial eigenvectors of
 \end{algorithm}
 
 \begin{algorithm}[t]
-\caption{Training-only short-pattern prototype fitting.}
+\caption{Training-only clustered temporal-pattern construction.}
 \label{alg:pattern-bank}
 \KwIn{scaled training histories $X^{\mathrm{tr}}$; activity channel $c_{\mathrm{act}}$; patch length $S{=}3$; centres $K{=}16$; iterations $J{=}10$; seed $0$}
 \KwOut{pattern bank $K^P=\{k^P_1,\ldots,k^P_K\}$}
@@ -816,7 +816,7 @@ The report-generation stage of Algorithm~\ref{alg:phgst-predict} is also used du
 %% ========================================================================
 \section{Experiments}\label{sec:exp}
 
-PHGST-DP is evaluated for a central production objective: identifying emerging bottlenecks with sufficient temporal and process detail to support intervention planning. The experiments connect event detection and early warning with duration and state prediction, then examine the heterogeneous resource representation, process-informed supervision, and delay-pattern conditioning that support these outputs. Resource-level traces illustrate how the predictions describe bottleneck onset, persistence, and recovery. A complementary evaluation examines the computational efficiency of report generation.
+PHGST-DP is evaluated for a central production objective: identifying emerging bottlenecks with sufficient temporal and process detail to support intervention planning. The experiments connect event detection and early warning with duration and state prediction, then examine the heterogeneous resource representation, process-informed rules and clustered temporal-pattern construction, and the prototype-conditioned delay-aware propagation module that support these outputs. Resource-level traces illustrate how the predictions describe bottleneck onset, persistence, and recovery. A complementary evaluation examines the computational efficiency of report generation.
 
 \subsection{Experimental setup}
 
@@ -1042,7 +1042,7 @@ The class-level results show how this explanation covers distinct production sym
 
 \subsection{Ablation study}
 
-The ablation study links predictive performance to three design choices: heterogeneous process--logistics information, process-informed supervision, and delay-pattern conditioning. Nine configurations also examine the decoder and training choices that support advance warning (Table~\ref{tab:ablation-arms}). Every ablation comparison, including its Full reference, begins from identical parameter values and uses a 50-epoch budget, the same Start$\leq5\rightarrow$Start$\leq10\rightarrow$Start$\leq15$ curriculum, and the same validation-controlled checkpoint and threshold-selection rule. Dataset, target resources, label rules, and candidate thresholds also follow the same protocol. The common selection procedure yields a threshold of $0.94$ for most arms and $0.90/0.88/0.94$ for NoFarBoost. The matched-budget cause-supervision experiment separately isolates the explanatory effect of the cause head. Remaining-time comparisons use the stage-1 reference, before head-specific fine-tuning.
+The ablation study links predictive performance to three design choices: heterogeneous process--logistics information, process-informed rules and clustered temporal-pattern construction, and the prototype-conditioned delay-aware propagation module. Nine configurations also examine the decoder and training choices that support advance warning (Table~\ref{tab:ablation-arms}). Every ablation comparison, including its Full reference, begins from identical parameter values and uses a 50-epoch budget, the same Start$\leq5\rightarrow$Start$\leq10\rightarrow$Start$\leq15$ curriculum, and the same validation-controlled checkpoint and threshold-selection rule. Dataset, target resources, label rules, and candidate thresholds also follow the same protocol. The common selection procedure yields a threshold of $0.94$ for most arms and $0.90/0.88/0.94$ for NoFarBoost. The matched-budget cause-supervision experiment separately isolates the explanatory effect of the cause head. Remaining-time comparisons use the stage-1 reference, before head-specific fine-tuning.
 
 \begin{table*}[t]
 \centering
@@ -1060,15 +1060,15 @@ NoGroup & Heterogeneous graph & One linear projection of the 27 channels instead
 NoCross & Heterogeneous graph & Within-type edges only; cross-type semantic attention masked & Common protocol, 50 ep. \\
 NoInfo & Heterogeneous graph & Only machines observed; non-machine features and five coupling channels zeroed & Common protocol, 50 ep. \\
 MachineOnly & Heterogeneous graph & NoCross and NoInfo combined & Common protocol, 50 ep. \\
-NoCluster & Cause/regime components & No cause supervision, deterministic regime fusion, or supervised contrastive regularization & Common protocol, 50 ep. \\
-NoPattern & Delay propagation & Delay-aware pattern matching disabled & Common protocol, 50 ep. \\
+NoCluster & Process rules/context & No cause supervision, deterministic regime fusion, or supervised contrastive regularization & Common protocol, 50 ep. \\
+NoPattern & \makecell[l]{Prototype-conditioned delay-aware\\propagation module} & Recent-patch matching to the clustered temporal-pattern bank disabled & Common protocol, 50 ep. \\
 NoSplit & Decoder & One shared will head for continuing and new events & Common protocol, 50 ep. \\
 NoFarBoost & Training & Far-onset weighting and enhanced false-alarm penalty removed & Common protocol, 50 ep. \\
 \bottomrule
 \end{tabular*}
 \end{table*}
 
-PHGST-DP preserves event accuracy as the onset range expands (Table~\ref{tab:ablation-grouped}). Most removed components lower F1-score and Upcoming recall and raise union duration error, while NoFarBoost is slightly better at Start$\leq5$ at its validation-selected threshold. From Start$\leq5$ to Start$\leq15$, Full F1-score changes from $0.804$ to $0.768$, and union duration MAE from $4.17$ to $4.43$~min. Under the matched initialization, budget, curriculum, and model-selection protocol, the structural and entity variants exhibit larger changes, with F1 reductions of $0.08$--$0.16$ and MAE increases of $0.8$--$1.5$~min. On the delay-pattern question, Upcoming recall holds with Full across caps, whereas NoPattern and NoSplit degrade more sharply, and the $>10$~min strict-report bin rises from $0.240$ (NoFarBoost) to $0.433$ (Full).
+PHGST-DP preserves event accuracy as the onset range expands (Table~\ref{tab:ablation-grouped}). Most removed components lower F1-score and Upcoming recall and raise union duration error, while NoFarBoost is slightly better at Start$\leq5$ at its validation-selected threshold. From Start$\leq5$ to Start$\leq15$, Full F1-score changes from $0.804$ to $0.768$, and union duration MAE from $4.17$ to $4.43$~min. Under the matched initialization, budget, curriculum, and model-selection protocol, the structural and entity variants exhibit larger changes, with F1 reductions of $0.08$--$0.16$ and MAE increases of $0.8$--$1.5$~min. For the prototype-conditioned delay-aware propagation module, Upcoming recall holds with Full across caps, whereas NoPattern and NoSplit degrade more sharply, and the $>10$~min strict-report bin rises from $0.240$ (NoFarBoost) to $0.433$ (Full).
 
 \subsubsection{Heterogeneous graph and multi-entity information}
 
@@ -1127,7 +1127,7 @@ Cross-resource information is most closely associated with advance warning. PHGS
 
 \input{tables/ch5_attention_resources.tex}
 
-\subsubsection{Process-informed supervision analysis}\label{sec:supervision-analysis}
+\subsubsection{Process-informed rules}\label{sec:supervision-analysis}
 % Prefer text+float sharing a column page; avoid near-empty float pages.
 \setcounter{topnumber}{3}
 \setcounter{bottomnumber}{2}
@@ -1138,14 +1138,14 @@ Cross-resource information is most closely associated with advance warning. PHGS
 \renewcommand{\floatpagefraction}{0.75}
 \renewcommand{\dbltopfraction}{0.9}
 
-Process-informed supervision connects the event representation to production meaning. The analysis focuses on event and state reporting under the complete supervision configuration, cause accuracy under a matched training budget, and alignment between process-informed label rankings and intervention-sensitive resources. These experiments answer different questions and are therefore interpreted separately.
+Process-informed rules connect the event representation to production meaning. The analysis focuses on event and state reporting under the complete rule-derived supervision configuration, cause accuracy under a matched training budget, and alignment between process-informed label rankings and intervention-sensitive resources. These experiments answer different questions and are therefore interpreted separately.
 
 \paragraph*{(1) Effects of supervision components.}
-The full configuration combines event recognition with process-cause and deterministic regime information. The legacy-named NoCluster comparison retains PHGST event labels and jointly removes cause supervision, history-regime fusion into the event head, and supervised contrastive regularization (Table~\ref{tab:group-ablation}). It does not isolate a k-means component. Across the three onset caps, PHGST-DP records higher event F1, upcoming-event recall, and next-window state F1, together with lower union and detected-event duration errors under the matched initialization, 50-epoch budget, curriculum, and model-selection protocol. Because NoCluster removes three coupled components, it remains a bundle-level rather than single-factor comparison; the matched-budget experiment below isolates the explanatory benefit of cause supervision.
+NoCluster is designed to remove the clustered temporal-pattern construction component of Contribution 2, \emph{process-informed rules and clustered temporal-pattern construction}, to assess the role of clustering in constructing recurrent temporal-pattern prototypes. NoPattern separately disables the use of prototype matching in the prototype-conditioned delay-aware propagation module.
 
 \begin{table*}[t]
 \centering
-\caption{Event, state, and duration metrics for the complete process-informed supervision configuration and NoCluster. Dur.\ MAE is the union error (min); Dur.\ MAE (tp) is computed on correctly reported events only.}
+\caption{Event, state, and duration metrics for the complete process-informed rule/context configuration and NoCluster. Dur.\ MAE is the union error (min); Dur.\ MAE (tp) is computed on correctly reported events only.}
 \label{tab:group-ablation}
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
@@ -1210,13 +1210,13 @@ PHGST yields the highest point estimates on all five sensitivity-alignment metri
 
 These exploratory estimates support production sensitivity as a distinct dimension of supervision quality. All five retained soft-alignment metrics favour PHGST in this pilot, but the metric set was finalized after inspecting the pilot and Holm-adjusted paired comparisons do not reject the null hypotheses. The independent full-Oracle evaluation has not been run; the numerical ordering is therefore interpreted only as a development result for disturbance-free episodes, not as proof of general superiority across operating conditions.
 
-\subsubsection{Delay-pattern conditioning}
+\subsubsection{Clustered temporal-pattern construction and the prototype-conditioned delay-aware propagation module}
 
-Delay-pattern conditioning supports warnings that precede the visible bottleneck state. PHGST-DP records Upcoming recall of $0.542/0.535/0.537$, compared with $0.167/0.278/0.427$ for NoPattern, which retains the graph and attention branches while disabling the matching of recent patches to clustered pattern keys (Table~\ref{tab:delay-ablation-new}). For events starting more than 10~min ahead, strict report recall is $0.433$ versus $0.163$. This distance-resolved result is consistent with the role of historical patterns in representing delayed propagation. Cause macro recall is $0.967/0.965/0.978$ for Full and $0.734/0.805/0.850$ for NoPattern; the largest class-level contrast is queue buildup, with recall $0.984$ versus $0.145$ at Start$\leq5$. The stage-1 remaining-time reference also records MAE $10.93/11.21/9.72$~min, compared with $18.62/13.35/11.06$~min for NoPattern, linking temporal context to order-progress estimation.
+Clustered temporal-pattern construction supplies the recurrent prototype bank, while the prototype-conditioned delay-aware propagation module uses that bank to support warnings that precede the visible bottleneck state. PHGST-DP records Upcoming recall of $0.542/0.535/0.537$, compared with $0.167/0.278/0.427$ for NoPattern, which retains the graph and attention branches while disabling the matching of recent patches to the clustered temporal-pattern bank (Table~\ref{tab:delay-ablation-new}). For events starting more than 10~min ahead, strict report recall is $0.433$ versus $0.163$. This distance-resolved result is consistent with the role of prototype-conditioned historical context in representing delayed propagation. Cause macro recall is $0.967/0.965/0.978$ for Full and $0.734/0.805/0.850$ for NoPattern; the largest class-level contrast is queue buildup, with recall $0.984$ versus $0.145$ at Start$\leq5$. The stage-1 remaining-time reference also records MAE $10.93/11.21/9.72$~min, compared with $18.62/13.35/11.06$~min for NoPattern, linking temporal context to order-progress estimation.
 
 \begin{table*}[t]
 \centering
-\caption{Ablation of delay-pattern conditioning. $R_{\mathrm{up,rep}}$ is strict report recall within the stated onset-distance bin; Cause Macro R is macro recall over the four supported process-cause classes. Remain MAE (min) is compared with the stage-1 model, which, like the ablation, has no remaining-time fine-tuning.}
+\caption{Ablation of clustered temporal-pattern matching in the prototype-conditioned delay-aware propagation module. $R_{\mathrm{up,rep}}$ is strict report recall within the stated onset-distance bin; Cause Macro R is macro recall over the four supported process-cause classes. Remain MAE (min) is compared with the stage-1 model, which, like the ablation, has no remaining-time fine-tuning.}
 \label{tab:delay-ablation-new}
 \scriptsize
 \setlength{\tabcolsep}{2.6pt}
@@ -1282,7 +1282,7 @@ Head-specific stage-2 fine-tuning reduces overall order remaining-time MAE by $1
 \begin{figure*}[t]
 \centering
 \includegraphics[width=0.96\textwidth]{figures/key_device_struct_pair.pdf}
-\caption{Key-device ablation traces (Start$\leq5$): (a)~graph arms; (b)~cause, delay-pattern, and decoder arms.}
+\caption{Key-device ablation traces (Start$\leq5$): (a)~graph arms; (b)~process-rule/context, the prototype-conditioned delay-aware propagation module, and decoder arms.}
 \label{fig:key-device-struct-graph}
 \end{figure*}
 
@@ -1376,7 +1376,7 @@ Timing runs use the source-recorded workloads on a shared server; the common-sam
 \label{fig:quality-cost}
 \end{figure*}
 
-PHGST-DP combines F1-score of $0.804/0.778/0.768$ with median report latency of 4.72--4.77~ms and p99 latency of 5.51--5.60~ms. Figure~\ref{fig:quality-cost} places it at the highest F1-score for each onset cap with millisecond-scale reporting. XGBoost's measured CUDA implementation has report p50 of 39.29--58.55~ms and p99 of 52.81--72.66~ms; LSTM, BTGCN, and BSTAN have median report latency below 1.1~ms. These operating points expose the predictive-quality and runtime choices among the measured implementations. PHGST-DP's heterogeneous resource interactions and delay-pattern conditioning fit within a model-side reporting budget far shorter than the 60-s observation interval, making its event coverage and advance warning usable within the studied update cycle.
+PHGST-DP combines F1-score of $0.804/0.778/0.768$ with median report latency of 4.72--4.77~ms and p99 latency of 5.51--5.60~ms. Figure~\ref{fig:quality-cost} places it at the highest F1-score for each onset cap with millisecond-scale reporting. XGBoost's measured CUDA implementation has report p50 of 39.29--58.55~ms and p99 of 52.81--72.66~ms; LSTM, BTGCN, and BSTAN have median report latency below 1.1~ms. These operating points expose the predictive-quality and runtime choices among the measured implementations. PHGST-DP's heterogeneous resource interactions and prototype-conditioned delay-aware propagation module fit within a model-side reporting budget far shorter than the 60-s observation interval, making its event coverage and advance warning usable within the studied update cycle.
 
 The resource requirements remain stable across onset caps. PHGST-DP processes 1,946--1,987 samples/s, with a 0.05-ms spread in median report latency. Its 713,984 parameters occupy a 2.91-MiB checkpoint, and peak GPU allocation is approximately 175.8~MiB, about 27\% below BTGCN and BSTAN under the measured configurations; LSTM uses 83.8~MiB. The three checkpoints share the same architecture and input shape. This combination of a compact parameter set, stable inference cost, and detailed event predictions supports frequent report updates on the tested platform.
 
@@ -1386,17 +1386,17 @@ PHGST-DP brings bottleneck forecasting closer to the information needed for prod
 
 The heterogeneous process--logistics representation broadens the evidence available before a target resource becomes constrained. Resource states carry different operational meanings, and grouped embeddings retain those meanings while graph relations connect processing, transport, and supply. In the evaluated ablation configurations, the full model reaches Upcoming recall $0.542$ at Start$\leq5$, compared with $0.104$ for NoGraph and $0.220$ for NoCross (Table~\ref{tab:entity-ablation-new}). The gains concentrate on emerging events, while ongoing-event recognition remains high across configurations. This pattern supports using cross-resource context to recognize precursors and extends the prediction task to gantries and transport robots as well as machines.
 
-Process-informed supervision gives the report an interpretable connection to production conditions. The cause head identifies several supported symptoms with high class recall, while the matched-budget component study shows that cause supervision substantially improves cause accuracy with little change in station identification. Rule-based event construction supplies the targets, and deterministic cause-aligned regime identifiers provide complementary context to the event head. In the retained label-validity analysis, the exploratory replay places PHGST highest on all reported soft service-sensitivity alignment measures. This evidence motivates labels that retain a clear relationship to resource operating conditions, while its pilot scale precludes a general claim of superiority across operating conditions. The cause categories express rule-derived process associations; the replay separately evaluates simulated intervention sensitivity.
+Process-informed rules give the report an interpretable connection to production conditions. The cause head identifies several supported symptoms with high class recall, while the matched-budget component study shows that cause supervision substantially improves cause accuracy with little change in station identification. Rule-based event construction supplies the targets, and deterministic cause-aligned regime identifiers provide complementary context to the event head. In the retained label-validity analysis, the exploratory replay places PHGST highest on all reported soft service-sensitivity alignment measures. This evidence motivates labels that retain a clear relationship to resource operating conditions, while its pilot scale precludes a general claim of superiority across operating conditions. The cause categories express rule-derived process associations; the replay separately evaluates simulated intervention sensitivity.
 
-Delay-pattern conditioning connects these heterogeneous observations across time. Matching recent patches to recurrent patterns supplies temporal context to geographic attention, allowing earlier resource states to inform later bottleneck formation. For events starting more than 10~min ahead, strict report recall is $0.433$ for PHGST-DP and $0.163$ for NoPattern (Table~\ref{tab:delay-ablation-new}). Separate onset and continuation decisions further focus warning on resources that are not yet constrained. These results are consistent with the intended role of the delay module: representing precursors whose consequences emerge after a lag. The aligned case traces provide a direct view of how this predictive information appears as an event trajectory.
+Clustered temporal-pattern construction summarizes recurrent operating histories, and the prototype-conditioned delay-aware propagation module connects that context across resources and time. Matching recent patches to the fixed prototypes supplies temporal context to geographic attention, allowing earlier resource states to inform later bottleneck formation. For events starting more than 10~min ahead, strict report recall is $0.433$ for PHGST-DP and $0.163$ for NoPattern (Table~\ref{tab:delay-ablation-new}). Separate onset and continuation decisions further focus warning on resources that are not yet constrained. These results are consistent with the intended role of the propagation module: representing precursors whose consequences emerge after a lag. The aligned case traces provide a direct view of how this predictive information appears as an event trajectory.
 
-The digital-twin evaluation establishes this reporting capability only for the studied resource layout, product mix, valid simulation runs, seed 42, and 20-min prediction horizon. Cross-layout, cross-product, and physical-production transfer are not evaluated, and the process rules and graph encode application-specific engineering knowledge rather than a portable manufacturing ontology. Deployment can build on the same interface by mapping MES, WMS, and transport-dispatch observations to the resource graph and updating the report as new windows arrive. The measurements in Section~\ref{sec:efficiency} show that model-side report generation fits comfortably within the one-minute update interval on the tested hardware. Further validation can extend to end-to-end data and decision latency, missing or delayed observations, additional seeds and layouts, and the scheduling or throughput outcomes of acting on the forecasts. These directions connect the demonstrated predictive capability to its use in production control.
+The digital-twin evaluation establishes this reporting capability only for the studied resource layout, product mix, valid simulation runs, seed 42, and 20-min prediction horizon. Cross-layout, cross-product, and physical-production transfer are not evaluated, and the process rules and graph encode application-specific engineering knowledge rather than a portable manufacturing ontology. Deployment can build on the same interface by mapping MES, WMS, and transport-dispatch observations to the resource graph and updating the report as new windows arrive. Integrated digital-twin monitoring and simulation platforms for reconfigurable manufacturing systems provide a related precedent for connecting CPS and MES data with real-time supervision and offline simulation~\cite{leng2023monitoring}. The measurements in Section~\ref{sec:efficiency} show that model-side report generation fits comfortably within the one-minute update interval on the tested hardware. Further validation can extend to end-to-end data and decision latency, missing or delayed observations, additional seeds and layouts, and the scheduling or throughput outcomes of acting on the forecasts. These directions connect the demonstrated predictive capability to its use in production control.
 
 \section{Conclusion}\label{sec:conclusion}
 
-This study addresses dynamic bottleneck prediction in a production line with interacting processing and logistics resources. PHGST-DP combines a heterogeneous process--logistics graph, process-informed event and cause supervision with deterministic regime conditioning, and short-pattern-clustered delay conditioning in a spatiotemporal Transformer. The resulting report integrates bottleneck occurrence and timing, process-cause prediction, and order-completion remaining time. This design connects multi-resource observations to forecasts of where a constraint will develop, when it will emerge, and how it will persist.
+This study addresses dynamic bottleneck prediction in a production line with interacting processing and logistics resources. PHGST-DP combines a heterogeneous process--logistics graph, process-informed rules and clustered temporal-pattern construction, and a prototype-conditioned delay-aware propagation module in a spatiotemporal Transformer. The resulting report integrates bottleneck occurrence and timing, process-cause prediction, and order-completion remaining time. This design connects multi-resource observations to forecasts of where a constraint will develop, when it will emerge, and how it will persist.
 
-Across onset caps of 5, 10, and 15~min, PHGST-DP achieves F1-score of $0.804/0.778/0.768$, Upcoming recall of $0.542/0.535/0.537$, and detected-event duration MAE of $1.863/1.788/1.716$~min. One-step State F1 reaches $0.883$--$0.900$. Component analyses connect these results to cross-resource information, process-informed supervision, and temporal pattern context, while the case study shows how the outputs track bottleneck onset, persistence, and recovery. PHGST-DP thus provides an integrated and interpretable forecast of production constraints, with temporal detail that supports the planning of timely resource interventions.
+Across onset caps of 5, 10, and 15~min, PHGST-DP achieves F1-score of $0.804/0.778/0.768$, Upcoming recall of $0.542/0.535/0.537$, and detected-event duration MAE of $1.863/1.788/1.716$~min. One-step State F1 reaches $0.883$--$0.900$. Component analyses connect these results to cross-resource information, process-informed rules and clustered temporal-pattern construction, and the prototype-conditioned delay-aware propagation module, while the case study shows how the outputs track bottleneck onset, persistence, and recovery. PHGST-DP thus provides an integrated and interpretable forecast of production constraints, with temporal detail that supports the planning of timely resource interventions.
 
 %% Bibliography precedes the appendix, following common Elsevier layout.
 \bibliographystyle{unsrtnat}
@@ -1461,7 +1461,7 @@ Encoder & Five blocks; 80-dimensional hidden representation \\
 Attention heads & Temporal/geographic/semantic: $4/2/2$ \\
 Graph and semantic context & Four-hop geographic mask; five semantic neighbours \\
 Positional encoding & Eight-dimensional Laplacian encoding \\
-Delay-pattern bank & 16 prototypes; length-three temporal patches \\
+Clustered temporal-pattern bank & 16 prototypes; length-three temporal patches \\
 Far-onset enhancement & Onset-loss multiplier 2; positive weights $9/10/11$ for Start$\leq5/10/15$ \\
 False-alarm weighting & 2.5 for ordinary false positives; additional hard-false-positive multiplier 2.2 \\
 \bottomrule
