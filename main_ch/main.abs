@@ -1,21 +1,25 @@
-Timely dynamic bottleneck prediction is urgently needed to warn of emerging throughput constraints and guide resource adjustment before production is disrupted.
-Existing studies mainly rely on single-entity data returned by machine or workstation sensors, with limited representation of workers, materials, buffers, and logistics and of their relations.
-This narrow observation scope leads to incomplete factory-graph modelling, reduces prediction accuracy, and makes it difficult to capture disturbances that propagate across resources after a delay.
-A second limitation is the difficulty of constructing reliable bottleneck supervision: positive events are scarce, whereas isolated threshold crossings may conflate transient fluctuations with sustained constraints and obscure their process causes.
-To address these limitations, we propose the \textbf{Process-Informed Heterogeneous-Graph Spatiotemporal Transformer with Delayed Propagation (PHGST-DP)}.
-To address the first limitation, PHGST-DP combines a heterogeneous process--logistics graph with prototype-conditioned delay-aware propagation, linking earlier resource states to constraints that emerge elsewhere after transport, buffering, or service delays.
-To address the second, a disturbance-controlled digital production line provides traceable trajectories; process-informed rules, persistence filtering, and training-only clustering construct sustained event and cause targets and recurrent operating-pattern prototypes.
-In addition, the model jointly outputs bottleneck station, onset, duration, process cause, and remaining order time as a decision-oriented event report.
-Held-out digital-twin experiments demonstrate high bottleneck-prediction accuracy and timely report generation, while ablations support the effectiveness of the proposed components.
-These results support PHGST-DP under the studied digital-twin conditions and indicate its potential for early warning and resource coordination.
+Dynamic bottleneck prediction is essential in multi-entity production systems.
+Existing studies face limitations in observation scope and bottleneck supervision.
+They mainly rely on single-entity data from workstations, with limited representation of multiple entities including workers, materials, buffers, and logistics and the relations among them.
+This narrow observation scope leads to incomplete factory-graph modelling, making it difficult to capture delayed propagation across resources and thereby reducing prediction accuracy.
+In addition, constructing reliable bottleneck supervision is difficult: bottleneck events are scarce, while simple threshold-based labels may mistake short-term changes for lasting bottlenecks and provide little information about their causes.
+To address these limitations, we propose the \textbf{Process-Informed Heterogeneous-Graph Spatiotemporal Transformer with a Propagation-Delay-Aware Module (PHGST-PD)}.
+Firstly, to broaden the observation scope, PHGST-PD combines a heterogeneous process--logistics graph with a propagation-delay-aware module guided by recurrent operating patterns, linking earlier resource states to operating changes that emerge elsewhere after a propagation delay.
+Secondly, to improve bottleneck supervision, process-informed supervision generates labels for sustained bottlenecks and their causes, while clustering identifies repeated operating patterns.
+In addition, the model extends bottleneck prediction beyond simple temporal estimates to provide a more comprehensive bottleneck description.
+It jointly outputs bottleneck station, onset, duration, process cause, and remaining order time.
+Experiments in the evaluated simulation setting demonstrate higher event-prediction accuracy than the compared baselines and detailed bottleneck forecasts, while ablation studies support the contributions of heterogeneous resource information, process-informed supervision, and the propagation-delay-aware module.
+These results highlight the potential of PHGST-PD to provide advance warning of emerging bottlenecks and inform timely resource interventions in multi-entity production systems.
 
-\zhpara{及时的动态瓶颈预测对于在吞吐约束影响生产之前发出预警、并指导资源调整具有迫切需求。
-现有研究主要依赖机器或工位传感器返回的单一实体数据，对人员、物料、缓冲区和物流及其相互关系的表征有限。
-这一狭窄观测范围导致工厂图建模不完整、预测精度下降，也难以刻画扰动经一定时延后在不同资源之间传播的过程。
-第二项局限在于可靠瓶颈监督难以构造：正事件稀缺，而孤立的阈值穿越可能将瞬时波动与持续性约束混为一谈，并掩盖其过程原因。
-针对上述局限，本文提出\textbf{面向延迟传播的过程启发式异构图时空 Transformer（PHGST-DP）}。
-针对第一项局限，PHGST-DP 将异构工艺—物流图与原型条件化的延迟感知传播相结合，把较早资源状态与经运输、缓冲或服务时延后在其他位置显现的约束联系起来。
-针对第二项局限，可控扰动的数字化生产线提供可追溯轨迹；过程启发式规则、持续性过滤以及仅在训练集上的聚类，共同构造持续性事件与原因目标以及重复运行模式原型。
-此外，模型将瓶颈工位、开始时间、持续时间、过程原因和订单剩余时间联合输出为面向决策的事件报告。
-留出数字孪生实验表明瓶颈预测精度高、报告生成及时，消融结果亦支持各组件的有效性。
-上述结果支持 PHGST-DP 在所研究数字孪生条件下的适用性，并显示其在早期预警与资源协调方面的潜力。}
+\zhpara{动态瓶颈预测是多实体生产系统中的关键任务。
+现有研究在观测范围和瓶颈监督两方面存在局限。
+它们主要依赖工位的单一实体数据，对工人、物料、缓冲区和物流等多类实体及其相互关系的表征有限。
+这一狭窄观测范围导致工厂图建模不完整，难以刻画资源间的延迟传播，从而降低预测精度。
+此外，可靠的瓶颈监督难以构造：瓶颈事件稀少，而简单的阈值标签可能把短期变化误认为持续瓶颈，并对其原因提供的信息很少。
+针对上述局限，本文提出\textbf{面向传播延迟感知模块的过程知情异构图时空 Transformer（PHGST-PD）}。
+首先，为扩展观测范围，PHGST-PD 将异构工艺—物流图与由重复运行模式引导的传播延迟感知模块相结合，把较早的资源状态与经传播延迟后在其他位置显现的运行变化联系起来。
+其次，为改进瓶颈监督，过程知情监督为持续瓶颈及其原因生成标签，聚类则识别反复出现的运行模式。
+此外，模型将瓶颈预测从简单的时间估计扩展为更完整的瓶颈描述。
+它联合输出瓶颈工位、开始时刻、持续时间、过程原因和订单剩余时间。
+在所评估的仿真设定下，实验表明事件预测精度高于对照基线，并能给出详细瓶颈预报；消融结果支持异构资源信息、过程知情监督和传播延迟感知模块各自的贡献。
+这些结果凸显了 PHGST-PD 在多实体生产系统中对新兴瓶颈提供提前预警、并指导及时资源干预的潜力。}

@@ -331,7 +331,7 @@ The production system is defined through heterogeneous resource entities and typ
 
 \subsubsection{Production task and resource entities}
 
-We consider a shared digital-manufacturing line that produces water pipes through cutting, grooving, spot welding, root welding, surface welding, and finishing operations. The process is coupled with storage, gantry handling, transport-robot delivery, and human service. The graph implementation represents the primary process backbone with seven workstation nodes because parallel workbench and rotary-welding resources are retained as separate stations. Each production episode contains one order of ten products, and the nominal controller admits at most five products as concurrent WIP. It coordinates admission, process precedence, resource availability, and handling tasks; bottleneck prediction observes this controlled process but does not replace the controller.
+We consider a shared digital-manufacturing line that produces water pipes through cutting, grooving, spot welding, root welding, surface welding, and finishing operations. The process is coupled with storage, gantry handling, transport-robot delivery, and worker service. The graph implementation represents the primary process backbone with seven workstation nodes because parallel workbench and rotary-welding resources are retained as separate stations. Each production episode contains one order of ten products, and the nominal controller admits at most five products as concurrent WIP. It coordinates admission, process precedence, resource availability, and handling tasks; bottleneck prediction observes this controlled process but does not replace the controller.
 
 \zhpara{本文考虑一条共享式数字制造产线，水管产品依次经过切割、开槽、点焊、根部焊接、表面焊接和后处理等工序，并与仓储、龙门搬运、运输机器人配送及人工服务相耦合。图实现将平行工作台和旋转焊接资源分别保留为独立工位，因此主要工艺骨干由七个工作站节点表示。每个生产 episode 包含一个十件产品订单，名义控制器最多允许五件产品同时作为在制品进入系统，并负责任务准入、工艺先后、资源可用性和搬运任务协调。瓶颈预测对这一受控生产过程进行观测，但不取代底层控制器。}
 
@@ -340,11 +340,11 @@ Let the complete resource set be
 \mathcal{R}=\mathcal{R}^{m}\cup\mathcal{R}^{g}\cup
 \mathcal{R}^{a}\cup\mathcal{R}^{h}\cup\mathcal{R}^{b},
 \end{equation}
-where the superscripts denote machines and workbenches, gantries, transport robots, humans, and buffers. The retained graph contains 38 nodes: 7 machine/workbench nodes, 4 gantries, 4 transport robots, 5 humans, and 18 buffers. Material is not represented as a separate graph node; its state enters through shortage propagation, inbound waiting, affiliated-buffer occupancy, and other material-flow channels attached to the affected resources. These entities have different operational meanings. A machine transforms a product, a gantry or transport robot moves a product between locations, a human provides labour-dependent service, and a buffer stores intermediate products. The event-supervised target set is
+where the superscripts denote machines and workbenches, gantries, transport robots, workers, and buffers. The retained graph contains 38 nodes: 7 machine/workbench nodes, 4 gantries, 4 transport robots, 5 workers, and 18 buffers. Material is not represented as a separate graph node; its state enters through shortage propagation, inbound waiting, affiliated-buffer occupancy, and other material-flow channels attached to the affected resources. These entities have different operational meanings. A machine transforms a product, a gantry or transport robot moves a product between locations, a worker provides labour-dependent service, and a buffer stores intermediate products. The event-supervised target set is
 \begin{equation}
 \mathcal{S}=\mathcal{R}^{m}\cup\mathcal{R}^{g}\cup\mathcal{R}^{a}.
 \end{equation}
-Human and buffer nodes remain in the observation graph because labour availability and storage occupancy influence other resources, but the current implementation does not assign them station-event targets.
+Worker and buffer nodes remain in the observation graph because labour availability and storage occupancy influence other resources, but the current implementation does not assign them station-event targets.
 
 \zhpara{设完整资源集合为 $\mathcal{R}$，其子集分别表示机器与工作台、龙门、运输机器人、人员和缓冲区。最终图共包含三十八个节点，其中包括七个机器/工作台、四个龙门、四个运输机器人、五个人员和十八个缓冲区。物料并不作为独立图节点，而是通过缺料传播、入站等待、关联缓冲区占用及其他物料流通道附着于受影响资源。这些实体具有不同运营含义：机器完成产品加工，龙门或运输机器人负责位置间搬运，人员提供依赖劳动力的服务，缓冲区存放中间产品。事件监督目标集合 $\mathcal{S}$ 由机器、龙门和运输机器人组成。人员和缓冲区仍保留在观测图中，因为劳动力可用性和存储占用会影响其他资源，但当前实现不直接为这两类节点分配工位事件目标。}
 
@@ -371,7 +371,7 @@ The resource graph is observed through fixed production windows and paired with 
 
 \subsubsection{Windowed production state}
 
-Raw simulation events are sampled at logical-second resolution and aggregated into non-overlapping windows of $\Delta=60$\,s. For resource $n$ and window $t$, the state $x_{t,n}\in\mathbb{R}^{27}$ contains twenty-one operational variables, five resource-type indicators, and one labour-saturation context variable. The operational variables cover queue and occupancy, activity and waiting, blockage and starvation, downtime, inter-departure variability, upstream/downstream interaction, route and inbound delay, shortage propagation, affiliated-buffer occupancy, disturbance context, and two turning-point/momentary indicators. Labour saturation is computed from the human states and broadcast only to machine nodes. The bottleneck score used by the offline aggregation pipeline is deliberately excluded from $x_{t,n}$ to avoid leaking a supervision signal into the predictor.
+Raw simulation events are sampled at logical-second resolution and aggregated into non-overlapping windows of $\Delta=60$\,s. For resource $n$ and window $t$, the state $x_{t,n}\in\mathbb{R}^{27}$ contains twenty-one operational variables, five resource-type indicators, and one labour-saturation context variable. The operational variables cover queue and occupancy, activity and waiting, blockage and starvation, downtime, inter-departure variability, upstream/downstream interaction, route and inbound delay, shortage propagation, affiliated-buffer occupancy, disturbance context, and two turning-point/momentary indicators. Labour saturation is computed from the worker states and broadcast only to machine nodes. The bottleneck score used by the offline aggregation pipeline is deliberately excluded from $x_{t,n}$ to avoid leaking a supervision signal into the predictor.
 
 \zhpara{原始仿真事件以逻辑秒为分辨率采集，并聚合为互不重叠的 $\Delta=60$ 秒窗口。资源 $n$ 在窗口 $t$ 的状态 $x_{t,n}\in\mathbb{R}^{27}$ 由二十一个运营变量、五个资源类型指示变量和一个人力饱和上下文变量组成。运营变量覆盖队列与占用、活跃与等待、阻塞与饥饿、停机、离开间隔波动、上下游交互、路径与入站延迟、缺料传播、关联缓冲区占用、扰动上下文以及转折点和瞬时瓶颈指示。人力饱和状态由人员节点计算并只广播至机器节点。离线聚合流程中的瓶颈评分被明确排除在 $x_{t,n}$ 之外，以避免监督信号泄漏到预测器输入。}
 
@@ -391,7 +391,7 @@ Stall & 6 & Blocked/starved time, stop, availability, coupling \\
 Logistics & 4 & Departure variation, route/inbound delay, buffer \\
 Shortage & 1 & Material-shortage propagation \\
 Context & 7 & Activity, duration, time gap, disturbance, turning state, labour \\
-Type & 5 & Machine, gantry, human, robot, buffer \\
+Type & 5 & Machine, gantry, worker, robot, buffer \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -433,7 +433,7 @@ where $w_{t,n}$ indicates that an eligible run exists, $s_{t,n}$ is its onset of
 
 \zhpara{对于紧邻窗口 $t$ 之前结束的历史序列，工位 $n$ 的主要目标为事件三元组 $y_{t,n}^{\mathrm{evt}}=(w_{t,n},s_{t,n},d_{t,n})$。其中，$w_{t,n}$ 表示存在满足条件的事件段，$s_{t,n}$ 为开始偏移，$d_{t,n}$ 为其在未来网格中的长度。如果资源在历史最后一个窗口处于热状态，且未来事件从偏移零开始，则该事件定义为进行中事件；由于完整事件已在观测边界之前满足持续性条件，其未来剩余部分可以短于八个窗口。否则，$s_{t,n}>0$ 的事件定义为即将发生事件，并必须满足最短持续时间。当同一工位存在多个候选热段时，选择最长的合格事件，而不是最早事件。}
 
-Algorithm~\ref{alg:targets} consolidates the complete supervision pipeline, from type-dependent state evidence to persistent events, cause targets, regime context, and order-level remaining time. Human and buffer nodes contribute contextual observations but are omitted from station-event decoding because they are not in $\mathcal{S}$.
+Algorithm~\ref{alg:targets} consolidates the complete supervision pipeline, from type-dependent state evidence to persistent events, cause targets, regime context, and order-level remaining time. Worker and buffer nodes contribute contextual observations but are omitted from station-event decoding because they are not in $\mathcal{S}$.
 
 \zhpara{算法~\ref{alg:targets} 汇总完整监督流程，从资源类型相关状态证据出发，依次构造持续性事件、原因目标、工况上下文和订单层剩余时间。人员和缓冲区提供上下文观测，但不属于 $\mathcal{S}$，因此不参与工位事件解码。}
 
@@ -544,7 +544,7 @@ Occurrence precision, recall, and F1 quantify the coverage and reliability of al
 
 \subsection{Method overview}
 
-PHGST-DP is organized around the three contributions established in Section~\ref{sec:intro}. First, controlled simulation, a heterogeneous factory graph, and grouped embedding integrate machine, human, material-flow, buffer, gantry, and transport evidence. Second, process-informed event construction, cause supervision, and deterministic regime conditioning address scarce, weakly separable supervision while retaining traceability to observable production evidence. Third, short-pattern clustering and prototype-conditioned spatiotemporal attention address delayed propagation. The complete information flow is
+PHGST-DP is organized around the three contributions established in Section~\ref{sec:intro}. First, controlled simulation, a heterogeneous factory graph, and grouped embedding integrate machine, worker, material-flow, buffer, gantry, and transport evidence. Second, process-informed event construction, cause supervision, and deterministic regime conditioning address scarce, weakly separable supervision while retaining traceability to observable production evidence. Third, short-pattern clustering and prototype-conditioned spatiotemporal attention address delayed propagation. The complete information flow is
 \begin{equation}
 \begin{aligned}
 \text{simulation}&\rightarrow\text{window/event construction}\\
@@ -630,11 +630,11 @@ The data-generation environment reconstructs the water-pipe line, resource layou
 Formal single-axis collection activates one disturbance dimension at intensity $I=1.0$ while leaving the other dimensions nominal:
 \begin{itemize}
  \item[$\bullet$] \textbf{Machine disturbance} increases processing-time variation, lowers successful operation probability, disables selected workstations, and inserts temporary machine-fault pulses.
- \item[$\bullet$] \textbf{Human disturbance} reduces the workforce from five to three, increases task-time variation, and inserts temporary leave periods.
+ \item[$\bullet$] \textbf{Worker disturbance} reduces the workforce from five to three, increases task-time variation, and inserts temporary leave periods.
  \item[$\bullet$] \textbf{Logistics disturbance} reduces transport robots from four to two, slows gantry motion, and inserts handling freezes that include an AGV freeze.
  \item[$\bullet$] \textbf{Material disturbance} temporarily hides flange or elbow kits and introduces additional shortage pulses for selected stock-keeping units.
 \end{itemize}
-The temporary machine, human, and logistics pulses last at least ten logical minutes. This design does not assume that the injected dimension is the final bottleneck cause. Its purpose is to produce traceable perturbations whose operational consequences can emerge at different resources and times.
+The temporary machine, worker, and logistics pulses last at least ten logical minutes. This design does not assume that the injected dimension is the final bottleneck cause. Its purpose is to produce traceable perturbations whose operational consequences can emerge at different resources and times.
 
 \zhpara{正式单轴采集以强度 $I=1.0$ 每次只激活一个扰动维度，其余维度保持名义状态。机器扰动增加加工时间波动、降低成功执行概率、关闭部分工位并注入临时故障脉冲；人员扰动将工人数由五人减至三人、增加任务时间波动并注入临时离岗；物流扰动将运输机器人由四台减至两台、降低龙门速度并注入包含 AGV 冻结的搬运中断；物料扰动暂时隐藏法兰或弯头套件，并对选定库存单元增加短缺脉冲。机器、人员和物流临时脉冲至少持续十个逻辑分钟。该设计并不把注入维度视为最终瓶颈原因，其目的在于产生可追溯扰动，使其运营后果能够在不同资源和时间上显现。}
 
@@ -644,7 +644,7 @@ Mixed two-, three-, and four-dimension episodes are exported as a separate datas
 
 \subsubsection{Multi-entity aggregation and target instantiation}
 
-The second stage converts heterogeneous raw logs into a common resource--time grid. Statistics are aggregated over non-overlapping one-minute windows and aligned by resource identifier. Missing resource states are completed through the export pipeline, type one-hot variables are appended, and labour saturation is recomputed from the available human nodes. The resulting tensor contains 38 resource nodes and 27 channels in the retained dataset. Episode boundaries are preserved throughout sliding-window generation, preventing a history from combining observations from two production runs.
+The second stage converts heterogeneous raw logs into a common resource--time grid. Statistics are aggregated over non-overlapping one-minute windows and aligned by resource identifier. Missing resource states are completed through the export pipeline, type one-hot variables are appended, and labour saturation is recomputed from the available worker nodes. The resulting tensor contains 38 resource nodes and 27 channels in the retained dataset. Episode boundaries are preserved throughout sliding-window generation, preventing a history from combining observations from two production runs.
 
 \zhpara{第二阶段将异构原始日志转换为统一的资源—时间网格。统计量按互不重叠的一分钟窗口聚合并依据资源标识对齐；缺失资源状态由导出流程补齐，随后加入类型独热变量，并依据可用人员节点重新计算人力饱和状态。最终保留数据集包含三十八个资源节点和二十七个通道。滑动窗口生成过程中始终保留 episode 边界，避免一个历史样本拼接两个不同生产运行。}
 
@@ -971,14 +971,14 @@ The data-generation environment exposes four disturbance dimensions and applies 
 Dimension & L0: episode configuration & L1: sampled process variation & L2: temporary runtime events \\
 \midrule
 Machine / workstation & Disable workbench ws1 and rotary-welding ws1 & Processing-time noise $5/10/15$ steps; success rate $0.88/0.76/0.64$; tool wear $15/30/45$ steps per 1,000 steps & $2/(2$--$3)/(3$--$4)$ idle-station failures; additional $1$--$2/2$--$3/3$--$4$ weld or kitting quality-hold windows \\
-Human & Reduce workers from 5 to $3/2/1$ & Service-time scale $1.55/2.10/2.65$; worker-specific skill range $0.8$--$1.4/0.7$--$1.6/0.6$--$1.8$; time noise $12/22/32$ steps & $2/(2$--$3)/(3$--$4)$ temporary absences, applied only when the selected worker is idle \\
+Worker & Reduce workers from 5 to $3/2/1$ & Service-time scale $1.55/2.10/2.65$; worker-specific skill range $0.8$--$1.4/0.7$--$1.6/0.6$--$1.8$; time noise $12/22/32$ steps & $2/(2$--$3)/(3$--$4)$ temporary absences, applied only when the selected worker is idle \\
 Logistics & Reduce AGVs from 4 to $2/1/1$; retain all four zone gantries & Gantry-time scale $1.65/2.30/2.95$ with motion noise $10/18/26$ steps; weak background process variation & $2/(2$--$3)/(3$--$4)$ gantry or AGV freezes; at least one pulse targets an AGV while other vehicles remain active \\
 Material & Keep the nominal inventory of ten pipes, flanges, and elbows; no permanent deletion & At steps 400--1,000, temporarily hide $6$--$7/7$--$8/7$--$8$ idle flanges or elbows for $1{,}400$--$2{,}200/2{,}000$--$2{,}700/2{,}500$--$3{,}200$ steps & After the opening shortage, inject $1$--$2/2$--$3/3$--$4$ complementary flange/elbow shortage pulses; pipe blanks are never hidden \\
 \bottomrule
 \end{tabularx}
 \end{table*}
 
-For machine, human, and logistics disturbances, every Level~2 pulse lasts at least 600 steps and the intensity-specific upper bounds are 900/1,300/1,400 steps. Event targets, start times, counts, and durations are resampled for each episode using a deterministic seed. Adjacent pulses are separated by at least 360 steps, and an event waits for an eligible idle target rather than interrupting an active operation. These controls make the injected condition long enough to survive the eight-window persistence filter while avoiding a deterministic one-to-one mapping between an injection and a labelled bottleneck.
+For machine, worker, and logistics disturbances, every Level~2 pulse lasts at least 600 steps and the intensity-specific upper bounds are 900/1,300/1,400 steps. Event targets, start times, counts, and durations are resampled for each episode using a deterministic seed. Adjacent pulses are separated by at least 360 steps, and an event waits for an eligible idle target rather than interrupting an active operation. These controls make the injected condition long enough to survive the eight-window persistence filter while avoiding a deterministic one-to-one mapping between an injection and a labelled bottleneck.
 
 \zhpara{对于工位、人员和物流扰动，每个 L2 脉冲至少持续六百步，三档强度的时长上限分别为 900/1,300/1,400 步。目标、起点、条数和时长在每个 episode 中依据固定种子重新采样，相邻事件至少间隔三百六十步；若目标资源正在作业，事件等待其空闲后再生效，而不直接打断加工。该约束使扰动能够跨越八窗口持续性过滤，同时避免注入事件与最终瓶颈标签形成确定的一一对应。}
 
@@ -1393,7 +1393,7 @@ Production sensitivity provides an operational criterion for bottleneck labels: 
 
 \zhpara{\textbf{（2）标签的生产意义验证。}生产敏感度为瓶颈标签提供直接的运营评价标准：优先识别临时加速后能够缩短订单完成时间的资源。反事实回放从同一保存状态出发，比较服务干预与原生产轨迹，将标签排序与资源级行动的结果联系起来。}
 
-At a saved simulation state $t$, each of seven machine/workstation candidates receives a separate service-bundle intervention. Machine processing and its associated human service use a duration scale of $0.8$, equivalent to a $1.25\times$ service rate, for 1,200 simulation steps. Baseline and intervention branches start from the same saved state and random-number state and run to order completion. The counterfactual sensitivity is
+At a saved simulation state $t$, each of seven machine/workstation candidates receives a separate service-bundle intervention. Machine processing and its associated worker service use a duration scale of $0.8$, equivalent to a $1.25\times$ service rate, for 1,200 simulation steps. Baseline and intervention branches start from the same saved state and random-number state and run to order completion. The counterfactual sensitivity is
 \begin{equation}
 S_i(t)=M_{\mathrm{base}}(t)-M_{i,0.8}(t),
 \end{equation}
@@ -1710,7 +1710,7 @@ Figure~\ref{fig:attn-states} retains the absolute resource-attention averages un
 
 \begin{center}
 \includegraphics[width=0.92\textwidth,height=0.64\textheight,keepaspectratio]{figures/attention_heatmaps/fig02_resource_attention_states.pdf}
-\captionof{figure}{Absolute geographic (upper row) and semantic (lower row) resource attention under normal, upcoming and ongoing conditions. The matrices display 20 machine, gantry, human and AGV nodes; 18 buffer nodes are omitted without renormalization. Start cap 5 min; 96 selected samples per condition; averages cover history steps, heads and layers. Mixed-disturbance supplementary analysis (\texttt{dense\_i1\_mix}, seed 42); not the retained \texttt{dense\_i1} evaluation.}
+\captionof{figure}{Absolute geographic (upper row) and semantic (lower row) resource attention under normal, upcoming and ongoing conditions. The matrices display 20 machine, gantry, worker and AGV nodes; 18 buffer nodes are omitted without renormalization. Start cap 5 min; 96 selected samples per condition; averages cover history steps, heads and layers. Mixed-disturbance supplementary analysis (\texttt{dense\_i1\_mix}, seed 42); not the retained \texttt{dense\_i1} evaluation.}
 \label{fig:attn-states}
 \end{center}
 

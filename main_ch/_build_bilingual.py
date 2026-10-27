@@ -197,45 +197,36 @@ def should_translate_block(block: str) -> bool:
 
 
 def inject_cjk_preamble(tex: str) -> str:
-    """Ensure xeCJK + zhpara exist (main_en may omit them)."""
-    if "\\usepackage{xeCJK}" in tex:
-        # still ensure zhpara
-        if "\\newcommand{\\zhpara}" not in tex:
-            tex = tex.replace(
-                "\\usepackage{xeCJK}",
-                "\\usepackage{xeCJK}\n"
-                "\\setCJKmainfont{FandolSong-Regular.otf}\n"
-                "\\setCJKsansfont{FandolHei-Regular.otf}\n"
-                "\\setCJKmonofont{FandolHei-Regular.otf}\n"
-                "\\newcommand{\\zhpara}[1]{%\n"
-                "  \\par\\begingroup\\small\\color{black!72}\\noindent #1\\par\\endgroup}",
-            )
-        return tex
+    """Ensure xeCJK + zhpara exist; CJK fonts after Latin main font."""
+    if "\\usepackage{xeCJK}" not in tex:
+        needle = "\\usepackage{amsmath}"
+        if needle not in tex:
+            raise SystemExit("amsmath not found")
+        tex = tex.replace(needle, "\\usepackage{amsmath}\n\\usepackage{xeCJK}", 1)
 
-    # Insert after amsmath / before fontspec block similar to main.tex
-    needle = "\\usepackage{amsmath}"
-    if needle not in tex:
-        raise SystemExit("amsmath not found")
-    insert = (
-        "\\usepackage{amsmath}\n"
-        "\\usepackage{xeCJK}\n"
-        "% Chinese passages use Fandol CJK fonts (Times New Roman has no Han coverage).\n"
-        "\\setCJKmainfont{FandolSong-Regular.otf}\n"
-        "\\setCJKsansfont{FandolHei-Regular.otf}\n"
-        "\\setCJKmonofont{FandolHei-Regular.otf}\n"
-        "\\newcommand{\\zhpara}[1]{%\n"
-        "  \\par\\begingroup\\small\\color{black!72}\\noindent #1\\par\\endgroup}"
-    )
-    tex = tex.replace(needle, insert, 1)
-    # Update header comment
+    if "\\newcommand{\\zhpara}" not in tex:
+        # Insert CJK font setup + zhpara after Latin font block.
+        marker = "\\setsansfont{lmsans10-regular.otf}}}"
+        cjk = (
+            marker
+            + "\n% CJK must be declared after the Latin main font so Han glyphs are not dropped.\n"
+            + "\\IfFontExistsTF{SimSun}\n"
+            + "  {\\setCJKmainfont{SimSun}[BoldFont=SimHei,ItalicFont=KaiTi,BoldItalicFont=SimHei]\n"
+            + "   \\setCJKsansfont{Microsoft YaHei}\n"
+            + "   \\setCJKmonofont{SimHei}}\n"
+            + "  {\\setCJKmainfont{FandolSong-Regular.otf}[BoldFont=FandolSong-Bold.otf,AutoFakeSlant=0.2]\n"
+            + "   \\setCJKsansfont{FandolHei-Regular.otf}\n"
+            + "   \\setCJKmonofont{FandolHei-Regular.otf}}\n"
+            + "\\newcommand{\\zhpara}[1]{%\n"
+            + "  \\par\\begingroup\\small\\color{black!72}\\noindent #1\\par\\endgroup}"
+        )
+        if marker not in tex:
+            raise SystemExit("Latin font block marker not found for CJK injection")
+        tex = tex.replace(marker, cjk, 1)
+
     tex = tex.replace(
         "%% English-only manuscript. Chinese paragraph translations are omitted.",
         "%% Bilingual manuscript: English paragraph followed by Chinese \\zhpara{...}.",
-        1,
-    )
-    tex = tex.replace(
-        "%%   $env:TEXINPUTS = \".;..;\"; xelatex main.tex; bibtex main; xelatex main.tex; xelatex main.tex",
-        "%%   $env:TEXINPUTS = \".;..;\"; xelatex main.tex; bibtex main; xelatex main.tex; xelatex main.tex",
         1,
     )
     return tex
