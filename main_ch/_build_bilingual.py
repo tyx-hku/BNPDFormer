@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build main_ch/main.tex: current main_en English + Chinese from main.tex (fuzzy reuse) + markers for new translations."""
+"""Build main_ch/main.tex: current main_en English + Chinese from prior bilingual (fuzzy reuse) + markers for new translations."""
 from __future__ import annotations
 
 import difflib
@@ -7,10 +7,15 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-MAIN = (ROOT / "main.tex").read_text(encoding="utf-8")
 EN = (ROOT / "main_en" / "main.tex").read_text(encoding="utf-8")
 OUT = ROOT / "main_ch" / "main.tex"
 NEED = ROOT / "main_ch" / "_need_zh.txt"
+# Prefer the existing bilingual draft; fall back to a deleted-root main.tex if present.
+_ZH_CANDIDATES = [OUT, ROOT / "main.tex"]
+_zh_src = next((p for p in _ZH_CANDIDATES if p.exists()), None)
+if _zh_src is None:
+    raise SystemExit("No Chinese source found (expected main_ch/main.tex or root main.tex)")
+MAIN = _zh_src.read_text(encoding="utf-8")
 
 
 def extract_brace_arg(text: str, start: int) -> tuple[str, int]:
@@ -254,6 +259,9 @@ def main() -> None:
     print(f"loaded {len(pairs)} zh pairs from main.tex")
 
     tex = inject_cjk_preamble(EN)
+    # Share identical English table fragments with the English manuscript.
+    for name in ("ch5_attention_resources.tex", "ch5_attention_temporal.tex", "ch5_checkpoint_validation.tex"):
+        tex = tex.replace("\\input{tables/" + name + "}", "\\input{../main_en/tables/" + name + "}")
     # Split into blank-line blocks while preserving separators approximately
     parts = re.split(r"(\n\s*\n)", tex)
     out_parts: list[str] = []
