@@ -101,7 +101,7 @@ def main() -> None:
     ax.tick_params(axis="y", labelsize=TICK_SIZE)
     ax.grid(axis="y", color="#E2E4E4", linewidth=0.5, zorder=0)
     ax.set_ylabel(r"$>10$-min upcoming recall (%)", fontsize=LABEL_SIZE)
-    ax.set_title(r"(a) Far-ahead @ Start$\leq$15", fontsize=TITLE_SIZE, pad=4)
+    ax.set_title("(a) Far-ahead recall\nOnset limit $\\leq15$ min", fontsize=TITLE_SIZE, pad=4)
 
     # (b) Grouped vertical bars: type hmean by Start cap
     ax = axes[1]
@@ -127,7 +127,7 @@ def main() -> None:
     ax.yaxis.set_major_locator(MultipleLocator(10))
     ax.tick_params(axis="y", labelsize=TICK_SIZE)
     ax.grid(axis="y", color="#E2E4E4", linewidth=0.5, zorder=0)
-    ax.set_xlabel("Start cap (min)", fontsize=LABEL_SIZE)
+    ax.set_xlabel("Onset limit (min)", fontsize=LABEL_SIZE)
     ax.set_ylabel("Resource-type hmean (%)", fontsize=LABEL_SIZE)
     ax.set_title("(b) Type-balanced hmean", fontsize=TITLE_SIZE, pad=4)
 

@@ -95,7 +95,7 @@ def main() -> None:
                 ax.annotate(f"{y:.3f}", (x, y), xytext=(-8, 7),
                             textcoords="offset points", ha="right", va="bottom",
                             color=color, fontsize=LABEL_SIZE, fontweight="bold")
-        ax.set_title(f"({chr(97 + i)}) Start $\\leq$ {cap} min", fontsize=TITLE_SIZE, pad=6)
+        ax.set_title(f"({chr(97 + i)}) Onset limit $\\leq$ {cap} min", fontsize=TITLE_SIZE, pad=6)
         ax.set_xscale("log")
         ax.set_xlim(0.4, 100)
         ax.set_ylim(0.40, 0.90)

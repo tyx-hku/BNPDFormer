@@ -381,7 +381,7 @@ def main() -> None:
 
     # Figure 7: horizon-specific signed changes.
     # Same 2×3 form as fig02/fig05: geographic row (a,c,e), semantic row (b,d,f).
-    horizon_keys = (("Startlt5", "Start<=5"), ("Startlt10", "Start<=10"), ("Startlt15", "Start<=15"))
+    horizon_keys = (("Startlt5", "Onset limit ≤ 5"), ("Startlt10", "Onset limit ≤ 10"), ("Startlt15", "Onset limit ≤ 15"))
     horizon = {
         (title, kind): filter_square(data[f"{key}_{kind}_upcoming_minus_normal"], keep)
         for key, title in horizon_keys

@@ -251,7 +251,7 @@ def plot_dataset_composition() -> None:
 
     # 100% stacked horizontal bars of window–resource pairs.
     y = np.arange(3)
-    labels_y = [f"Start ≤{s}" for s in STARTS]
+    labels_y = [f"Onset limit ≤{s}" for s in STARTS]
     up = np.array([EVENT_COMPOSITION[s]["upcoming"] for s in STARTS], dtype=float)
     on = np.array([EVENT_COMPOSITION[s]["ongoing"] for s in STARTS], dtype=float)
     none = np.array([total_pairs - EVENT_COMPOSITION[s]["n_true"] for s in STARTS], dtype=float)
@@ -314,7 +314,7 @@ def plot_range_response() -> None:
         ("upcoming", "(b) Upcoming recall ↑", "", (0.0, 0.65)),
         ("dur_mae", "(c) Duration MAE ↓", "Minutes", (0.0, 4.4)),
     )
-    # Palette light blue / coral / yellow for Start ≤5 / 10 / 15.
+    # Palette light blue / coral / yellow for Onset limit ≤5 / 10 / 15.
     colors = (LIGHT, CORAL, YELLOW)
     bar_h = 0.22
     offsets = (-bar_h, 0.0, bar_h)
@@ -326,7 +326,7 @@ def plot_range_response() -> None:
             xs = [float(values[(m, cap)][key]) for m in models]
             ax.barh(
                 y + offsets[j], xs, height=bar_h * 0.92, color=colors[j],
-                edgecolor="none", zorder=3, label=f"Start ≤ {cap} min",
+                edgecolor="none", zorder=3, label=f"Onset limit ≤ {cap} min",
             )
         ax.set_xlim(limits)
         ax.set_ylim(len(models) - 0.55, -0.55)
@@ -341,7 +341,7 @@ def plot_range_response() -> None:
         ax.grid(axis="x", color="#E3E5E5", lw=0.5)
         ax.set_axisbelow(True)
     axes[0].get_yticklabels()[0].set_fontweight("bold")
-    handles = [Patch(facecolor=c, edgecolor="none", label=f"Start ≤ {cap} min")
+    handles = [Patch(facecolor=c, edgecolor="none", label=f"Onset limit ≤ {cap} min")
                for cap, c in zip(STARTS, colors)]
     fig.legend(
         handles=handles, loc="upper center", ncol=3, frameon=False, fontsize=7,
@@ -386,7 +386,7 @@ def plot_delay_distance(events: dict) -> None:
             ax0.text(x, y + 0.018, f"{y:.3f}", ha="center", fontsize=6.5, color=colors[arm])
     ax0.set_xticks(STARTS)
     ax0.set_xticklabels(["≤5", "≤10", "≤15"])
-    ax0.set_xlabel("Start cap (min)")
+    ax0.set_xlabel("Onset limit (min)")
     ax0.set_ylabel("Upcoming recall")
     ax0.set_ylim(0.05, 0.72)
     ax0.set_title("(a) Delay / decoder arms", loc="left")
@@ -409,7 +409,7 @@ def plot_delay_distance(events: dict) -> None:
             ax1.text(px, pv + 0.015, f"{pv:.3f}", ha="center", fontsize=6.5, color=color)
     ax1.set_xticks(xpos)
     ax1.set_xticklabels(bin_order)
-    ax1.set_xlabel("True onset distance (min), Start ≤15")
+    ax1.set_xlabel("True onset distance (min), Onset limit ≤15")
     ax1.set_ylabel("Strict report recall")
     ax1.set_ylim(0, 0.72)
     ax1.set_title("(b) Distance bins (published values only)", loc="left")
@@ -502,7 +502,7 @@ def plot_remain_finetuning_matrix(summary: dict | None = None) -> None:
     ax.set_xticklabels([name for name, _ in metrics], fontsize=7.5)
     ax.xaxis.tick_top()
     ax.set_yticks(np.arange(len(STARTS)))
-    ax.set_yticklabels([f"Start ≤{start}" for start in STARTS], fontsize=7.5)
+    ax.set_yticklabels([f"Onset limit ≤{start}" for start in STARTS], fontsize=7.5)
     ax.tick_params(which="both", length=0, pad=5)
     ax.set_xticks(np.arange(-0.5, len(metrics), 1), minor=True)
     ax.set_yticks(np.arange(-0.5, len(STARTS), 1), minor=True)
@@ -925,7 +925,7 @@ def plot_latency_stack() -> None:
         ax.text(f + e / 2, yi, f"{e:.2f}", ha="center", va="center", fontsize=7.5, color=INK)
         ax.text(r + 0.08, yi, f"total {r:.2f} ms", va="center", fontsize=7.5, color=INK)
     ax.set_yticks(y)
-    ax.set_yticklabels([f"Start ≤{s}" for s in STARTS])
+    ax.set_yticklabels([f"Onset limit ≤{s}" for s in STARTS])
     ax.set_xlabel("Batch-1 latency (ms)")
     ax.set_xlim(0, max(rep) + 1.4)
     ax.legend(frameon=False, fontsize=8, loc="lower right")

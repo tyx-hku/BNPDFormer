@@ -55,10 +55,10 @@
 \SetInd{0.4em}{0.7em}
 \SetCommentSty{textit}
 \hypersetup{
-  colorlinks=False,
-  citecolor=Violet,
-  linkcolor=Red,
-  urlcolor=Blue}
+colorlinks=False,
+citecolor=Violet,
+linkcolor=Red,
+urlcolor=Blue}
 % Make bibliography DOI identifiers resolve directly to the publisher landing page.
 \providecommand{\doi}[1]{\href{https://doi.org/#1}{\nolinkurl{doi: #1}}}
 
@@ -193,7 +193,7 @@
 \author[1]{Wantong Xu}[]
 \credit{Investigation, Validation}
 \affiliation[1]{organization={CI3 Lab, Department of Civil Engineering, The University of Hong Kong},
-                city={Hong Kong SAR},
+city={Hong Kong SAR},
                 }
 
 \cortext[cor1]{Corresponding author: CI3 Lab, Department of Civil Engineering, Faculty of Engineering, The University of Hong Kong, Pokfulam, Hong Kong, China.}
@@ -282,17 +282,17 @@ Zhang et al.~\cite{zhang2022vulnerability} made the delay explicit in a finite-b
 
 \subsection{Graph-based spatiotemporal modelling and event prediction}
 
-Process precedence, material transfer, and shared tasks connect manufacturing resources into networks. Graph neural networks aggregate related-node information~\cite{wu2021gnn}, using normalized connectivity in GCN~\cite{kipf2017gcn} or learned neighbour weights in GAT~\cite{velickovic2018gat}. Dynamic forecasting additionally requires temporal organization of those interactions.
+Process precedence, material transfer, and shared tasks connect manufacturing resources into networks. Graph neural networks aggregate related-node information~\cite{wu2021gnn}, using normalized connectivity in graph convolutional networks (GCN)~\cite{kipf2017gcn} or learned neighbour weights in graph attention networks (GAT)~\cite{velickovic2018gat}. Dynamic forecasting additionally requires temporal organization of those interactions.
 
 Traffic forecasting offers methodological references for this organization: DCRNN combines diffusion with recurrence~\cite{li2018dcrnn}, STGCN combines graph and temporal convolution~\cite{yu2018stgcn}, and Graph WaveNet and STSGCN extend learned connectivity and joint spatiotemporal interaction~\cite{wu2019graphwavenet,song2020stsgcn}. These mechanisms can organize multi-node histories, but road connectivity does not directly specify manufacturing process, logistics, or resource-coordination relations.
 
-Manufacturing graph models differ in the production objects and prediction targets they represent. BSTAN uses stations as nodes and production-line relations as edges, combining GAT with GRU to predict blockage and starvation before inferring future bottlenecks~\cite{lai2023bstan}. BTGCN represents ERP-managed tasks in a shipbuilding enterprise as nodes and links them through shared operators~\cite{yin2025btgcn}. Its GCN and GRU predict task-execution frequency for bottleneck identification under a minimum-throughput criterion. Dual-BDSTN combines GRU and self-attention for temporal features with a dynamic graph for material-flow-related spatial dependence~\cite{cen2025dstnn}. Cross-attention integrates these representations to predict blockage and starvation time. Because the nodes, edges, and outputs have different production meanings, comparisons must specify both the analysis object and the prediction target.
+Manufacturing graph models differ in the production objects and prediction targets they represent. BSTAN uses stations as nodes and production-line relations as edges, combining GAT with a gated recurrent unit (GRU) to predict blockage and starvation before inferring future bottlenecks~\cite{lai2023bstan}. BTGCN represents ERP-managed tasks in a shipbuilding enterprise as nodes and links them through shared operators~\cite{yin2025btgcn}. Its GCN and GRU predict task-execution frequency for bottleneck identification under a minimum-throughput criterion. Dual-BDSTN combines GRU and self-attention for temporal features with a dynamic graph for material-flow-related spatial dependence~\cite{cen2025dstnn}. Cross-attention integrates these representations to predict blockage and starvation time. Because the nodes, edges, and outputs have different production meanings, comparisons must specify both the analysis object and the prediction target.
 
 These manufacturing models organize information through production relations; the remaining question is how to use historical evidence across those relations. Local aggregation requires multiple propagation steps to connect distant resources, while adaptive relations extend connectivity but still require manufacturing-specific interpretation. In coupled production and logistics, related-resource histories may carry warning evidence before the target resource visibly becomes constrained. This motivates considering attention-based organization of historical cross-resource information.
 
 Spatiotemporal attention offers another way to connect historical positions and distant resources. Multi-head self-attention models dependencies across representation subspaces~\cite{vaswani2017attention}, with input, position, and output design adapted to forecasting~\cite{wen2023transformers}. GMAN combines spatial and temporal attention with historical-to-future transformation~\cite{zheng2020gman}. PDFormer uses geographic and semantic masks, short-term historical patterns, and propagation-delay-aware feature transformation for traffic prediction~\cite{jiang2023pdformer}. These are relevant design foundations for PHGST-DM, whose observations and relations must instead express heterogeneous production and logistics conditions. Predictive attention associations do not establish physical propagation paths.
 
-The representation produced by a spatiotemporal model must also match the prediction target. Continuous-indicator prediction concerns future values, whereas event prediction involves categories, onset time, and duration. Tax et al.~\cite{tax2017predictive} used an LSTM to predict the next activity and its occurrence time from process logs and to estimate the remaining completion time. Jin et al.~\cite{jin2023stgnpp} proposed STGNPP, which combines traffic states, road relations, and congestion-event history with spatiotemporal representations, a continuous-time GRU, and a point-process intensity function to predict the occurrence time and duration of the next congestion event. These studies provide different implementations for joint prediction of events and temporal attributes and show that output design should follow the definition of the target event.
+The representation produced by a spatiotemporal model must also match the prediction target. Continuous-indicator prediction concerns future values, whereas event prediction involves categories, onset time, and duration. Tax et al.~\cite{tax2017predictive} used a long short-term memory network (LSTM) to predict the next activity and its occurrence time from process logs and to estimate the remaining completion time. Jin et al.~\cite{jin2023stgnpp} proposed STGNPP, which combines traffic states, road relations, and congestion-event history with spatiotemporal representations, a continuous-time GRU, and a point-process intensity function to predict the occurrence time and duration of the next congestion event. These studies provide different implementations for joint prediction of events and temporal attributes and show that output design should follow the definition of the target event.
 
 
 
@@ -326,12 +326,12 @@ The system comprises interacting resource entities represented by a heterogeneou
 
 We consider a production system coupling processing and assembly with storage, handling, transport, and worker service. A workstation denotes a processing or assembly unit, including automated equipment and manually operated workbenches. Bottleneck prediction observes the controlled production process; it does not replace its admission or allocation controller. The evaluated water-pipe line and collection conditions are described in Section~\ref{sec:exp}.
 
-Let the complete resource set be
+We denote the complete resource set by $\mathcal{R}$ and its workstation, gantry, transport-robot, worker, and buffer subsets by superscripts $m$, $g$, $a$, $h$, and $b$, respectively:
 \begin{equation}
 \mathcal{R}=\mathcal{R}^{m}\cup\mathcal{R}^{g}\cup
-\mathcal{R}^{a}\cup\mathcal{R}^{h}\cup\mathcal{R}^{b},
+\mathcal{R}^{a}\cup\mathcal{R}^{h}\cup\mathcal{R}^{b}.
 \end{equation}
-where the superscripts denote workstations, gantries, transport robots, workers, and buffers. The evaluated graph contains 38 nodes: 7 workstations, 4 gantries, 4 transport robots, 5 workers, and 18 buffers. Material supply enters through resource-associated shortage, inbound-waiting, and buffer features rather than separate material nodes. The event-supervised target set is
+A transport robot is an automated guided vehicle (AGV). The evaluated graph contains 38 nodes: 7 workstations, 4 gantries, 4 transport robots, 5 workers, and 18 buffers. Material supply enters through resource-associated shortage, inbound-waiting, and buffer features rather than separate material nodes. Bottleneck-event targets are assigned to the subset $\mathcal{S}$:
 \begin{equation}
 \mathcal{S}=\mathcal{R}^{m}\cup\mathcal{R}^{g}\cup\mathcal{R}^{a}.
 \end{equation}
@@ -339,12 +339,12 @@ Worker and buffer nodes remain in the observation graph because labour availabil
 
 \subsubsection{Heterogeneous process--logistics graph}
 
-The production system is represented as a weighted undirected graph
+Using $E$ for the edge set and $A$ for the weighted adjacency matrix, we represent the production system as a weighted undirected graph:
 \begin{equation}
 G=(\mathcal{R},E,A),\qquad
-E=E^{p}\cup E^{f}\cup E^{b}\cup E^{l}\cup E^{w},
+E=E^{p}\cup E^{f}\cup E^{b}\cup E^{l}\cup E^{w}.
 \end{equation}
-where $E^{p}$ denotes process-chain relations, $E^{f}$ connects parallel workstations of the same equipment family, $E^{b}$ associates buffers with workstations, $E^{l}$ connects handling and processing resources, and $E^{w}$ links handling resources of the same type. Edge weights and attention-mask construction are specified in Section~\ref{sec:method}.
+The relation subsets $E^{p}$, $E^{f}$, $E^{b}$, $E^{l}$, and $E^{w}$ encode process chains, parallel workstations of the same equipment family, buffer--workstation associations, handling--processing links, and same-type handling links, respectively. Edge weights and attention-mask construction are specified in Section~\ref{sec:method}.
 
 These relations organize process dependency, storage-mediated constraints, and logistics interaction. Geographic proximity and behavioural similarity are treated separately by the encoder; graph edges denote possible interactions rather than verified physical causal paths.
 
@@ -377,34 +377,34 @@ Type & 5 & Workstation, gantry, worker, robot, buffer \\
 \end{tabularx}
 \end{table}
 
-Given $T_{\mathrm{in}}=30$ historical windows over $N$ resources, the model input is
+Let $t$ denote the forecast origin, $\tau$ a historical window, and $n$ one of $N$ resources. Collecting their states $x_{\tau,n}$ over $T_{\mathrm{in}}=30$ historical windows gives the input tensor
 \begin{equation}
 X_t=\left[x_{\tau,n}\right]_
 {\substack{\tau=t-T_{\mathrm{in}},\ldots,t-1\\n=1,\ldots,N}}
 \in\mathbb{R}^{T_{\mathrm{in}}\times N\times 27}.
 \end{equation}
-The future label grid contains $H_{\mathrm{label}}=30$ one-minute windows. Within this grid, the admissible event onset $H_{\mathrm{start}}$ is varied between experimental settings. Separating the thirty-minute label grid from the onset cap allows an event to begin up to fifteen minutes ahead while retaining enough future windows to satisfy the eight-window persistence requirement.
+The future label grid contains $H_{\mathrm{label}}=30$ one-minute windows. A new bottleneck is eligible only if it starts within a specified time after the forecast origin. We call this maximum offset the \emph{onset limit}, denoted by $H_{\mathrm{start}}$. For example, Onset limit~$\leq5$ admits a new onset at most 5~min ahead while retaining the full 30-min label grid. Experiments compare limits of 5, 10, and 15~min.
 
 \subsubsection{Process-informed supervision for bottleneck events}
 
-A bottleneck label must distinguish a production-relevant constraint from ordinary activity or travel. For each supervised resource, the implementation first applies a type-dependent rule
+A bottleneck label must distinguish a production-relevant constraint from ordinary activity or travel. For resource $n$ of type $\rho(n)$, the operational rule $\Phi_{\rho(n)}$ maps the resource state and observed history to a raw binary indicator $b^{\mathrm{raw}}_{t,n}$:
 \begin{equation}
-b^{\mathrm{raw}}_{t,n}=\Phi_{\rho(n)}(x_{t,n},X_t)\in\{0,1\},
+b^{\mathrm{raw}}_{t,n}=\Phi_{\rho(n)}(x_{t,n},X_t)\in\{0,1\}.
 \end{equation}
-where $\rho(n)$ denotes resource type. The rule combines operational evidence rather than treating an injected operating variation or ordinary resource activity as a bottleneck. Its resource-specific implementation is given in Algorithm~\ref{alg:targets} and Appendix~\ref{app:additional}.
+The rule combines operational evidence rather than treating an injected operating variation or ordinary resource activity as a bottleneck. Its resource-specific implementation is given in Algorithm~\ref{alg:targets} and Appendix~\ref{app:additional}.
 
-The raw binary grid is converted into sustained occupancy by first removing runs shorter than $m=8$ windows, then filling an internal cold gap of at most $g=1$ window when it lies between retained hot regions. Denoting short-run removal by $\mathcal{D}_{m}$ and gap filling by $\mathcal{F}_{g}$, the sustained occupancy grid is obtained as
+To construct sustained occupancy $o$, short-run removal $\mathcal{D}_{m}$ filters the raw binary grid using a minimum run length $m$. Gap filling $\mathcal{F}_{g}$ then joins retained regions separated by an internal gap of at most $g=1$ window. For each resource $n$, with the colon denoting its full episode sequence, these operations give
 \begin{equation}
 o_{:,n}=\mathcal{F}_{g}\!\left(\mathcal{D}_{m}
 \left(b^{\mathrm{raw}}_{:,n}\right)\right).
 \end{equation}
 The occupancy grid $o$ is an offline supervision target. At forecast origin $t$, the history-only state $h_{t-1,n}$ is computed from observations strictly before $t$, including any persistence or gap checks. It can differ from the retrospective label $o_{t-1,n}$ because the latter can use later observations. Inference therefore receives the observed-prefix state, not the offline occupancy label.
 
-For a history ending immediately before window $t$, the primary target for station $n$ is
+For a history ending immediately before window $t$, let $w_{t,n}$ indicate an eligible event on resource $n$, with onset offset $s_{t,n}$ and future length $d_{t,n}$ measured in one-minute windows. Its event target is
 \begin{equation}
-y_{t,n}^{\mathrm{evt}}=(w_{t,n},s_{t,n},d_{t,n}),
+y_{t,n}^{\mathrm{evt}}=(w_{t,n},s_{t,n},d_{t,n}).
 \end{equation}
-where $w_{t,n}$ indicates that an eligible run exists, $s_{t,n}$ is its onset offset, and $d_{t,n}$ is its length within the future grid. If the history-only state $h_{t-1,n}=1$ and the future run begins at offset zero, the event is \emph{ongoing}; its future remainder may be shorter than eight windows because the full event already satisfied persistence before the observation boundary. Otherwise, a run with $s_{t,n}>0$ is \emph{upcoming} and must satisfy the configured minimum duration. If several runs are available for one station, the longest eligible run is selected rather than the earliest run.
+If the history-only state $h_{t-1,n}=1$ and the future run begins at offset zero, the event is \emph{ongoing}, and the duration target describes its future remainder. A run with $s_{t,n}>0$ is \emph{upcoming}. If several runs are available for one station, the longest eligible run is selected rather than the earliest run.
 
 Algorithm~\ref{alg:targets} in Section~\ref{sec:method} specifies construction of these targets and the associated regime context.
 
@@ -413,7 +413,7 @@ Algorithm~\ref{alg:targets} in Section~\ref{sec:method} specifies construction o
 
 The window-level process-cause target $c_t$ describes observed conditions accompanying bottleneck evidence. Its fixed priority is material shortage, transport delay, queue buildup, and downstream blockage, inferred from operational variables rather than the injected variation dimension. These categories describe process symptoms, not independently verified root causes.
 
-The reported cause set is
+The graph-level cause head uses the four-class set $\mathcal{C}$:
 \begin{equation}
 \begin{aligned}
 \mathcal{C}=\{&
@@ -421,13 +421,13 @@ The reported cause set is
 &\text{queue buildup},\text{downstream blockage}\}.
 \end{aligned}
 \end{equation}
-Cause targets supervise the graph-level classification head. They differ from deterministic regime identifiers, which condition the event representation; Algorithm~\ref{alg:targets} specifies both.
+Cause targets differ from deterministic regime identifiers, which condition the event representation; Algorithm~\ref{alg:targets} specifies both.
 
-The order-level target $\ell_t$ is the number of future one-minute windows until all jobs are complete under the configured prediction cap. It estimates order progress alongside the station-level event report.
+The order-level target $\ell_t$ is the number of future one-minute windows until all jobs are complete under the configured prediction limit. It estimates order progress alongside the station-level event report.
 
 \subsection{Multi-task prediction formulation}
 
-The complete prediction problem is the mapping
+With learned parameters $\theta$, the predictor $f_{\theta}$ maps the history and graph to event reports for all supervised resources and graph-level estimates of cause and remaining order time:
 \begin{equation}
 f_{\theta}:(X_t,G)\longmapsto
 \left(
@@ -435,7 +435,7 @@ f_{\theta}:(X_t,G)\longmapsto
 \hat c_t,\hat\ell_t
 \right).
 \end{equation}
-The outputs jointly describe the affected resource, event interval, observable process conditions, and remaining order time. Earlier states of related resources can provide evidence for a future event; PHGST-DM uses this history without introducing a physical propagation-delay target. Evaluation and report-matching criteria are specified in Section~\ref{sec:exp}.
+Hats distinguish predictions from the targets defined above: $\hat w_{t,n}$, $\hat s_{t,n}$, and $\hat d_{t,n}$ describe event occurrence, onset, and future duration; $\hat c_t$ and $\hat\ell_t$ describe process cause and remaining order time. Earlier states of related resources can provide evidence for a future event; PHGST-DM uses this history without introducing a physical propagation-delay target. Evaluation and report-matching criteria are specified in Section~\ref{sec:exp}.
 
 %% ========================================================================
 \section{Methodology} \label{sec:method}
@@ -450,6 +450,8 @@ PHGST-DM integrates heterogeneous process--logistics observations, process-infor
 &\rightarrow\text{factory graph}\rightarrow\text{joint prediction}.
 \end{aligned}
 \end{equation}
+
+
 
 
 Figure~\ref{fig:model-architecture} shows how grouped resource features, temporal and structural embeddings, and a fixed pattern bank feed the spatiotemporal encoder. Station-level and graph-level heads decode the joint outputs defined in Section~\ref{sec:problem}.
@@ -470,40 +472,40 @@ Algorithm~\ref{alg:phgst-train} specifies training, validation-controlled select
 \SetInd{0.6em}{1.0em}
 \caption{End-to-end PHGST-DM training, selection, and held-out evaluation.}
 \label{alg:phgst-train}
-\KwIn{raw episodes $\mathcal{E}$; factory relations $G$; onset caps $\mathcal{H}=\{5,10,15\}$; candidate thresholds $\mathcal{T}$}
+\KwIn{raw episodes $\mathcal{E}$; factory relations $G$; onset limits $\mathcal{H}=\{5,10,15\}$; candidate thresholds $\mathcal{T}$}
 \KwOut{frozen event model $\theta^{\star}$, remaining-time head $\psi^{\star}$, threshold $\tau^{\star}$, held-out reports}
 \BlankLine
-\textbf{Stage 1: leakage-controlled data and fixed structural context}\;
+\textbf{Phase 1: leakage-controlled data and fixed structural context}\;
 split $\mathcal{E}$ by episode into $\mathcal{E}_{\mathrm{tr}},\mathcal{E}_{\mathrm{val}},\mathcal{E}_{\mathrm{te}}$\;
 construct samples with history-only inputs with Algorithm~\ref{alg:targets} independently inside each episode\;
 fit all feature/target scalers on $\mathcal{E}_{\mathrm{tr}}$; reuse them unchanged for $\mathcal{E}_{\mathrm{val}}$ and $\mathcal{E}_{\mathrm{te}}$\;
 obtain $(A,M^{G},M^{S},E_{\mathrm{lap}})$ from Algorithm~\ref{alg:graph-masks} and $K^{P}$ from Algorithm~\ref{alg:pattern-bank}\;
 freeze every data-derived structural quantity before neural-parameter optimization \tcp*{masks and prototypes stay fixed}
 \BlankLine
-\textbf{Stage 2: curriculum learning of shared representations and event-related heads}\;
+\textbf{Phase 2: shared-representation learning (training stage 1)}\;
 initialize $\theta$ from the documented prefix-supervised checkpoint\;
 \ForEach{$H_{\mathrm{start}}\in\mathcal{H}$ in curriculum order}{
-  warm-start the current onset cap from the preceding retained checkpoint when available\;
+warm-start the current onset limit from the preceding retained checkpoint when available\;
   \For{epoch $=1,\ldots,E_1$ until patience is exhausted}{
     \ForEach{oversampled training minibatch $B$}{
-      $(\widehat{Y}^{\mathrm{evt}},\hat O,\hat c,\hat\ell)\leftarrow\mathrm{PHGSTDMForward}_{\theta}(B,A,M^{G},M^{S},K^{P})$\;
-      evaluate the event, occupancy, cause, reconstruction, contrastive, and remaining-time losses, then update $\theta$\;
+$(\widehat{Y}^{\mathrm{evt}},\hat O,\hat c,\hat\ell)\leftarrow\mathrm{PHGSTDMForward}_{\theta}(B,A,M^{G},M^{S},K^{P})$\;
+evaluate the event, occupancy, cause, reconstruction, contrastive, and remaining-time losses, then update $\theta$\;
     }
-    decode $\mathcal{E}_{\mathrm{val}}$ with Algorithm~\ref{alg:phgst-predict} for every $\tau\in\mathcal{T}$\;
-    retain the checkpoint--threshold pair that passes the precision/recall gates and maximizes station F1\;
+decode $\mathcal{E}_{\mathrm{val}}$ with Algorithm~\ref{alg:phgst-predict} for every $\tau\in\mathcal{T}$\;
+retain the checkpoint--threshold pair that passes the precision/recall gates and maximizes station F1\;
   }
 }
 freeze the selected stage-1 parameters and threshold as $(\theta^{\star},\tau^{\star})$ \tcp*{event reports locked hereafter}
 \BlankLine
-\textbf{Stage 3: remaining-time specialization without changing event reports}\;
+\textbf{Phase 3: remaining-time specialization (training stage 2)}\;
 freeze the encoder and all event, occupancy, and cause heads\;
 initialize the rate-augmented remaining-time head $\psi$ from $\theta^{\star}$\;
 \For{epoch $=1,\ldots,E_2$ until validation loss stops improving}{
-  update only $\psi$ using progress-weighted remaining-time loss\;
+update only $\psi$ using progress-weighted remaining-time loss\;
 }
 freeze $\psi^{\star}$; do not retune $\tau^{\star}$\;
 \BlankLine
-\textbf{Stage 4: held-out evaluation after all choices are frozen}\;
+\textbf{Phase 4: held-out evaluation after all choices are frozen}\;
 run Algorithm~\ref{alg:phgst-predict} on $\mathcal{E}_{\mathrm{te}}$ using $(\theta^{\star},\psi^{\star},\tau^{\star})$\;
 \Return frozen models, threshold, and held-out reports \tcp*{test episodes never re-enter selection}
 \end{algorithm*}
@@ -526,52 +528,52 @@ Windows share a fixed resource ordering. Missing numeric entries are filled with
 
 Algorithm~\ref{alg:targets} derives event, occupancy, prefix, cause, regime-context, and remaining-time supervision from operational states, excluding the exported bottleneck score.
 
-Rule-derived regime identifiers provide context for event representations and contrastive learning, while training-only clustering constructs the temporal prototype bank from recurrent histories. The exploratory station/window descriptors use $K=8$ and neither define event labels nor contribute a cluster-prediction loss.
+Rule-derived regime identifiers provide context for event representations and contrastive learning, while training-only clustering constructs the temporal prototype bank from recurrent histories.
 
 \begin{algorithm*}[t]
 \caption{Process-informed supervision and regime-context construction.}
 \label{alg:targets}
-\KwIn{episode trajectories $\mathcal{E}$; resource types $\rho$; supervised set $\mathcal{S}$; $T_{\mathrm{in}}$; $H_{\mathrm{label}}$; $H_{\mathrm{start}}$; $m{=}8$; $g{=}1$}
+\KwIn{episode trajectories $\mathcal{E}$; resource types $\rho$; supervised set $\mathcal{S}$; $T_{\mathrm{in}}$; $H_{\mathrm{label}}$; $H_{\mathrm{start}}$; $m$; $g{=}1$}
 \KwOut{samples with history-only inputs $\mathcal{D}=\{X_t,O_t,Y_t^{\mathrm{evt}},c_t,\ell_t,r_t\}$}
 $\mathcal{D}\leftarrow\varnothing$\;
 \ForEach{completed, reset-free episode $e\in\mathcal{E}$}{
-  \tcp{Stage 1: synchronize heterogeneous observations}
-  aggregate raw streams into non-overlapping $60$,s windows\;
-  align resource states by identifier and append type/context channels\;
-  preserve the episode boundary and compute jobs remaining\;
-  \tcp{Stage 2: construct the persistent occupancy grid}
+  \tcp{Phase 1: synchronize heterogeneous observations}
+aggregate raw streams into non-overlapping 60-s windows\;
+align resource states by identifier and append type/context channels\;
+preserve the episode boundary and compute jobs remaining\;
+  \tcp{Phase 2: construct the persistent occupancy grid}
   \ForEach{$n\in\mathcal{S}$ and window $u$}{
-    $b^{\mathrm{raw}}_{u,n}\leftarrow\Phi_{\rho(n)}(x_{u,n})$ using queue, stall, availability, shortage, and logistics evidence\;
+$b^{\mathrm{raw}}_{u,n}\leftarrow\Phi_{\rho(n)}(x_{u,n})$ using queue, stall, availability, shortage, and logistics evidence\;
   }
   \ForEach{$n\in\mathcal{S}$}{
-    $o_{:,n}\leftarrow\mathcal{F}_{g}(\mathcal{D}_{m}(b^{\mathrm{raw}}_{:,n}))$ \tcp*{drop short runs, then fill gaps}
+$o_{:,n}\leftarrow\mathcal{F}_{g}(\mathcal{D}_{m}(b^{\mathrm{raw}}_{:,n}))$ \tcp*{drop short runs, then fill gaps}
   }
-  \tcp{Stage 3: derive process cause and regime context}
+  \tcp{Phase 3: derive process cause and regime context}
   \ForEach{window $u$ and resource $n$}{
-    assign $r_{u,n}$ by the deterministic cause-aligned state rules\;
+assign $r_{u,n}$ by the deterministic cause-aligned state rules\;
   }
   \ForEach{window $u$ containing reportable hot evidence}{
-    assign $c_u$ by the priority shortage $\succ$ delay $\succ$ queue $\succ$ blockage\;
-    set the cause-loss weight to $1$ only when $c_u\in\mathcal{C}$\;
+assign $c_u$ by the priority shortage $\succ$ delay $\succ$ queue $\succ$ blockage\;
+set the cause-loss weight to $1$ only when $c_u\in\mathcal{C}$\;
   }
-  \tcp{Stage 4: instantiate one forecasting sample with history-only inputs}
+  \tcp{Phase 4: instantiate one forecasting sample with history-only inputs}
   \For{$t\leftarrow T_{\mathrm{in}}$ \KwTo episode completion}{
-    $X_t\leftarrow x_{t-T_{\mathrm{in}}:t,:,:}$ and $O_t\leftarrow o_{t:t+H_{\mathrm{label}},:}$\;
-    compute $h_{t-1}$ from the observed prefix $x_{0:t,:,:}$ only \tcp*{no retrospective occupancy supplied to inference}
+$X_t\leftarrow x_{t-T_{\mathrm{in}}:t,:,:}$ and $O_t\leftarrow o_{t:t+H_{\mathrm{label}},:}$\;
+compute $h_{t-1}$ from the observed prefix $x_{0:t,:,:}$ only \tcp*{no retrospective occupancy supplied to inference}
     \ForEach{$n\in\mathcal{S}$}{
-      $(s,d)\leftarrow$ longest hot run of $O_{t,:,n}$ whose onset is within $H_{\mathrm{start}}$\;
+$(s,d)\leftarrow$ longest hot run of $O_{t,:,n}$ whose onset is within $H_{\mathrm{start}}$\;
       \eIf{$h_{t-1,n}=1$ and $s=0$}{
-        $(w_{t,n},s_{t,n},d_{t,n})\leftarrow(1,0,d)$ \tcp*{ongoing remainder}
+$(w_{t,n},s_{t,n},d_{t,n})\leftarrow(1,0,d)$ \tcp*{ongoing remainder}
       }{
         \eIf{$0<s\le H_{\mathrm{start}}$ and $d\ge m$}{
-          $(w_{t,n},s_{t,n},d_{t,n})\leftarrow(1,s,d)$ \tcp*{upcoming event}
+$(w_{t,n},s_{t,n},d_{t,n})\leftarrow(1,s,d)$ \tcp*{upcoming event}
         }{
-          $(w_{t,n},s_{t,n},d_{t,n})\leftarrow(0,0,0)$\;
+$(w_{t,n},s_{t,n},d_{t,n})\leftarrow(0,0,0)$\;
         }
       }
     }
-    $\ell_t\leftarrow$ future one-minute windows until all jobs finish, clipped by the prediction cap\;
-    append $(X_t,O_t,Y_t^{\mathrm{evt}},c_{t-1},\ell_t,r_{t-1})$ to $\mathcal{D}$\;
+$\ell_t\leftarrow$ future one-minute windows until all jobs finish, clipped by the prediction limit\;
+append $(X_t,O_t,Y_t^{\mathrm{evt}},c_{t-1},\ell_t,r_{t-1})$ to $\mathcal{D}$\;
   }
 }
 \Return $\mathcal{D}$\;
@@ -579,23 +581,23 @@ $\mathcal{D}\leftarrow\varnothing$\;
 
 \subsubsection{Heterogeneous factory graph and attention masks}
 
-The weighted adjacency $A$ follows the relations in Section~\ref{sec:problem}. The five relation groups use weights $1.0$, $0.8$, $0.6$, $0.5$, and $0.3$, respectively; self-loops have weight $1.0$. Floyd--Warshall computation converts nonzero edges into hop distances $D^{\mathrm{hop}}$. The geographic mask is
+The weighted adjacency $A$ follows the relations in Section~\ref{sec:problem}. The five relation groups use weights $1.0$, $0.8$, $0.6$, $0.5$, and $0.3$, respectively; self-loops have weight $1.0$. Floyd--Warshall computation gives the shortest-path hop distance $D^{\mathrm{hop}}_{ij}$ between resources $i$ and $j$. Geographic attention uses a hop cutoff $\delta_G=4$ through the additive mask
 \begin{equation}
 M^G_{ij}=
 \begin{cases}
 0, & D^{\mathrm{hop}}_{ij}<\delta_G,\\
 -\infty, & \text{otherwise},
 \end{cases}
-\qquad \delta_G=4,
+\qquad \delta_G=4.
 \end{equation}
-Thus, geographic attention permits resources fewer than four hops apart.
+A zero mask entry permits attention, whereas $-\infty$ blocks it. Geographic attention therefore connects resources fewer than four hops apart.
 
-Semantic attention instead links similar training trajectories. Averaging each node's feature channels gives $\bar x_{:,i}$, with correlation distance
+Semantic attention instead links similar training trajectories. Let $\bar x_{:,i}$ denote the channel-averaged training trajectory of resource $i$. Its semantic distance from resource $j$ is measured by one minus their Pearson correlation:
 \begin{equation}
 D^{\mathrm{sem}}_{ij}
 =1-\mathrm{corr}(\bar{x}_{:,i},\bar{x}_{:,j}).
 \end{equation}
-The five nearest trajectories are unmasked in $M^S$. Pearson correlation replaces traffic PDFormer's dynamic-time-warping distance in this short-episode setting. Eight nontrivial normalized-Laplacian eigenvectors supply structural positions. Algorithm~\ref{alg:graph-masks} summarizes construction; all trajectory-derived quantities use training data only.
+The five nearest trajectories are unmasked in the semantic attention mask $M^S$. Pearson correlation replaces traffic PDFormer's dynamic-time-warping distance in this short-episode setting. Eight nontrivial normalized-Laplacian eigenvectors supply structural positions. Algorithm~\ref{alg:graph-masks} summarizes construction; all trajectory-derived quantities use training data only.
 
 \begin{algorithm}[t]
 \caption{Factory graph and attention-mask construction.}
@@ -604,22 +606,24 @@ The five nearest trajectories are unmasked in $M^S$. Pearson correlation replace
 \KwOut{weighted adjacency $A$; geographic mask $M^G$; semantic mask $M^S$; structural positions $E_{\mathrm{lap}}$}
 $A\leftarrow I_{|\mathcal{V}|}$\;
 \ForEach{typed relation $(i,j,w)\in\mathcal{R}$}{
-  $A_{ij}\leftarrow A_{ji}\leftarrow\max(A_{ij},w)$\;
+$A_{ij}\leftarrow A_{ji}\leftarrow\max(A_{ij},w)$\;
 }
 $D^{\mathrm{hop}}\leftarrow\mathrm{FloydWarshall}(\mathbf{1}[A>0])$\;
 \ForEach{$(i,j)\in\mathcal{V}\times\mathcal{V}$}{
-  $M^G_{ij}\leftarrow0$ if $D^{\mathrm{hop}}_{ij}<\delta_G$, otherwise $-\infty$\;
+$M^G_{ij}\leftarrow0$ if $D^{\mathrm{hop}}_{ij}<\delta_G$, otherwise $-\infty$\;
 }
 $\bar x_{:,i}\leftarrow\mathrm{MeanChannels}(X^{\mathrm{tr}}_{:,:,i,:})$ for every $i$\;
 $D^{\mathrm{sem}}_{ij}\leftarrow1-\mathrm{corr}(\bar x_{:,i},\bar x_{:,j})$\;
 \ForEach{$i\in\mathcal{V}$}{
-  $\mathcal{N}^{S}_i\leftarrow$ indices of the $k_S$ smallest finite values in $D^{\mathrm{sem}}_{i,:}$\;
-  $M^S_{ij}\leftarrow0$ for $j\in\mathcal{N}^{S}_i\cup\{i\}$, and $-\infty$ otherwise\;
+$\mathcal{N}^{S}_i\leftarrow$ indices of the $k_S$ smallest finite values in $D^{\mathrm{sem}}_{i,:}$\;
+$M^S_{ij}\leftarrow0$ for $j\in\mathcal{N}^{S}_i\cup\{i\}$, and $-\infty$ otherwise\;
 }
 $L\leftarrow I-D_A^{-1/2}AD_A^{-1/2}$\;
 $E_{\mathrm{lap}}\leftarrow$ first $d_{\mathrm{lap}}$ nontrivial eigenvectors of $L$\;
 \Return $A,M^G,M^S,E_{\mathrm{lap}}$\;
 \end{algorithm}
+
+In Algorithm~\ref{alg:graph-masks}, $\mathcal{V}$ denotes resource nodes and $\mathcal{R}$ the list of typed relations $(i,j,w)$ with edge weight $w$. The matrix $D_A$ contains adjacency row sums on its diagonal, $I$ is the identity matrix, and $L$ is the normalized graph Laplacian. The set $\mathcal{N}^{S}_i$ contains the $k_S$ semantic neighbours of resource $i$, and $d_{\mathrm{lap}}$ is the number of retained structural eigenvectors.
 
 \subsection{Delay-aware heterogeneous spatiotemporal encoding}
 
@@ -627,45 +631,45 @@ $E_{\mathrm{lap}}\leftarrow$ first $d_{\mathrm{lap}}$ nontrivial eigenvectors of
 
 \subsubsection{Grouped heterogeneous state embedding}
 
-The 27 input channels are partitioned into six groups: queue, stall, logistics, shortage, context, and type. Each group $q$ has an independent affine projection and GELU activation:
+The 27 input channels are partitioned into six groups: queue, stall, logistics, shortage, context, and type. For group $q$, the feature vector $x^{(q)}_{t,n}$ is projected with a learned matrix $W_q$ and bias $b_q$ to obtain the embedding $e^{(q)}_{t,n}$:
 \begin{equation}
 e^{(q)}_{t,n}=\mathrm{GELU}
 \left(W_q x^{(q)}_{t,n}+b_q\right).
 \end{equation}
-The six group embeddings are mean-pooled, rather than concatenated as separate tokens:
+GELU denotes the Gaussian error linear unit. Mean pooling the six group embeddings gives the combined resource embedding $e_{t,n}$:
 \begin{equation}
 e_{t,n}=\frac{1}{6}\sum_{q=1}^{6}e^{(q)}_{t,n}.
 \end{equation}
 Mean pooling gives each semantic group equal weight regardless of channel count.
 
-The initial representation combines grouped evidence with temporal, structural, and identity information:
+The encoder input $H^{(0)}$ combines the grouped embeddings $E_{\mathrm{group}}(X_t)$ with sinusoidal temporal positions $E_{\mathrm{time}}$, projected graph eigenvectors $E_{\mathrm{lap}}(G)$, and learned resource identities $E_{\mathrm{node}}$:
 \begin{equation}
 H^{(0)}=E_{\mathrm{group}}(X_t)+
 E_{\mathrm{time}}+E_{\mathrm{lap}}(G)+E_{\mathrm{node}}.
 \end{equation}
-$E_{\mathrm{time}}$ is sinusoidal, $E_{\mathrm{lap}}$ projects the graph eigenvectors, and $E_{\mathrm{node}}$ is a learned resource-identity embedding. Day-of-week and time-of-day embeddings are disabled because an episode is driven by order progress and operating variations rather than calendar periodicity.
+Day-of-week and time-of-day embeddings are disabled because an episode is driven by order progress and operating variations rather than calendar periodicity.
 
 \subsubsection{Delay-aware spatiotemporal modeling}
 
-Each encoder block uses temporal, geographic, and semantic attention~\cite{jiang2023pdformer}, organized around resource histories, process--logistics relations, and behavioural similarity. For $b\in\{T,G,S\}$,
+Each encoder block uses temporal, geographic, and semantic attention~\cite{jiang2023pdformer}, organized around resource histories, process--logistics relations, and behavioural similarity. For branch $b\in\{T,G,S\}$, respectively, scaled dot-product attention is computed as
 \begin{equation}
 \mathrm{Attn}_{b}(Q_b,K_b,V_b;M_b)
 =\mathrm{softmax}\!\left(
 \frac{Q_bK_b^\top}{\sqrt{d_h}}+M_b
 \right)V_b ,
 \end{equation}
-where temporal attention has no cross-node mask, geographic attention uses $M^G$, and semantic attention uses $M^S$.
+where $Q_b$, $K_b$, and $V_b$ are query, key, and value matrices, $d_h$ is the query/key dimension per head, and $M_b$ is the additive mask. The superscript $\top$ denotes transpose; softmax normalizes scores over attended positions. Temporal attention operates within each resource history without a cross-node mask, while geographic and semantic attention use $M^G$ and $M^S$.
 
-Training-only k-means fits sixteen prototypes from length-three activity patches (\texttt{active\_pct\_s}); online queries use queue patches (\texttt{queue\_length\_s}). For query $P_{t,n}$ and fixed activity centres $K^P$, prototype matching gives
+Training-only k-means fits sixteen prototypes from three-window sequences of resource activity ratios; online queries use three-window sequences of queue length. Both variables use the training-fitted feature scaling described above. Let $P_{t,n}$ denote a recent queue-length patch and $K^P$ the fixed activity-prototype bank. Matching them produces the context $C^P_{t,n}$:
 \begin{equation}
 C^P_{t,n}=
 \mathrm{softmax}\!\left(
-\frac{Q^P(P_{t,n})K^P(K^P)^\top}{\sqrt{d_h}}
-\right)V^P(K^P).
+\frac{f_Q^P(P_{t,n})f_K^P(K^P)^\top}{\sqrt{d_h}}
+\right)f_V^P(K^P).
 \end{equation}
-The matched context is added to the geographic key, conditioning cross-resource interaction on recurrent activity patterns and current queue evolution. Pattern matching operates directly on historical patches, without a Fourier transform or an explicit physical propagation-time target. Algorithm~\ref{alg:pattern-bank} specifies prototype fitting.
+The learned functions $f_Q^P(\cdot)$, $f_K^P(\cdot)$, and $f_V^P(\cdot)$ project queries, keys, and values, respectively. The matched context is added to the geographic key, conditioning cross-resource interaction on recurrent activity patterns and current queue evolution. Pattern matching operates directly on historical patches, without a Fourier transform or an explicit physical propagation-time target. Algorithm~\ref{alg:pattern-bank} specifies prototype fitting.
 
-For encoder block $l$, the three branches are
+At encoder block $l$, the preceding representation $H^{(l-1)}$ feeds three branches. Their temporal, geographic, and semantic outputs are denoted by $H_T^{(l)}$, $H_G^{(l)}$, and $H_S^{(l)}$; the geographic branch also receives the pattern context $C^P$:
 \begin{equation}
 \begin{aligned}
 H_T^{(l)}&=\mathrm{Attn}_T(H^{(l-1)}),\\
@@ -673,7 +677,7 @@ H_G^{(l)}&=\mathrm{Attn}_G(H^{(l-1)},M^G,C^P),\\
 H_S^{(l)}&=\mathrm{Attn}_S(H^{(l-1)},M^S).
 \end{aligned}
 \end{equation}
-Branch outputs are concatenated and projected, followed by pre-normalized residual and feed-forward layers. Five blocks use latent dimension 80 and $4/2/2$ temporal/geographic/semantic heads.
+Branch outputs are concatenated and projected, followed by pre-normalized residual and feed-forward layers; FFN in Algorithm~\ref{alg:phgst-predict} denotes the feed-forward network. Five blocks use latent dimension 80 and $4/2/2$ temporal/geographic/semantic heads.
 
 \begin{algorithm}[t]
 \caption{Training-only temporal pattern clustering.}
@@ -683,14 +687,14 @@ Branch outputs are concatenated and projected, followed by pre-normalized residu
 $\mathcal{P}\leftarrow\varnothing$\;
 \ForEach{training history $X_b\in X^{\mathrm{tr}}$}{
   \ForEach{resource $n$ and valid start $u$}{
-    append $X_{b,u:u+S-1,n,c_{\mathrm{act}}}$ to $\mathcal{P}$\;
+append $X_{b,u:u+S-1,n,c_{\mathrm{act}}}$ to $\mathcal{P}$\;
   }
 }
 initialize $K^P$ with $K$ distinct patches sampled from $\mathcal{P}$ using seed $0$\;
 \For{$j=1,\ldots,J$}{
-  assign each $p\in\mathcal{P}$ to $a(p)=\arg\min_k\lVert p-k^P_k\rVert_2^2$\;
+assign each $p\in\mathcal{P}$ to $a(p)=\arg\min_k\lVert p-k^P_k\rVert_2^2$\;
   \ForEach{centre $k$ with nonempty assignment $\mathcal{P}_k$}{
-    $k^P_k\leftarrow |\mathcal{P}_k|^{-1}\sum_{p\in\mathcal{P}_k}p$\;
+$k^P_k\leftarrow |\mathcal{P}_k|^{-1}\sum_{p\in\mathcal{P}_k}p$\;
   }
 }
 \Return $K^P$ reshaped to $K\times S\times1$\;
@@ -702,13 +706,13 @@ The encoder feeds station-level event and occupancy heads and graph-level cause 
 
 \subsubsection{Event, occupancy, and explanatory heads}
 
-Let $z_{t,n}$ be the final representation of supervised station $n$. The event occurrence module contains separate logits for continuation and future onset:
+Let $z_{t,n}$ be the final representation of supervised station $n$. Learned scalar-output heads $f_{\mathrm{cont}}$ and $f_{\mathrm{onset}}$ predict the probabilities of event continuation $p^{\mathrm{cont}}_{t,n}$ and a new onset $p^{\mathrm{onset}}_{t,n}$, using the sigmoid function $\sigma$:
 \begin{equation}
 p^{\mathrm{cont}}_{t,n}=\sigma(f_{\mathrm{cont}}(z_{t,n})),
 \qquad
 p^{\mathrm{onset}}_{t,n}=\sigma(f_{\mathrm{onset}}(z_{t,n})).
 \end{equation}
-The observed-prefix state $h_{t-1,n}$ selects continuation or onset, separating continuing events from emerging precursors. The start head predicts a categorical minute offset; duration and prefix heads predict nonnegative lengths:
+The observed-prefix state $h_{t-1,n}$ selects continuation or onset, separating continuing events from emerging precursors. Additional heads $f_s$, $f_d$, and $f_p$ predict the onset-offset distribution $\pi^s_{t,n}$, future duration $\hat d_{t,n}$, and prefix length $\hat p_{t,n}$, respectively:
 \begin{equation}
 \begin{aligned}
 \pi^s_{t,n}&=\mathrm{softmax}(f_s(z_{t,n})),\\
@@ -716,10 +720,10 @@ The observed-prefix state $h_{t-1,n}$ selects continuation or onset, separating 
 \hat p_{t,n}&=\mathrm{softplus}(f_p(z_{t,n})).
 \end{aligned}
 \end{equation}
+Softplus enforces nonnegative lengths, measured in one-minute windows. Prefix length is uninterrupted bottleneck occupancy from the first future window, distinguishing sustained activity from immediate recovery.
+The occupancy decoder predicts $\hat O_t\in[0,1]^{H_{\mathrm{label}}\times N}$ as dense temporal supervision. A precursor branch fuses local queue/stall evidence with neighbourhood context before occurrence prediction.
 
-The occupancy decoder predicts $\hat O_t\in[0,1]^{H_{\mathrm{label}}\times N}$ as dense temporal supervision. Prefix length measures continuation from the first future window, distinguishing sustained activity from immediate recovery. A precursor branch fuses local queue/stall evidence with neighbourhood context before occurrence prediction.
-
-Order remaining time and cause are graph-level outputs. The final node states are pooled through mean aggregation and a maximum gated-node score, then concatenated with order-progress information:
+Order remaining time and cause are graph-level outputs. After $L$ encoder blocks, the final node states $H_t^{(L)}$ are pooled through mean aggregation and a maximum gated-node score, then concatenated with order-progress information. Denoting this operation by $\mathrm{AuxPool}$, we obtain a graph-level vector $u_t$ for the remaining-time and cause heads $f_\ell$ and $f_c$:
 \begin{equation}
 \begin{aligned}
 u_t&=\mathrm{AuxPool}(H_t^{(L)},\text{order state}),\\
@@ -737,47 +741,47 @@ Algorithm~\ref{alg:phgst-predict} combines encoding, heads, and decoding. Patter
 \SetInd{0.6em}{1.0em}
 \caption{PHGST-DM prediction with delay-aware spatiotemporal modeling.}
 \label{alg:phgst-predict}
-\KwIn{history $X_t$ and history-only state $h_{t-1}$; $A,M^{G},M^{S}$; pattern bank $K^{P}$; regime state $r_{t-1}$; parameters $(\theta,\psi)$; threshold $\tau$; onset cap $H_{\mathrm{start}}$}
+\KwIn{history $X_t$ and history-only state $h_{t-1}$; $A,M^{G},M^{S}$; pattern bank $K^{P}$; regime state $r_{t-1}$; parameters $(\theta,\psi)$; threshold $\tau$; onset limit $H_{\mathrm{start}}$}
 \KwOut{station reports $\widehat{\mathcal{R}}_t$; occupancy $\hat O_t$; cause $\hat c_t$; remaining time $\hat\ell_t$}
 \BlankLine
-\textbf{Stage 1: heterogeneous state representation}\;
+\textbf{Phase 1: heterogeneous state representation}\;
 \ForEach{group $q$}{
-  $e^{(q)}\leftarrow\mathrm{GELU}(W_q x^{(q)}+b_q)$\;
+$e^{(q)}\leftarrow\mathrm{GELU}(W_q x^{(q)}+b_q)$\;
 }
 $H^{(0)}\leftarrow\mathrm{mean}_{q}e^{(q)}+E_{\mathrm{time}}+E_{\mathrm{lap}}+E_{\mathrm{node}}$\;
 construct history-only length-$3$ queue patches $P$ and project the fixed activity-pattern centres $K^{P}$\;
 \BlankLine
-\textbf{Stage 2: delay-aware spatiotemporal modeling}\;
+\textbf{Phase 2: delay-aware spatiotemporal modeling}\;
 \For{$l\leftarrow 1$ \KwTo $5$}{
-  $H_T\leftarrow\mathrm{Attn}_{T}(H^{(l-1)})$\;
-  $C^{P}\leftarrow\mathrm{softmax}(Q^{P}(P)K^{P}(K^{P})^{\top}/\sqrt{d_h})V^{P}(K^{P})$ \tcp*{queue query vs.\ activity prototypes}
-  $H_G\leftarrow\mathrm{Attn}_{G}(H^{(l-1)},M^{G};\,\text{geographic keys}+C^{P})$ \tcp*{delay-aware geographic mixing}
-  $H_S\leftarrow\mathrm{Attn}_{S}(H^{(l-1)},M^{S})$\;
-  $\widetilde H^{(l)}\leftarrow H^{(l-1)}+\mathrm{Proj}[H_T;H_G;H_S]$\;
-  $H^{(l)}\leftarrow\widetilde H^{(l)}+\mathrm{FFN}(\widetilde H^{(l)})$\;
+$H_T\leftarrow\mathrm{Attn}_{T}(H^{(l-1)})$\;
+$C^{P}\leftarrow\mathrm{softmax}(f_Q^{P}(P)f_K^{P}(K^{P})^{\top}/\sqrt{d_h})f_V^{P}(K^{P})$ \tcp*{queue query vs.\ activity prototypes}
+$H_G\leftarrow\mathrm{Attn}_{G}(H^{(l-1)},M^{G};\,\text{geographic keys}+C^{P})$ \tcp*{delay-aware geographic mixing}
+$H_S\leftarrow\mathrm{Attn}_{S}(H^{(l-1)},M^{S})$\;
+$\widetilde H^{(l)}\leftarrow H^{(l-1)}+\mathrm{Proj}[H_T;H_G;H_S]$\;
+$H^{(l)}\leftarrow\widetilde H^{(l)}+\mathrm{FFN}(\widetilde H^{(l)})$\;
 }
 \BlankLine
-\textbf{Stage 3: station-level and graph-level prediction heads}\;
+\textbf{Phase 3: station-level and graph-level prediction heads}\;
 $z_n\leftarrow H^{(5)}_{t-1,n}+E_{\mathrm{regime}}(r_{t-1,n})$ for the station-event branch\;
 fuse local queue/stall and neighbourhood precursor evidence into $z_n$\;
 \ForEach{$n\in\mathcal{S}$}{
-  $(a^{\mathrm{cont}}_n,a^{\mathrm{onset}}_n)\leftarrow(f_{\mathrm{cont}}(z_n),f_{\mathrm{onset}}(z_n))$ \tcp*{continuation vs.\ new-onset scores}
-  $(\pi^{s}_n,\hat d_n,\hat p_n)\leftarrow(\mathrm{softmax}(f_s(z_n)),\mathrm{softplus}(f_d(z_n)),\mathrm{softplus}(f_p(z_n)))$\;
+$(a^{\mathrm{cont}}_n,a^{\mathrm{onset}}_n)\leftarrow(f_{\mathrm{cont}}(z_n),f_{\mathrm{onset}}(z_n))$ \tcp*{continuation vs.\ new-onset scores}
+$(\pi^{s}_n,\hat d_n,\hat p_n)\leftarrow(\mathrm{softmax}(f_s(z_n)),\mathrm{softplus}(f_d(z_n)),\mathrm{softplus}(f_p(z_n)))$\;
 }
 $\hat O_t\leftarrow\sigma(f_O(H^{(5)}))$; pool nodes and order progress into $u_t$; set $(\hat c_t,\hat\ell_t)\leftarrow(f_c(u_t),f_{\psi}(u_t))$\;
 \BlankLine
-\textbf{Stage 4: event-consistent operational decoding}\;
+\textbf{Phase 4: event-consistent operational decoding}\;
 $\widehat{\mathcal{R}}_t\leftarrow\varnothing$\;
 \ForEach{$n\in\mathcal{S}$}{
-  select $a_n\leftarrow a^{\mathrm{cont}}_n$ if $h_{t-1,n}=1$, and $a_n\leftarrow a^{\mathrm{onset}}_n$ otherwise\;
+select $a_n\leftarrow a^{\mathrm{cont}}_n$ if $h_{t-1,n}=1$, and $a_n\leftarrow a^{\mathrm{onset}}_n$ otherwise\;
   \If{$h_{t-1,n}=1$ and $\hat p_n$ satisfies the continuation rule}{
-    lift $a_n$ with prefix evidence and set $\hat s_n\leftarrow0$\;
+lift $a_n$ with prefix evidence and set $\hat s_n\leftarrow0$\;
   }
-  recover the longest eligible run $(\hat s^{O}_n,\hat d^{O}_n)$ from $\hat O_{t,:,n}$\;
-  merge the run and event-head estimates subject to the ongoing/upcoming duration rule\;
-  apply the global threshold $\tau$, the resource-type threshold, and the onset cap $H_{\mathrm{start}}$\;
+recover the longest eligible run $(\hat s^{O}_n,\hat d^{O}_n)$ from $\hat O_{t,:,n}$\;
+merge the run and event-head estimates subject to the ongoing/upcoming duration rule\;
+apply the global threshold $\tau$, the resource-type threshold, and the onset limit $H_{\mathrm{start}}$\;
   \If{station $n$ is retained}{
-    append $(n,\hat s_n,\hat d_n,\hat c_t,\hat\ell_t)$ to $\widehat{\mathcal{R}}_t$\;
+append $(n,\hat s_n,\hat d_n,\hat c_t,\hat\ell_t)$ to $\widehat{\mathcal{R}}_t$\;
   }
 }
 \Return $\widehat{\mathcal{R}}_t,\hat O_t,\hat c_t,\hat\ell_t$\;
@@ -787,7 +791,7 @@ $\widehat{\mathcal{R}}_t\leftarrow\varnothing$\;
 
 \subsubsection{Joint training objective}\label{sec:joint-optimization}
 
-The learning objective is organized into primary event terms, dense temporal terms, explanatory terms, and representation regularizers:
+The learning objective combines event supervision, dense temporal supervision, explanatory outputs, and representation regularization. Each $\lambda$ weights its corresponding loss. Event occurrence and new-event occurrence use $\mathcal{L}_{\mathrm{will}}$ and $\mathcal{L}_{\mathrm{onset}}$, respectively; the remaining subscripts identify onset offset, duration, prefix length, occupancy, remaining time, cause, reconstruction, and contrastive learning. The auxiliary binary loss $\mathcal{L}_{\mathrm{tpm}}$ supervises prediction of whether a resource receives a bottleneck turning-point label at least once within the prediction horizon. The full objective is
 \begin{equation}
 \begin{aligned}
 \mathcal{L}={}&
@@ -804,15 +808,17 @@ The learning objective is organized into primary event terms, dense temporal ter
 \lambda_{\mathrm{tpm}}\mathcal{L}_{\mathrm{tpm}} .
 \end{aligned}
 \end{equation}
-The occurrence loss combines reweighted binary cross-entropy, focal modulation, hard-false-positive weighting, and an internal differentiable F1 term. Separate onset supervision is applied to the cold-history head. The start loss uses a Gaussian soft target over minute offsets, whereas duration, prefix, and remaining time use log-transformed Smooth-L1 regression. Remaining-time samples are further weighted by order progress.
+Numerical weights are given in Appendix~\ref{app:additional}.
 
-The occupancy term combines type-balanced binary cross-entropy, soft Dice, and soft intersection-over-union losses. Cause classification uses class-weighted cross-entropy only for supported hot-window labels. Future-feature reconstruction and graph-level supervised contrastive learning regularize the shared representation, while an auxiliary turning-point/momentary signal contributes a binary loss. The additional losses labelled score, will, mark, time-to-start, STGNPP, and offline cluster-head in the implementation are disabled. With $\lambda_{\mathrm{cluster}}=0$, event prediction is not trained to reproduce offline k-means assignments.
+The occurrence loss combines reweighted binary cross-entropy, focal modulation, hard-false-positive weighting, and an internal differentiable F1 term. Separate onset supervision is applied to the new-onset head. The start loss uses a Gaussian soft target over minute offsets, whereas duration, prefix, and remaining time use log-transformed Smooth-L1 regression. Remaining-time samples are further weighted by order progress.
 
-Training follows Algorithm~\ref{alg:phgst-train}. Stage~1 jointly learns the shared representation and event-related heads using the Start$\leq5\rightarrow$Start$\leq10\rightarrow$Start$\leq15$ curriculum. Far-onset weighting and an enhanced false-alarm penalty balance warning sensitivity and false reports. Stage~2 freezes the encoder and event, occupancy, and cause heads, adds a per-workpiece rate term to the remaining-time head, and optimizes that head alone using progress-weighted loss. This specialization preserves the event and cause outputs. Numerical settings and the common initialization protocol are specified in Section~\ref{sec:exp}.
+The occupancy term combines type-balanced binary cross-entropy, soft Dice, and soft intersection-over-union losses. Cause classification uses class-weighted cross-entropy only for bottleneck-positive windows with one of the four supported cause labels. Future-feature reconstruction and graph-level supervised contrastive learning regularize the shared representation. Other implementation-specific auxiliary losses are disabled; their configuration names are listed in Appendix~\ref{app:additional}. With $\lambda_{\mathrm{cluster}}=0$, event prediction is not trained to reproduce offline k-means assignments.
+
+Training follows Algorithm~\ref{alg:phgst-train}. Stage~1 jointly learns the shared representation and event-related heads using the Onset limit~$\leq5\rightarrow$Onset limit~$\leq10\rightarrow$Onset limit~$\leq15$ curriculum. Far-onset weighting and an enhanced false-alarm penalty balance warning sensitivity and false reports. Stage~2 freezes the encoder and event, occupancy, and cause heads, adds a per-workpiece rate term to the remaining-time head, and optimizes that head alone using progress-weighted loss. This specialization preserves the event and cause outputs. Numerical settings and the common initialization protocol are specified in Section~\ref{sec:exp}.
 
 \subsubsection{Validation-controlled report decoding}
 
-At inference, the observed-prefix state defined in Section~\ref{sec:problem} selects the continuation logit when $h_{t-1,n}=1$ and the onset logit otherwise. Prefix evidence can retain an ongoing event and set its onset to zero. Occupancy runs are united with event-head estimates subject to the duration rules. Resource-type thresholds and the active onset cap then filter reports; Appendix~\ref{app:additional} gives numerical cutoffs.
+At inference, the observed-prefix state defined in Section~\ref{sec:problem} selects the continuation logit when $h_{t-1,n}=1$ and the onset logit otherwise. Prefix evidence can retain an ongoing event and set its onset to zero. Occupancy runs are united with event-head estimates subject to the duration rules. Resource-type thresholds and the active onset limit then filter reports; Appendix~\ref{app:additional} gives numerical cutoffs.
 
 Validation selects the checkpoint and report threshold using the configured precision/recall gates and station F1, with the documented fallback when gates are unmet. Both choices are frozen before testing; the same decoder is used throughout (Algorithm~\ref{alg:phgst-train}, Appendix~\ref{app:additional}).
 
@@ -822,13 +828,13 @@ Validation selects the checkpoint and report threshold using the configured prec
 
 Forecast accuracy evaluates prediction against the constructed labels. An additional replay protocol examines whether label rankings align with production sensitivity, measured by the completion-time effect of accelerating resources. This validation is separate from predictor training and inference.
 
-At a saved factory-model state $t$, each of seven workstation candidates receives a separate service-bundle intervention. Workstation processing and its associated worker service use a duration scale of $0.8$, equivalent to a $1.25\times$ service rate, for 1,200 model steps. Baseline and intervention branches start from the same saved state and random-number state and run to order completion. The counterfactual sensitivity is
+At a saved factory-model state $t$, each of seven workstation candidates receives a separate service-bundle intervention. Workstation processing and its associated worker service use a duration scale of $0.8$, equivalent to a $1.25\times$ service rate, for 1,200 model steps. Baseline and intervention branches start from the same saved state and random-number state and run to order completion. Let $M_{\mathrm{base}}(t)$ and $M_{i,0.8}(t)$ denote their completion times, measured from the same time origin, for candidate workstation $i$. The completion-time reduction defines its counterfactual sensitivity:
 \begin{equation}
-S_i(t)=M_{\mathrm{base}}(t)-M_{i,0.8}(t),
+S_i(t)=M_{\mathrm{base}}(t)-M_{i,0.8}(t).
 \end{equation}
-where $M$ denotes order-completion time. Positive $S_i(t)$ indicates that temporarily accelerating resource $i$ shortens the order. Each label method ranks candidates using its maximum evidence over the last three fully observed windows before $t$.
+Positive $S_i(t)$ indicates that temporarily accelerating resource $i$ shortens the order. Each label method ranks candidates using its maximum evidence over the last three fully observed windows before $t$.
 
-NDCG@3 measures ranking quality using positive sensitivity as relevance; Positive Recall@$k$ measures coverage of the oracle's $k$ highest positive-sensitivity resources by the first $k$ candidates. Weighted Recall@3 gives the fraction of total positive sensitivity captured by the first three candidates, and Coverage@3$_{0.9}$ covers resources satisfying $S_i\geq0.9\max_j S_j$.
+Normalized discounted cumulative gain at rank 3 (NDCG@3) measures ranking quality using positive sensitivity as relevance; Positive Recall@$k$ measures coverage of the oracle's $k$ highest positive-sensitivity resources by the first $k$ candidates. Weighted Recall@3 gives the fraction of total positive sensitivity captured by the first three candidates, and Coverage@3$_{0.9}$ covers resources satisfying $S_i\geq0.9\max_j S_j$.
 
 The fixed acceleration protocol assesses label relevance; it does not select an intervention policy.
 
@@ -863,13 +869,13 @@ The fixed acceleration protocol assesses label relevance; it does not select an 
 
 \section{Experiments}\label{sec:exp}
 
-The experiments evaluate how PHGST-DM addresses restricted observation scope and difficult bottleneck supervision while jointly predicting the bottleneck station, onset, duration, observable process cause, and remaining order time. Baseline comparisons evaluate these joint outputs; component studies examine heterogeneous multi-entity representation, process-informed supervision and temporal pattern clustering, and recurrent-pattern-guided delay-aware modeling. A case study follows bottleneck onset, persistence, and recovery. Together, these evaluations assess how the proposed designs contribute to advance warning and joint forecasting. Supplementary results, attention analyses, and computational cost are reported in Appendices~\ref{app:supplementary-results}--\ref{sec:efficiency}.
+We evaluate whether PHGST-DM can address restricted observation scope and difficult bottleneck supervision to forecast bottleneck events, process causes, and remaining order time. Baseline comparisons evaluate these joint outputs; component studies examine heterogeneous multi-entity representation, process-informed supervision and temporal pattern clustering, and recurrent-pattern-guided delay-aware modeling. A case study follows bottleneck onset, persistence, and recovery. Together, these evaluations assess how the proposed designs contribute to advance warning and joint forecasting. Supplementary results, attention analyses, and computational cost are reported in Appendices~\ref{app:supplementary-results}--\ref{sec:efficiency}.
 
 \subsection{Experimental setup}
 
 \subsubsection{Dataset and data processing}
 
-Experiments use \texttt{dense\_i1}, collected from the NVIDIA Isaac Sim factory model in Section~\ref{sec:method}. Each episode produces ten workpieces through cutting, grooving, spot welding, root welding, surface welding, and finishing (Figure~\ref{fig:experiment}). The 38-node graph and 15 prediction targets follow Section~\ref{sec:problem}; worker, buffer, and resource-associated material features supply context.
+Experiments use \texttt{dense\_i1}, collected from the NVIDIA Isaac Sim factory model in Section~\ref{sec:method}. This dataset identifier denotes the collection with one active operating-variation dimension at intensity level 1, together with nominal episodes. Each episode produces ten workpieces through cutting, grooving, spot welding, root welding, surface welding, and finishing (Figure~\ref{fig:experiment}). The 38-node graph and 15 prediction targets follow Section~\ref{sec:problem}; worker, buffer, and resource-associated material features supply context.
 
 \begin{figure*}[pos=!tbp]
 \centering
@@ -899,15 +905,15 @@ Material & Keep the nominal inventory of ten pipes, flanges, and elbows; no perm
 \end{tabularx}
 \end{table*}
 
-For workstation, worker, and logistics operating variations, every Level~2 pulse lasts at least 600 steps and the intensity-specific upper bounds are 900/1,300/1,400 steps. Event targets, start times, counts, and durations are resampled for each episode using a deterministic seed. Adjacent pulses are separated by at least 360 steps, and an event waits for an eligible idle target rather than interrupting an active operation. These controls make the injected condition long enough to survive the eight-window persistence filter while avoiding a deterministic one-to-one mapping between an injection and a labelled bottleneck.
+For workstation, worker, and logistics operating variations, every Level~2 pulse lasts at least 600 steps and the intensity-specific upper bounds are 900/1,300/1,400 steps. Event targets, start times, counts, and durations are resampled for each episode using a deterministic seed. Adjacent pulses are separated by at least 360 steps, and an event waits for an eligible idle target rather than interrupting an active operation. These controls produce sustained operating variations while avoiding a deterministic one-to-one mapping between an injection and a labelled bottleneck.
 
 
 
-A run-stratified, episode-level split gives 140/28/36 training/validation/test episodes from 204 valid episodes, yielding 20,826/4,331/5,354 forecast windows (Table~\ref{tab:exp-dataset}). Data preparation follows Section~\ref{sec:method}. All comparisons use the same test-window identities, history length, future grid, target resources, and label definitions. Table~\ref{tab:dataset-labels} reports test-label composition.
+A run-stratified, episode-level split gives 140/28/36 training/validation/test episodes from 204 valid episodes, yielding 20,826/4,331/5,354 forecast windows (Table~\ref{tab:exp-dataset}). Data preparation follows Section~\ref{sec:method}. All comparisons use the same test-window identities, history length, future grid, target resources, and label definitions. Table~\ref{tab:dataset-labels} reports test-label composition. All single-device trajectory comparisons and the case study use the same cutting workstation (\texttt{num02}) from the same test episode; the selection procedure is documented in Appendix~\ref{app:case-details}.
 
 
 
-Labels follow the event and auxiliary-target definitions in Section~\ref{sec:problem} and Algorithm~\ref{alg:targets}. Experiments vary the onset cap across Start$\leq5/10/15$ while retaining the 30-window future grid and Min8 criterion. Strict report matching uses a three-window onset tolerance; timing errors are reported in minutes.
+Labels follow the event and auxiliary-target definitions in Section~\ref{sec:problem} and Algorithm~\ref{alg:targets}. Experiments compare onset limits of 5, 10, and 15~min, as defined in Section~\ref{sec:problem}. Bottleneck events are required to persist for at least 8~min ($m=8$ one-minute windows), with ongoing events evaluated over their remaining duration. The future label grid remains fixed at 30 windows. Strict report matching uses a three-window onset tolerance; timing errors are reported in minutes.
 
 \begin{table}[pos=!htbp]
 \centering
@@ -924,7 +930,7 @@ Dataset & \texttt{dense\_i1}, 204 valid episodes, 38 resources \\
 Split & 140/28/36 episodes; 20,826/4,331/5,354 windows \\
 Windowing & 60-s windows; 30 historical + 30 future windows \\
 Targets & 15 resources: 7 workstations, 4 gantries, 4 robots \\
-Event rule & Min8 persistence; Start$\leq5/10/15$ \\
+Onset limit & $5/10/15$~min \\
 Report matching & Three-window onset tolerance \\
 \bottomrule
 \end{tabularx}
@@ -932,14 +938,14 @@ Report matching & Three-window onset tolerance \\
 
 \begin{table}[pos=!htbp]
 \centering
-\caption{Test-set label composition under each Start cap. Counts are window--resource pairs over 5,354 windows $\times$ 15 targets ($80{,}310$ pairs); parentheses give the share of all pairs.}
+\caption{Test-set label composition under each onset limit. Counts are window--resource pairs over 5,354 windows $\times$ 15 targets ($80{,}310$ pairs); parentheses give the share of all pairs. Onset limit is the maximum admissible onset offset in minutes; Upcoming and Ongoing denote newly emerging and already active events, respectively, and No-event denotes pairs with no eligible event.}
 \label{tab:dataset-labels}
 \scriptsize
 \setlength{\tabcolsep}{3.2pt}
 \renewcommand{\arraystretch}{1.08}
 \begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}lrrr@{}}
 \toprule
-Start cap & Upcoming & Ongoing & No-event \\
+Onset limit & Upcoming & Ongoing & No-event \\
 \midrule
 $\leq5$ & 336 (0.42\%) & 766 (0.95\%) & 79,208 (98.63\%) \\
 $\leq10$ & 604 (0.75\%) & 768 (0.96\%) & 78,938 (98.29\%) \\
@@ -950,7 +956,7 @@ $\leq15$ & 708 (0.88\%) & 770 (0.96\%) & 78,832 (98.16\%) \\
 
 \subsubsection{Baseline methods}
 
-Four baselines cover complementary model families: XGBoost learns nonlinear interactions from tabular summaries; LSTM models historical sequences; BTGCN combines production-task graphs with GCN and GRU~\cite{yin2025btgcn}; and BSTAN combines graph attention with GRU for blockage/starvation-related prediction~\cite{lai2023bstan}. All baselines follow the unified experimental protocol, with architecture-specific input representations and learning algorithms.
+Four baselines represent tabular, recurrent, and graph-based forecasting approaches. XGBoost learns nonlinear interactions from tabular summaries; LSTM models historical sequences; BTGCN combines production-task graphs with GCN and GRU~\cite{yin2025btgcn}; and BSTAN combines graph attention with GRU for blockage/starvation-related prediction~\cite{lai2023bstan}. All baselines follow the unified experimental protocol, with architecture-specific input representations and learning algorithms.
 
 \begin{table}[pos=!htbp]
 \centering
@@ -976,16 +982,18 @@ BSTAN & Graph attention + GRU & Graph-attention predictor \\
 All experiments use common data splits, forecast windows, targets, initialization controls, training-budget standards, and validation-based selection. Full and ablation models start from the same fixed parameter state; all selected models and report thresholds are frozen before testing.
 
 
-Shared PHGST-DM settings appear in Table~\ref{tab:shared-training-protocol}. AdamW uses batch size 16, learning rate $5\times10^{-5}$, weight decay $0.05$, cosine decay to $10^{-6}$, and fourfold positive-window oversampling. Under the two-stage procedure in Section~\ref{sec:joint-optimization}, stage~1 starts from the fixed parameter state shared by all ablation arms, unfreezes the last five encoder blocks, and runs for at most 50 epochs with patience 40. Far-onset weighting doubles onset loss beyond 5~min and uses positive weights $9/10/11$ for the three caps; ordinary and hard false-positive weights are $2.5$ and $2.2$. Stage~2 runs for at most 20 epochs, selected by validation loss. All runs use seed 42 and provide point estimates rather than multi-seed stability estimates. Appendix~\ref{app:additional} provides loss weights, label thresholds, and decoding details.
+Shared PHGST-DM settings appear in Table~\ref{tab:shared-training-protocol}. AdamW uses batch size 16, learning rate $5\times10^{-5}$, weight decay $0.05$, cosine decay to $10^{-6}$, and fourfold positive-window oversampling. Under the two-stage procedure in Section~\ref{sec:joint-optimization}, stage~1 starts from the fixed parameter state shared by all ablation arms, unfreezes all five encoder blocks, and runs for at most 50 epochs with patience 40. Far-onset weighting doubles onset loss beyond 5~min and uses positive weights $9/10/11$ for the three limits; ordinary and hard false-positive weights are $2.5$ and $2.2$. Stage~2 runs for at most 20 epochs, selected by validation loss. All runs use seed 42 and provide point estimates rather than multi-seed stability estimates. Appendix~\ref{app:additional} provides loss weights, label thresholds, and decoding details.
 
-The model and report threshold are selected on the validation split. Candidate thresholds are $\{0.45,\dots,0.90,0.94\}$; selection uses the internal station-identification F1 among candidates satisfying validation report precision $\geq0.80$ and recall $\geq0.70$. This selection score is not reported as a result; the reported event metric is the onset-qualified F1-score defined below. All three onset caps use the selected threshold of $0.94$ for testing.
+The model and report threshold are selected on the validation split. Candidate thresholds are $\{0.45,\dots,0.90,0.94\}$; selection uses the internal station-identification F1 among candidates satisfying validation report precision $\geq0.80$ and recall $\geq0.70$. This selection score is not reported as a result; the reported event metric is the onset-qualified F1-score defined below. All three onset limits use the selected threshold of $0.94$ for testing.
 
-A strict report-level hit requires the correct resource and
+For resource $n$ at forecast origin $t$, let $\hat s_{t,n}$ and $s_{t,n}$ denote the predicted and reference onset offsets in minutes. A strict report-level hit requires the correct resource and an absolute onset error within tolerance $\epsilon_s$:
 \begin{equation}
 |\hat{s}_{t,n}-s_{t,n}|\leq\epsilon_s,\qquad
 \epsilon_s=3~\mathrm{min}.
 \end{equation}
-Metrics follow the three prediction dimensions. The reported bottleneck-event F1-score requires both correct station identification and an onset error within three windows. Upcoming recall uses future-event window--resource pairs whose final historical window is non-bottleneck; Ongoing recall uses pairs with an active final historical window. Start and duration MAE are measured on correctly detected events, while union duration MAE/RMSE includes missed and false events. Next-window and 30-window State F1 describe the predicted occupancy over time, including recovery. Process-cause evaluation uses accuracy and macro recall over the four supported classes. Order-completion evaluation uses remaining-time MAE at the line level.
+At the one-minute window resolution, this tolerance equals three windows.
+
+Metrics cover bottleneck-event prediction, process-cause classification, and remaining order time. The reported bottleneck-event F1-score requires both correct station identification and an onset error within three windows. Upcoming recall uses future-event window--resource pairs whose final historical window is non-bottleneck; Ongoing recall uses pairs with an active final historical window. Onset and duration mean absolute error (MAE) are measured on correctly detected events, while union duration MAE and root mean squared error (RMSE) include missed and false events. Event F1 is the harmonic mean of precision and recall; macro recall is the unweighted mean of class-specific recalls. Next-window and 30-window State F1 describe the predicted occupancy over time, including recovery. Process-cause evaluation uses accuracy and macro recall over the four supported classes. Order-completion evaluation uses remaining-time MAE at the line level.
 
 \begin{table*}[pos=!tbp]
 \centering
@@ -1001,7 +1009,7 @@ Metric group & Metric & Interpretation \\
 Event & F1-score & Station identification with a three-window onset tolerance \\
 Early warning & Upcoming / ongoing recall & Station recall: historically cold / active resources \\
 State & State F1 (1-step / horizon) & Bottleneck state accuracy at one step / 30-step horizon \\
-Temporal & Start MAE; duration MAE & Localization and duration error on detected events \\
+Temporal & Onset MAE; duration MAE & Localization and duration error on detected events \\
 Temporal & Union duration MAE/RMSE & Error including missed and false events \\
 Auxiliary & Remaining-time MAE & Global order-progress estimation error \\
 Auxiliary & Cause accuracy / macro recall & Four supported process-cause classes \\
@@ -1011,17 +1019,17 @@ Auxiliary & Cause accuracy / macro recall & Four supported process-cause classes
 
 \subsection{Overall bottleneck prediction performance}\label{sec:comparison-overview}
 
-This comparison evaluates PHGST-DM's joint forecasts of bottleneck events, process causes, and order progress under the common protocol in Section~\ref{sec:exp} (Tables~\ref{tab:comparison-main}--\ref{tab:comparison-remain}). The outputs assess both advance warning and the additional context supplied with each bottleneck forecast.
+This section evaluates how well PHGST-DM jointly predicts bottleneck events, process causes, and remaining order time. Its performance is compared with four baselines under the shared experimental protocol (Tables~\ref{tab:comparison-main}--\ref{tab:comparison-remain}).
 
 \subsubsection{Bottleneck station, onset, and duration}\label{sec:comparison-event}
 
-This experiment tests whether the heterogeneous representation and delay-aware modeling improve advance warning while retaining coverage of active bottlenecks. Table~\ref{tab:comparison-main} jointly evaluates the affected resource, event timing, and future occupancy to assess how well the model forecasts a bottleneck's evolution.
+At the event level, we assess how accurately PHGST-DM identifies bottleneck stations and predicts their onset, duration, and future occupancy (Table~\ref{tab:comparison-main}).
 
-PHGST-DM achieves the highest event F1, upcoming recall, ongoing recall, and state F1 across the onset caps. Relative to the strongest baseline for each metric and cap, event F1 improves by 10.2--19.1 percentage points and upcoming recall by 42.3--44.3 percentage points. These gains show improved detection before bottlenecks become active, alongside continued coverage of persistent constraints (Figure~\ref{fig:baseline-comparison}).
+PHGST-DM achieves the highest event F1, upcoming recall, ongoing recall, and state F1 across the onset limits. Relative to the strongest baseline for each metric and limit, event F1 improves by 10.2--19.1 percentage points and upcoming recall by 42.3--44.3 percentage points. These gains show improved detection before bottlenecks become active, alongside continued coverage of persistent constraints (Figure~\ref{fig:baseline-comparison}).
 
 \begin{table*}[pos=!tbp]
 \centering
-\caption{Bottleneck event and temporal prediction. Classification scores are percentages; timing MAE is in minutes. Within each Start cap, bold marks the best value and underline marks second-best. All entries use the unified 5,354-window re-evaluation in Section~\ref{sec:comparison-overview}.}
+\caption{Bottleneck event and temporal prediction. Classification scores are percentages; timing MAE is in minutes. Within each onset limit, bold marks the best value and underline marks second-best. All entries use the unified 5,354-window re-evaluation in Section~\ref{sec:comparison-overview}.}
 \label{tab:comparison-main}
 \scriptsize
 \setlength{\tabcolsep}{3.2pt}
@@ -1030,23 +1038,23 @@ PHGST-DM achieves the highest event F1, upcoming recall, ongoing recall, and sta
 \toprule
 Model & \multicolumn{1}{c}{Event identification $\uparrow$} & \multicolumn{2}{c}{Event recall $\uparrow$} & \multicolumn{2}{c}{Timing MAE $\downarrow$} & \multicolumn{2}{c}{State F1 $\uparrow$} \\
 \cmidrule(lr){2-2}\cmidrule(lr){3-4}\cmidrule(lr){5-6}\cmidrule(l){7-8}
- & F1-score & Upcoming & Ongoing & Start & Duration & 1 step & 30 steps \\
+ & F1-score & Upcoming & Ongoing & Onset & Duration & 1 step & 30 steps \\
 \midrule
-\multicolumn{8}{l}{\textit{Start $\leq5$}} \\
+\multicolumn{8}{l}{\textit{Onset limit $\leq5$}} \\
 PHGST-DM & \textbf{80.4\%} & \textbf{54.2\%} & \textbf{93.7\%} & 0.127 & \textbf{1.863} & \textbf{88.3\%} & \textbf{52.5\%} \\
 XGBoost & \underline{70.2\%} & 6.0\% & \underline{81.9\%} & \underline{0.030} & \underline{3.264} & 61.1\% & 37.3\% \\
 LSTM & 58.3\% & \underline{9.9\%} & 68.7\% & 0.056 & 3.855 & 29.5\% & 29.5\% \\
 BTGCN & 66.9\% & 4.6\% & 78.6\% & \textbf{0.020} & 3.322 & 64.3\% & 37.2\% \\
 BSTAN & 68.7\% & 9.5\% & 79.4\% & 0.043 & 3.565 & \underline{71.9\%} & \underline{37.9\%} \\
 \midrule
-\multicolumn{8}{l}{\textit{Start $\leq10$}} \\
+\multicolumn{8}{l}{\textit{Onset limit $\leq10$}} \\
 PHGST-DM & \textbf{77.8\%} & \textbf{53.5\%} & \textbf{93.9\%} & 0.227 & \textbf{1.788} & \textbf{89.2\%} & \textbf{58.9\%} \\
 XGBoost & \underline{61.1\%} & 4.1\% & \underline{80.5\%} & \underline{0.122} & \underline{3.210} & 59.5\% & 33.7\% \\
 LSTM & 47.7\% & \underline{11.2\%} & 69.3\% & 0.388 & 3.768 & 27.5\% & 26.2\% \\
 BTGCN & 57.9\% & 4.5\% & 72.2\% & \textbf{0.117} & 3.238 & 56.6\% & 35.9\% \\
 BSTAN & 60.9\% & 5.7\% & 79.6\% & 0.153 & 3.533 & \underline{63.2\%} & \underline{36.5\%} \\
 \midrule
-\multicolumn{8}{l}{\textit{Start $\leq15$}} \\
+\multicolumn{8}{l}{\textit{Onset limit $\leq15$}} \\
 PHGST-DM & \textbf{76.8\%} & \textbf{53.7\%} & \textbf{93.0\%} & 0.227 & \textbf{1.716} & \textbf{90.0\%} & \textbf{61.0\%} \\
 XGBoost & \underline{57.7\%} & 3.9\% & \underline{79.6\%} & \textbf{0.167} & 3.170 & 58.2\% & 32.2\% \\
 LSTM & 46.1\% & \underline{10.2\%} & 64.3\% & 0.453 & 3.615 & 26.8\% & 26.0\% \\
@@ -1056,46 +1064,46 @@ BSTAN & 53.4\% & 4.4\% & 70.0\% & \underline{0.222} & 3.422 & \underline{59.3\%}
 \end{tabular*}
 \end{table*}
 
-Detected-event duration MAE is 1.40--1.42~min lower than the best baseline at each onset cap, a relative reduction of 42.9--45.0\%. This extends the benefit from identifying an affected station to estimating how long its constraint persists. Timing MAE is conditional on correct detection, and onset MAE alone does not show a uniform advantage over the baselines. Further onset-distance and resource-type results appear in Appendix~\ref{app:supplementary-results}.
+Detected-event duration MAE is 1.40--1.42~min lower than the best baseline at each onset limit, a relative reduction of 42.9--45.0\%. This extends the benefit from identifying an affected station to estimating how long its constraint persists. Timing MAE is conditional on correct detection, and onset MAE alone does not show a uniform advantage over the baselines. Further onset-distance and resource-type results appear in Appendix~\ref{app:supplementary-results}.
 
 \begin{figure*}[pos=!tbp]
 \centering
 \includegraphics[width=0.96\textwidth]{figures/fig_range_response.pdf}
-\caption{Grouped comparison of (a)~F1-score, (b)~Upcoming recall, and (c)~detected-event duration MAE across Start caps.}
+\caption{Grouped comparison of (a)~F1-score, (b)~Upcoming recall, and (c)~detected-event duration MAE across onset limits.}
 \label{fig:baseline-comparison}
 \end{figure*}
 
 \begin{figure*}[pos=!tbp]
 \centering
 \includegraphics[width=0.90\textwidth]{figures/key_device_models_aligned.pdf}
-\caption{Key-device comparison of PHGST-DM and baselines at Start$\leq5$: (a)~next-window state; (b)~duration with the true reference truncated at 20~min for visualization (black: true; dashed: predictions).}
+\caption{Comparison of PHGST-DM and baselines at Onset limit~$\leq5$: (a)~next-window state; (b)~duration with the true reference truncated at 20~min for visualization (black: true; dashed: predictions).}
 \label{fig:key-device-baselines}
 \end{figure*}
 
 
 
-Figure~\ref{fig:key-device-baselines} shows the corresponding cutting-workstation trajectories. PHGST-DM follows both intervals and their recovery, connecting event coverage to successive duration forecasts. The displayed true-duration reference is truncated at 20~min, while every model retains the 30-min prediction horizon.
+Figure~\ref{fig:key-device-baselines} shows the corresponding trajectories. PHGST-DM follows both intervals and their recovery, connecting event coverage to successive duration forecasts. The displayed true-duration reference is truncated at 20~min, while every model retains the 30-min prediction horizon.
 
 
 
 \subsubsection{Bottleneck process-cause prediction}\label{sec:comparison-cause}
 
-This experiment tests whether the four process-cause outputs add observable operational context to bottleneck location and timing (Table~\ref{tab:comparison-state}). It evaluates the explanatory information supplied by the joint predictor beyond an event score alone.
+The process-cause comparison covers four operational conditions: material shortage, transport delay, queue buildup, and downstream blockage (Table~\ref{tab:comparison-state}).
 
-PHGST-DM exceeds the three neural baselines in both cause accuracy and macro recall across the onset caps. Compared with the strongest neural baseline at each cap, macro recall improves by 1.4--4.3 percentage points. The improvement across cause categories supports supplying process-level information alongside event forecasts.
+PHGST-DM exceeds the three neural baselines in both cause accuracy and macro recall across the onset limits. Compared with the strongest neural baseline at each limit, macro recall improves by 1.4--4.3 percentage points.
 
 The model accurately describes observable process conditions associated with the predicted bottleneck, giving its location and timing outputs an interpretable operational context.
 
 \begin{table*}[pos=!tbp]
 \centering
-\caption{Bottleneck process-cause prediction (\%). Each Start-cap group reports accuracy and macro recall. Within each Start-cap metric, bold marks the best value and underline marks second-best among the compared models. All entries use the unified 5,354-window re-evaluation in Section~\ref{sec:comparison-overview}.}
+\caption{Bottleneck process-cause prediction (\%). Each onset-limit group reports accuracy and macro recall. Within each onset-limit metric, bold marks the best value and underline marks second-best among the compared models. All entries use the unified 5,354-window re-evaluation in Section~\ref{sec:comparison-overview}. Macro R denotes the unweighted mean recall over the four process-cause classes; the onset limits are in minutes.}
 \label{tab:comparison-state}
 \scriptsize
 \setlength{\tabcolsep}{3.2pt}
 \renewcommand{\arraystretch}{1.12}
 \begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}lrrrrrr@{}}
 \toprule
-Model & \multicolumn{2}{c}{Start $\leq5$} & \multicolumn{2}{c}{Start $\leq10$} & \multicolumn{2}{c}{Start $\leq15$} \\
+Model & \multicolumn{2}{c}{Onset limit $\leq5$} & \multicolumn{2}{c}{Onset limit $\leq10$} & \multicolumn{2}{c}{Onset limit $\leq15$} \\
 \cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(l){6-7}
  & Accuracy $\uparrow$ & Macro R $\uparrow$ & Accuracy $\uparrow$ & Macro R $\uparrow$ & Accuracy $\uparrow$ & Macro R $\uparrow$ \\
 \midrule
@@ -1111,18 +1119,18 @@ BSTAN & 95.7\% & 95.2\% & 95.9\% & 95.1\% & 95.1\% & 93.5\% \\
 
 \subsubsection{Order-completion remaining-time prediction}\label{sec:comparison-remain}
 
-This experiment tests whether head-specific optimization improves the order-level output after learning the shared bottleneck representation. Table~\ref{tab:comparison-remain} compares the first- and second-stage PHGST-DM predictions with the baselines on the same test windows.
+After joint training, the remaining-time head is fine-tuned while the encoder and all other prediction heads remain fixed. Table~\ref{tab:comparison-remain} compares the first- and second-stage PHGST-DM predictions with the baselines on the same test windows.
 
 \begin{table}[pos=htbp]
 \centering
-\caption{Global order remaining-time MAE (min; lower is better). Within each Start cap, bold marks the best value and underline marks second-best. All entries use the unified 5,354-window re-evaluation in Section~\ref{sec:comparison-overview}.}
+\caption{Global order remaining-time MAE (min; lower is better). Within each onset limit, bold marks the best value and underline marks second-best. All entries use the unified 5,354-window re-evaluation in Section~\ref{sec:comparison-overview}.}
 \label{tab:comparison-remain}
 \scriptsize
 \setlength{\tabcolsep}{3pt}
 \renewcommand{\arraystretch}{1.10}
 \begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}lrrr@{}}
 \toprule
-Model & Start $\leq5$ & Start $\leq10$ & Start $\leq15$ \\
+Model & Onset limit $\leq5$ & Onset limit $\leq10$ & Onset limit $\leq15$ \\
 \midrule
 XGBoost & \textbf{5.23} & \textbf{5.23} & \textbf{5.23} \\
 LSTM & 10.59 & 10.61 & 9.01 \\
@@ -1135,11 +1143,11 @@ PHGST-DM (stage 2) & \underline{9.60} & \underline{9.27} & \underline{8.91} \\
 \end{tabular*}
 \end{table}
 
-Second-stage fine-tuning reduces remaining-time MAE by 0.81--1.94~min across the onset caps, equivalent to an 8.3--17.3\% reduction relative to stage~1, while retaining the event and cause outputs. Freezing the encoder and other heads separates order-progress optimization from event prediction, improving the combined output without changing the event-reporting functions.
+Second-stage fine-tuning reduces remaining-time MAE by 0.81--1.94~min across the onset limits, equivalent to an 8.3--17.3\% reduction relative to stage~1, while retaining the event and cause outputs.
 
-Figure~\ref{fig:remain-finetune} locates most improvement in early and middle production. Head-specific optimization therefore improves the order-completion estimate while substantial work remains, adding order-level context to the resource-level forecasts.
+Figure~\ref{fig:remain-finetune} locates most improvement in early and middle production.
 
-After fine-tuning, PHGST-DM achieves the lowest remaining-time MAE among the recurrent and graph-based neural models at every onset cap, reducing error by 0.10--1.34~min relative to the strongest neural baseline. This combines competitive order-progress estimation with the resource-level event and process-cause forecasts.
+After fine-tuning, PHGST-DM achieves the lowest remaining-time MAE among the recurrent and graph-based neural models at every onset limit, reducing error by 0.10--1.34~min relative to the strongest neural baseline. This combines competitive order-progress estimation with the resource-level event and process-cause forecasts.
 
 \begin{figure*}[pos=!tbp]
 \centering
@@ -1154,7 +1162,7 @@ The component studies isolate heterogeneous multi-entity representation, process
 
 \begin{table*}[pos=!tbp]
 \centering
-\caption{Ablation arms. Every comparison, including the Full reference, begins from identical parameter values and uses the same 50-epoch budget, Start$\leq5\rightarrow$Start$\leq10\rightarrow$Start$\leq15$ curriculum, and validation-controlled model-selection rule.}
+\caption{Ablation arms. Every comparison, including the Full reference, begins from identical parameter values and uses the same 50-epoch budget, Onset limit~$\leq5\rightarrow$Onset limit~$\leq10\rightarrow$Onset limit~$\leq15$ curriculum, and validation-controlled model-selection rule.}
 \label{tab:ablation-arms}
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
@@ -1163,15 +1171,15 @@ The component studies isolate heterogeneous multi-entity representation, process
 \toprule
 Arm & Contribution & Change relative to the retained model & Training \\
 \midrule
-NoGraph & Heterogeneous graph & Self-loop adjacency only; no factory edges & Common protocol, 50 ep. \\
-NoGroup & Heterogeneous graph & One linear projection of the 27 channels instead of six semantic groups & Common protocol, 50 ep. \\
-NoCross & Heterogeneous graph & Within-type edges only; cross-type semantic attention masked & Common protocol, 50 ep. \\
-NoInfo & Heterogeneous graph & Only workstations observed; non-workstation features and five coupling channels zeroed & Common protocol, 50 ep. \\
-WorkstationOnly & Heterogeneous graph & NoCross and NoInfo combined & Common protocol, 50 ep. \\
-NoCluster & Temporal pattern clustering & Temporal pattern clustering removed & Common protocol, 50 ep. \\
-NoPattern & \makecell[l]{Delay-aware modeling} & Recent-patch matching to the temporal-pattern prototype bank disabled & Common protocol, 50 ep. \\
-NoSplit & Decoder & One shared will head for continuing and new events & Common protocol, 50 ep. \\
-NoFarBoost & Training & Far-onset weighting and enhanced false-alarm penalty removed & Common protocol, 50 ep. \\
+NoGraph & Heterogeneous graph & Self-loop adjacency only; no factory edges & Common protocol, 50 epochs \\
+NoGroup & Heterogeneous graph & One linear projection of the 27 channels instead of six semantic groups & Common protocol, 50 epochs \\
+NoCross & Heterogeneous graph & Within-type edges only; cross-type semantic attention masked & Common protocol, 50 epochs \\
+NoInfo & Heterogeneous graph & Only workstations observed; non-workstation features and five coupling channels zeroed & Common protocol, 50 epochs \\
+WorkstationOnly & Heterogeneous graph & NoCross and NoInfo combined & Common protocol, 50 epochs \\
+NoCluster & Temporal pattern clustering & Temporal pattern clustering removed & Common protocol, 50 epochs \\
+NoPattern & \makecell[l]{Delay-aware modeling} & Recent-patch matching to the temporal-pattern prototype bank disabled & Common protocol, 50 epochs \\
+NoSplit & Decoder & One shared event-occurrence head for continuing and new events & Common protocol, 50 epochs \\
+NoFarBoost & Training & Far-onset weighting and enhanced false-alarm penalty removed & Common protocol, 50 epochs \\
 \bottomrule
 \end{tabular*}
 \end{table*}
@@ -1180,18 +1188,18 @@ NoFarBoost & Training & Far-onset weighting and enhanced false-alarm penalty rem
 
 \subsubsection{Heterogeneous multi-entity representation}\label{sec:entity-analysis}
 
-This experiment tests whether observations beyond workstations and their cross-resource relations improve advance warning. The ablations restrict non-workstation information, cross-type relations, factory edges, or grouped embedding while retaining the same targets (Tables~\ref{tab:ablation-arms} and~\ref{tab:entity-ablation-new}).
+Multi-entity ablations assess the contribution of non-workstation observations and cross-resource relations to advance warning. The ablations restrict non-workstation information, cross-type relations, factory edges, or grouped embedding while retaining the same targets (Tables~\ref{tab:ablation-arms} and~\ref{tab:entity-ablation-new}).
 
 \begin{table*}[pos=!tbp]
 \centering
-\caption{Ablation of the heterogeneous graph, grouped embedding, and multi-entity information. Type hmean is the harmonic mean of workstation, gantry, and AGV occupancy F1; Dur.\ MAE is the union duration MAE (min; lower is better). Within each Start cap, bold marks the best value and underline marks second-best. NoInfo and WorkstationOnly retain the same evaluation targets; their zero type hmean reflects zero occupancy F1 for at least one resource type after the associated input information is removed.}
+\caption{Ablation of the heterogeneous graph, grouped embedding, and multi-entity information. Type hmean is the harmonic mean of workstation, gantry, and AGV occupancy F1; Dur.\ MAE is the union duration MAE (min; lower is better). Within each onset limit, bold marks the best value and underline marks second-best. NoInfo and WorkstationOnly retain the same evaluation targets; their zero type hmean reflects zero occupancy F1 for at least one resource type after the associated input information is removed. R denotes recall, Upcoming R is recall for newly emerging events, and State F1 (1-step) evaluates next-window occupancy; onset limit is in minutes.}
 \label{tab:entity-ablation-new}
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
 \renewcommand{\arraystretch}{1.05}
 \begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}llrrrrr@{}}
 \toprule
-Arm & Start cap & F1-score & Upcoming R & Type hmean & State F1 (1-step) & Dur.\ MAE \\
+Arm & Onset limit & F1-score & Upcoming R & Type hmean & State F1 (1-step) & Dur.\ MAE \\
 \midrule
 Full & $\leq5$ & \textbf{80.4\%} & \textbf{54.2\%} & \textbf{50.5\%} & \textbf{88.3\%} & \textbf{4.17} \\
 NoGraph &  & 74.6\% & 10.4\% & 38.4\% & \underline{87.3\%} & 5.48 \\
@@ -1217,12 +1225,12 @@ WorkstationOnly &  & 53.4\% & 2.1\% & 0.0\% & 70.6\% & 7.46 \\
 \end{tabular*}
 \end{table*}
 
-At Start$\leq5$, the full representation improves upcoming recall by 50.9 percentage points over WorkstationOnly and by 49.3 points over NoInfo. Removing cross-resource relations or factory edges also weakens distant-event warning (Figure~\ref{fig:cross-resource-evidence}). These comparisons support both the broader observation scope and its relational organization for recognizing constraints that workstation-centred inputs alone fail to reveal.
+At Onset limit~$\leq5$, the full representation improves upcoming recall by 50.9 percentage points over WorkstationOnly and by 49.3 points over NoInfo. Removing cross-resource relations or factory edges also weakens distant-event warning (Figure~\ref{fig:cross-resource-evidence}). These comparisons support both the broader observation scope and its relational organization for recognizing constraints that workstation-centred inputs alone fail to reveal.
 
 \begin{figure}[pos=htbp]
 \centering
 \includegraphics[width=\columnwidth]{figures/fig_cross_resource_evidence.pdf}
-\caption{Cross-resource evidence from structural ablations: (a)~far-onset report recall at Start$\leq15$; (b)~type-hmean F1 across Start caps.}
+\caption{Cross-resource evidence from structural ablations: (a)~far-onset report recall at Onset limit~$\leq15$; (b)~type-hmean F1 across onset limits.}
 \label{fig:cross-resource-evidence}
 \end{figure}
 
@@ -1233,7 +1241,7 @@ The complete representation also follows bottleneck persistence and recovery mor
 \begin{figure*}[pos=!tbp]
 \centering
 \includegraphics[width=0.96\textwidth]{figures/key_device_entity.pdf}
-\caption{Key-device duration traces: (a)~multi-entity ablations at Start$\leq5$; (b)~PHGST-DM under Start$\leq5/10/15$ on the same episode.}
+\caption{Bottleneck-duration traces: panel~(a) compares multi-entity ablations with a 5-min onset limit; panel~(b) compares PHGST-DM with onset limits of 5, 10, and 15~min. The black curve shows the true-duration reference.}
 \label{fig:key-device-entity}
 \end{figure*}
 
@@ -1249,25 +1257,25 @@ Figure~\ref{fig:attn-types} examines how the model combines resource information
 
 \subsubsection{Process-informed supervision and temporal pattern clustering}\label{sec:supervision-analysis}
 
-This study examines supervision and pattern construction for scarce bottleneck events. It separately evaluates clustered temporal prototypes, process-cause supervision, and the agreement of constructed labels with production sensitivity, linking the design to prediction, explanation, and operational relevance.
+Three complementary studies address temporal pattern clustering, process-cause supervision, and the production relevance of the constructed event labels.
 
 \paragraph*{(1) Effects of temporal pattern clustering.}
 NoCluster tests the predictive value of clustering historical patches into recurrent-pattern prototypes (Table~\ref{tab:group-ablation}); NoPattern separately tests prototype use in Section~\ref{sec:delay-analysis}.
 
-At Start$\leq15$, temporal pattern clustering improves event F1 by 23.1 percentage points and reduces union duration MAE by 2.22~min relative to NoCluster, a 33.4\% reduction. Gains in upcoming recall and next-window state F1 across the onset caps further show that the pattern bank supports both detection and temporal reconstruction.
+At Onset limit~$\leq15$, temporal pattern clustering improves event F1 by 23.1 percentage points and reduces union duration MAE by 2.22~min relative to NoCluster, a 33.4\% reduction. Gains in upcoming recall and next-window state F1 across the onset limits further show that the pattern bank supports both detection and temporal reconstruction.
 
 These results support temporal pattern clustering as a means of retaining recurring operating context for predicting sustained bottlenecks and their duration.
 
 \begin{table*}[pos=!tbp]
 \centering
-\caption{Event, state, and duration metrics for the Full configuration and NoCluster (temporal pattern clustering removed). Dur.\ MAE is the union error (min); Dur.\ MAE (tp) is computed on correctly reported events only.}
+\caption{Event, state, and duration metrics for the Full configuration and NoCluster (temporal pattern clustering removed). Dur.\ MAE is the union error (min); Dur.\ MAE (tp) is computed on correctly reported events only. The abbreviation tp denotes true-positive event reports, R denotes recall, and State F1 (1-step) evaluates next-window occupancy; onset limit is in minutes.}
 \label{tab:group-ablation}
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
 \renewcommand{\arraystretch}{1.08}
 \begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}llrrrrr@{}}
 \toprule
-Arm & Start cap & F1-score & Upcoming R & State F1 (1-step) & Dur.\ MAE & Dur.\ MAE (tp) \\
+Arm & Onset limit & F1-score & Upcoming R & State F1 (1-step) & Dur.\ MAE & Dur.\ MAE (tp) \\
 \midrule
 Full & $\leq5$ & \textbf{80.4\%} & \textbf{54.2\%} & \textbf{88.3\%} & \textbf{4.17} & \textbf{1.86} \\
 NoCluster & & 73.4\% & 12.5\% & 84.1\% & 5.43 & 2.89 \\
@@ -1282,15 +1290,15 @@ NoCluster & & 53.7\% & 37.3\% & 81.9\% & 6.65 & 2.30 \\
 \end{table*}
 
 \paragraph*{(2) Effects of cause supervision.}
-This comparison tests process-cause supervision under matched labels, split, onset cap, initialization, seed, and training budget (Table~\ref{tab:matched-cause}).
+The cause-supervision comparison holds labels, data split, onset limit, initialization, seed, and training budget constant (Table~\ref{tab:matched-cause}).
 
-Adding cause supervision improves the separately selected cause accuracy by 67.0 percentage points and macro recall by 68.2 points, while logged station F1 changes by only 0.2 points. Under the same training budget, cause supervision improves the model's description of the process conditions associated with predicted bottlenecks.
+Adding cause supervision improves the separately selected cause accuracy by 67.0 percentage points and macro recall by 68.2 points, while logged station F1 changes by only 0.2 points.
 
 Process-cause supervision improves the accuracy and interpretability of the process context reported alongside bottleneck-station predictions. Event and cause targets together connect the predicted resource constraint to its observable operational context.
 
 \begin{table}[pos=!htbp]
 \centering
-\caption{Matched-budget cause-supervision study at Start$\leq5$ (seed 42; 50 epochs). Values are percentages. Logged metrics come from the training export; selected cause metrics use a separately chosen operating point and are not interchanged with the logged values.}
+\caption{Matched-budget cause-supervision study at Onset limit~$\leq5$ (seed 42; 50 epochs). Values are percentages. Logged metrics come from the training export; selected cause metrics use a separately chosen operating point and are not interchanged with the logged values. Backbone omits cause supervision, +Cause adds it, and acc. denotes accuracy.}
 \label{tab:matched-cause}
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
@@ -1311,7 +1319,7 @@ Selected cause macro recall & 25.5\% & \textbf{93.7\%} \\
 % Source: bottleneck ground-truth validity notes (2026-10-14), checked against label/evaluation code.
 % Imported summary values: experiments/data/label_validity_dev_tyx_8767583.json.
 \paragraph*{(3) Validation against production sensitivity.}
-This pilot checks the production relevance of the event labels by comparing label rankings with order-completion sensitivity under the counterfactual acceleration protocol in Section~\ref{sec:sensitivity-protocol}.
+To assess the production relevance of the event labels, the pilot compares their rankings with order-completion sensitivity under the counterfactual acceleration protocol in Section~\ref{sec:sensitivity-protocol}.
 
 PHGST-DM obtains the highest point estimates on all retained alignment metrics (Figure~\ref{fig:label-oracle-pilot}). Compared with Queue-Wait, weighted Recall@3 increases by 13.1 percentage points, indicating better coverage of resources whose acceleration shortens order completion. The counterfactual validation shows that, in the evaluated production episodes, the process-informed bottleneck rankings agree with resources that constrain order completion.
 
@@ -1326,22 +1334,22 @@ This agreement supports the production relevance of combining process evidence w
 
 \subsubsection{Delay-aware modeling}\label{sec:delay-analysis}
 
-This experiment tests recurrent-pattern-guided delay-aware modeling by disabling recent-patch matching to the fixed prototype bank while retaining the graph and attention branches (NoPattern, Table~\ref{tab:delay-ablation-new}). It isolates historical pattern conditioning from the availability of heterogeneous observations.
+NoPattern disables recent-patch matching to the fixed prototype bank while retaining the graph and attention branches (Table~\ref{tab:delay-ablation-new}). It isolates historical pattern conditioning from the availability of heterogeneous observations.
 
-At Start$\leq15$, prototype matching raises strict recall for events more than 10~min ahead by 27.0 percentage points relative to NoPattern, more than doubling distant-event coverage. Improvements in event identification and auxiliary outputs further show that recurrent-pattern conditioning adds forecasting value beyond the heterogeneous graph alone.
+At Onset limit~$\leq15$, prototype matching raises strict recall for events more than 10~min ahead by 27.0 percentage points relative to NoPattern, more than doubling distant-event coverage. Improvements in event identification and auxiliary outputs further show that recurrent-pattern conditioning adds forecasting value beyond the heterogeneous graph alone.
 
 This distant-warning benefit supports using earlier resource patterns to anticipate constraints that emerge later, addressing the difficulty of predicting delayed cross-resource effects. Further results appear in Appendix~\ref{app:supplementary-results}.
 
 \begin{table*}[pos=!tbp]
 \centering
-\caption{Ablation of temporal-pattern prototype matching in delay-aware modeling. $R_{\mathrm{up,rep}}$ is strict report recall within the stated onset-distance bin; Cause Macro R is macro recall over the four supported process-cause classes. Remain MAE (min) is compared with the stage-1 model, which, like the ablation, has no remaining-time fine-tuning.}
+\caption{Ablation of temporal-pattern prototype matching in delay-aware modeling. $R_{\mathrm{up,rep}}$ is strict report recall within the stated onset-distance bin; Cause Macro R is macro recall over the four supported process-cause classes. Remain MAE (min) is compared with the stage-1 model, which, like the ablation, has no remaining-time fine-tuning. Upcoming R denotes recall for newly emerging events, Queue R denotes recall for the queue-buildup cause, and superscripts 6--10 and $>10$ specify onset-distance bins in minutes; onset limit is also in minutes.}
 \label{tab:delay-ablation-new}
 \scriptsize
 \setlength{\tabcolsep}{2.6pt}
 \renewcommand{\arraystretch}{1.08}
 \begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}llrrrrrrr@{}}
 \toprule
-Arm & Start cap & F1-score & Upcoming R & $R_{\mathrm{up,rep}}^{6\text{--}10}$ & $R_{\mathrm{up,rep}}^{>10}$ & Queue R & Cause Macro R & Remain MAE \\
+Arm & Onset limit & F1-score & Upcoming R & $R_{\mathrm{up,rep}}^{6\text{--}10}$ & $R_{\mathrm{up,rep}}^{>10}$ & Queue R & Cause Macro R & Remain MAE \\
 \midrule
 Full (stage 1) & $\leq5$ & \textbf{80.4\%} & \textbf{54.2\%} & --- & --- & \textbf{98.4\%} & \textbf{96.7\%} & \textbf{10.93} \\
 NoPattern & & 74.5\% & 16.7\% & --- & --- & 14.5\% & 73.4\% & 18.62 \\
@@ -1357,7 +1365,7 @@ NoPattern & & 60.1\% & 42.7\% & 39.6\% & 16.3\% & 57.3\% & 85.0\% & 11.06 \\
 
 
 
-\paragraph*{Historical attention and onset-cap comparisons.}
+\paragraph*{Historical attention and onset-limit comparisons.}
 Figure~\ref{fig:attn-temporal} compares historical attention under normal and upcoming bottleneck conditions using the protocol in Section~\ref{sec:attention-protocol}. Both maps contain prominent bands around history steps 12--15 and 25--30, indicating that the model draws on multiple historical regions. The upcoming-minus-normal map shows localized increases and decreases around these bands. This pattern is consistent with selective use of historical operating context when forecasting an emerging bottleneck.
 
 \begin{figure*}[pos=!tbp]
@@ -1378,29 +1386,29 @@ Figure~\ref{fig:attn-layers} reveals complementary changes across encoder layers
 
 
 
-Figure~\ref{fig:attn-horizons} compares upcoming-minus-normal resource attention under Start$\leq5/10/15$, using 96 samples per condition. Geographic maps retain a common emphasis on the M3--M5 workstation region, while the magnitudes and extent of the changes vary across onset caps. Semantic maps show localized positive and negative changes, including recurring links to M3--M4 across resource types. Thus, the models share recurring resource associations while adjusting the allocation of attention to the admissible onset range.
+Figure~\ref{fig:attn-horizons} compares upcoming-minus-normal resource attention under Onset limit~$\leq5/10/15$, using 96 samples per condition. Geographic maps retain a common emphasis on the M3--M5 workstation region, while the magnitudes and extent of the changes vary across onset limits. Semantic maps show localized positive and negative changes, including recurring links to M3--M4 across resource types. Thus, the models share recurring resource associations while adjusting the allocation of attention to the admissible onset range.
 
 \begin{figure*}[pos=!tbp]
 \centering
 \includegraphics[width=0.98\textwidth]{figures/attention_heatmaps/fig07_horizon_attention_change.pdf}
-\caption{Upcoming-minus-normal attention change across Start caps 5/10/15 (upper: geographic; lower: semantic).}
+\caption{Upcoming-minus-normal attention change across onset limits 5/10/15 (upper: geographic; lower: semantic).}
 \label{fig:attn-horizons}
 \end{figure*}
 
 \subsubsection{Supporting decoder components}\label{sec:decoder-training}
 
-This experiment tests split event heads and far-onset enhancement under the common training and selection protocol (Table~\ref{tab:decoder-ablation}). NoSplit examines the distinction between continuing and newly emerging events; NoFarBoost examines weighting for distant onsets. Each retains its validation-selected operating point.
+Two decoder-related ablations examine split event heads and far-onset enhancement under the common training and selection protocol (Table~\ref{tab:decoder-ablation}). NoSplit examines the distinction between continuing and newly emerging events; NoFarBoost examines weighting for distant onsets. Each retains its validation-selected operating point.
 
 \begin{table*}[pos=!tbp]
 \centering
-\caption{Ablation of the split event heads and the far-onset enhancement. Distance-specific $R_{\mathrm{up,rep}}$ additionally requires the three-window onset tolerance. Thr is the validation-selected report threshold.}
+\caption{Ablation of the split event heads and the far-onset enhancement. Distance-specific $R_{\mathrm{up,rep}}$ additionally requires the three-window onset tolerance. Thr is the validation-selected report threshold. Upcoming R and Ongoing R denote recall for newly emerging and already active events, respectively; the superscript $>10$ restricts recall to onsets more than 10~min ahead. Dur.\ MAE is union duration mean absolute error in minutes; onset limit is in minutes.}
 \label{tab:decoder-ablation}
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
 \renewcommand{\arraystretch}{1.08}
 \begin{tabular*}{\FullWidth}{@{\extracolsep{\fill}}llrrrrrr@{}}
 \toprule
-Arm & Start cap & Thr & F1-score & Upcoming R & $R_{\mathrm{up,rep}}^{>10}$ & Ongoing R & Dur.\ MAE \\
+Arm & Onset limit & Thr & F1-score & Upcoming R & $R_{\mathrm{up,rep}}^{>10}$ & Ongoing R & Dur.\ MAE \\
 \midrule
 Full & $\leq5$ & 94.0\% & 80.4\% & 54.2\% & --- & \textbf{93.7\%} & 4.17 \\
 NoFarBoost & & 90.0\% & \textbf{81.9\%} & \textbf{54.5\%} & --- & 92.3\% & \textbf{4.03} \\
@@ -1417,20 +1425,20 @@ NoSplit & & 94.0\% & 58.6\% & 35.3\% & 12.5\% & \textbf{95.1\%} & 6.36 \\
 \end{tabular*}
 \end{table*}
 
-At Start$\leq5$, split event heads improve upcoming recall by 35.2 percentage points over NoSplit while retaining high ongoing recall. At Start$\leq15$, far-onset enhancement raises strict recall beyond 10~min by 19.3 points over NoFarBoost. These gains connect the decoder designs to recognizing newly emerging and more distant events.
+At Onset limit~$\leq5$, split event heads improve upcoming recall by 35.2 percentage points over NoSplit while retaining high ongoing recall. At Onset limit~$\leq15$, far-onset enhancement raises strict recall beyond 10~min by 19.3 points over NoFarBoost. These gains connect the decoder designs to recognizing newly emerging and more distant events.
 
-Figure~\ref{fig:key-device-struct-graph} shows closer duration tracking by the complete model, with stronger underestimation or post-event spikes in the ablations. Together, the comparisons support decoding that distinguishes current persistence from future onset; weighting benefits remain range-dependent, with NoFarBoost performing better at Start$\leq5$.
+Figure~\ref{fig:key-device-struct-graph} shows closer duration tracking by the complete model, with stronger underestimation or post-event spikes in the ablations. Together, the comparisons support decoding that distinguishes current persistence from future onset; weighting benefits remain range-dependent, with NoFarBoost performing better at Onset limit~$\leq5$.
 
 \begin{figure*}[pos=!tbp]
 \centering
 \includegraphics[width=0.96\textwidth]{figures/key_device_struct_pair.pdf}
-\caption{Key-device ablation traces (Start$\leq5$): (a)~graph arms; (b)~process-rule/context, delay-aware modeling, and decoder arms.}
+\caption{Ablation traces (Onset limit~$\leq5$): (a)~graph arms; (b)~process-rule/context, delay-aware modeling, and decoder arms.}
 \label{fig:key-device-struct-graph}
 \end{figure*}
 
 \subsection{Case study}\label{sec:case-study}
 
-The case study examines whether forecasts follow bottleneck onset, persistence, and recovery on the selected cutting workstation (\texttt{num02}). A fixed device-and-episode selection rule is documented in Appendix~\ref{app:case-details}. The selected episode contains an approximately 8-min bottleneck and a 49-min bottleneck. The prediction horizon is 30~min; the plotted true-duration reference is truncated at 20~min for readability (Figure~\ref{fig:key-device-baselines}).
+Moving from aggregate results to individual workstation trajectories, the case study assesses predictions of bottleneck onset, duration, and next-window occupancy. The selected episode contains an approximately 8-min bottleneck and a 49-min bottleneck. The prediction horizon is 30~min; the plotted true-duration reference is truncated at 20~min for readability (Figure~\ref{fig:key-device-baselines}).
 
 
 
@@ -1442,7 +1450,7 @@ The workstation state map checks coverage across resources in the same episode (
 
 
 \paragraph*{Resource-level coverage.}
-Figure~\ref{fig:per-device} examines whether the joint predictor covers workstations, gantries, and AGVs on the full Start$\leq5$ test split. Reporting event F1 alongside union duration error separates recognition of an affected resource from reconstruction of its bottleneck interval. The results extend the coverage assessment across resource families and make device-level variation visible instead of hiding it within a single aggregate score.
+Figure~\ref{fig:per-device} examines whether the joint predictor covers workstations, gantries, and AGVs on the full Onset limit~$\leq5$ test split. Reporting event F1 alongside union duration error separates recognition of an affected resource from reconstruction of its bottleneck interval. The results extend the coverage assessment across resource families and make device-level variation visible instead of hiding it within a single aggregate score.
 
 
 
@@ -1451,7 +1459,7 @@ The complete per-device result table and supplementary mixed-condition probabili
 \begin{figure}[pos=!tbp]
 \centering
 \includegraphics[width=\columnwidth]{figures/all_devices_state_main.pdf}
-\caption{Next-window state map for seven workstation targets (gray TN; light blue TP; coral FP/FN).}
+\caption{Next-window state map for seven workstation targets (gray TN; light blue TP; coral FP/FN). TN, TP, FP, and FN denote true negatives, true positives, false positives, and false negatives, respectively.}
 \label{fig:all-devices-main}
 \end{figure}
 
@@ -1461,14 +1469,12 @@ The complete per-device result table and supplementary mixed-condition probabili
 \includegraphics[width=0.88\columnwidth,trim=0 0 250.36bp 0,clip]{figures/fig_per_device_box.pdf}
 \par\smallskip
 \includegraphics[width=0.88\columnwidth,trim=255bp 0 0 0,clip]{figures/fig_per_device_box.pdf}
-\caption{Per-device F1-score and union duration MAE for PHGST-DM at Start$\leq5$, by workstation, gantry, and AGV.}
+\caption{Per-device F1-score and union duration MAE for PHGST-DM at Onset limit~$\leq5$, by workstation, gantry, and AGV.}
 \label{fig:per-device}
 \end{figure}
 
 \paragraph*{Experimental findings.}
-The experiments connect the proposed components to the two problems motivating PHGST-DM. Heterogeneous multi-entity representation broadens the observation scope and improves warning beyond workstation-only information. Temporal pattern clustering and prototype-conditioned interaction support event identification, duration estimation, and distant-onset warning, while process-cause supervision improves the explanatory output and the sensitivity pilot provides preliminary evidence of label relevance. These findings support a joint bottleneck description: identifying the constrained resource and describing its onset, persistence, observable process context, and associated order progress.
-
-The aggregate comparisons and case trajectories show how the joint outputs describe a bottleneck through detection, persistence, and recovery. Event recall measures coverage of emerging constraints, state maps identify the resources that remain affected, and duration trajectories track their predicted recovery. The per-device results extend this assessment across production and handling resources with different event support, while the remaining-time head provides order-level context. PHGST-DM leads the main event and state comparisons, and the ablations identify the resource information and prediction operations responsible for these gains.
+The experiments link heterogeneous resource observations to improved advance warning and process-informed supervision to the explanatory output. Temporal pattern clustering and prototype-conditioned interaction support event identification, duration estimation, and distant-onset warning, while the sensitivity pilot provides preliminary evidence of label relevance. Aggregate comparisons and station-level trajectories assess bottleneck location, onset, persistence, and recovery; per-device results show variation across resource families, and the remaining-time head adds order-level context.
 
 % Complete the experimental figures before opening the Discussion.
 \FloatBarrier
@@ -1510,6 +1516,8 @@ The appendices retain implementation settings, numerical rules, supplementary pr
 
 Table~\ref{tab:shared-training-protocol} summarizes the settings shared by the Full model and ablation arms; their architectural differences are listed in Table~\ref{tab:ablation-arms}.
 
+The exploratory station/window descriptors use eight clusters ($K=8$) and neither define event labels nor contribute a cluster-prediction loss.
+
 \begin{table*}[pos=!bp]
 \centering
 \caption{Shared training, model, and task settings for the Full model and ablation arms.}
@@ -1524,17 +1532,17 @@ Item & Setting \\
 Initialization and seed & Identical initial parameter values across arms; seed 42 \\
 Optimizer and batch size & AdamW; batch size 16; weight decay 0.05 \\
 Learning rate & $5\times10^{-5}$ initially; cosine decay to $10^{-6}$ \\
-Sampling and training budget & Fourfold positive-window oversampling; at most 50 epochs per Start-cap run; early-stopping patience 40 \\
-Curriculum & Start$\leq5\rightarrow$Start$\leq10\rightarrow$Start$\leq15$ \\
+Sampling and training budget & Fourfold positive-window oversampling; at most 50 epochs per Onset-limit run; early-stopping patience 40 \\
+Curriculum & Onset limit~$\leq5\rightarrow$Onset limit~$\leq10\rightarrow$Onset limit~$\leq15$ \\
 Checkpoint criterion & Validation station-identification F1 among candidates with report precision $\geq0.80$ and recall $\geq0.70$ \\
 Threshold candidates & $\{0.45,0.50,0.55,0.60,0.65,0.70,0.75,0.80,0.85,0.88,0.90,0.94\}$ \\
 Held-out evaluation & Freeze the selected checkpoint and threshold before evaluating the shared test episodes \\
 Windowing and targets & 60-s windows; 30 historical and 30 future windows; seven workstation, four gantry, and four transport-robot targets \\
-Event and matching rules & Eight-window persistence; one-window internal gap filling; Start$\leq5/10/15$; three-window onset tolerance \\
+Event and matching rules & One-window internal gap filling; Onset limit~$\leq5/10/15$; three-window onset tolerance \\
 Encoder and attention & Five blocks; hidden dimension 80; temporal/geographic/semantic heads $4/2/2$ \\
 Graph and positional context & Geographic hop cutoff 4; five semantic neighbours; eight-dimensional Laplacian encoding \\
 Pattern bank & 16 prototypes from length-three temporal patches \\
-Far-onset enhancement & Onset-loss multiplier 2; positive weights $9/10/11$ for Start$\leq5/10/15$ \\
+Far-onset enhancement & Onset-loss multiplier 2; positive weights $9/10/11$ for Onset limit~$\leq5/10/15$ \\
 False-alarm weighting & Ordinary false-positive weight 2.5; additional hard-false-positive multiplier 2.2 \\
 \bottomrule
 \end{tabularx}
@@ -1542,9 +1550,11 @@ False-alarm weighting & Ordinary false-positive weight 2.5; additional hard-fals
 
 The objective in Section~\ref{sec:method} uses the following weights. Event occurrence, start, duration, and prefix losses have weights $2.4$, $2.0$, $2.0$, and $2.5$, respectively. The cold-history onset term has weight $2.2$ within the event-occurrence objective; focal modulation uses exponent $1.5$, and the internal differentiable F1 term has weight $0.8$. Future occupancy uses separate binary-cross-entropy, Dice, and IoU weights of $0.7$, $0.5$, and $0.35$. The reconstruction, supervised contrastive, cause, and turning-point/momentary losses have weights $0.2$, $0.05$, $0.1$, and $0.25$. Remaining-time regression has weight $0.5$ in stage~1 and $4.0$ during head-only stage~2.
 
-The offline event CSV can retain a one-window event through score-event merging. PHGST-DM training instead constructs targets from the operational occupancy grid with the eight-window criterion.
+The offline event CSV can retain a one-window event through score-event merging. PHGST-DM training instead constructs targets from the operational occupancy grid.
 
-All state rules act on the original physical feature scale before input standardization. Let $q$, $B$, $S$, $U$, $I$, $R$, and $Z$ denote queue length, blocked seconds, starved seconds, unavailable fraction, inbound-wait seconds, route-delay seconds, and shortage propagation, respectively. At the 60-s resolution, a workstation has raw hot evidence if any of the following holds: (i) $q\geq2$ and $B+S>0$; (ii) $B\geq24$ and $q\geq1$; (iii) $B+S\geq24$ together with an upstream/downstream coupling ratio of at least $0.15$, $I\geq20$, $R\geq20$, $Z\geq0.25$, or $q\geq1$; (iv) $S\geq30$ and $Z\geq0.25$; (v) $S\geq18$ and either $I\geq20$ or $R\geq20$; or (vi) $B+S\geq24$ together with worker absence or labour saturation. An active workstation operating-variation flag combined with $U\geq0.5$ also supplies hot evidence. Worker absence uses unavailable fraction $\geq0.5$; labour saturation uses an activity cutoff of $0.8$ among present workers, with a presence tolerance of $0.05$. A gantry requires $B+S\geq18$ and either $I\geq20$ or $R\geq20$, whereas a transport robot requires $B+S\geq18$ and $I\geq20$; either handling type is also hot when $U\geq0.5$. When an operating-variation flag is active, evidence is retained only if $q\geq1$, $B+S\geq24$, or $U\geq0.5$. The eight-window removal and one-window internal-gap rule are then applied as described in Algorithm~\ref{alg:targets}.
+All state rules act on the original physical feature scale before input standardization. Let $q$, $B$, $S$, $U$, $I$, $R$, and $Z$ denote queue length, blocked seconds, starved seconds, unavailable fraction, inbound-wait seconds, route-delay seconds, and shortage propagation, respectively. At the 60-s resolution, a workstation has raw hot evidence if any of the following holds: (i) $q\geq2$ and $B+S>0$; (ii) $B\geq24$ and $q\geq1$; (iii) $B+S\geq24$ together with an upstream/downstream coupling ratio of at least $0.15$, $I\geq20$, $R\geq20$, $Z\geq0.25$, or $q\geq1$; (iv) $S\geq30$ and $Z\geq0.25$; (v) $S\geq18$ and either $I\geq20$ or $R\geq20$; or (vi) $B+S\geq24$ together with worker absence or labour saturation. An active workstation operating-variation flag combined with $U\geq0.5$ also supplies hot evidence. Worker absence uses unavailable fraction $\geq0.5$; labour saturation uses an activity cutoff of $0.8$ among present workers, with a presence tolerance of $0.05$. A gantry requires $B+S\geq18$ and either $I\geq20$ or $R\geq20$, whereas a transport robot requires $B+S\geq18$ and $I\geq20$; either handling type is also hot when $U\geq0.5$. When an operating-variation flag is active, evidence is retained only if $q\geq1$, $B+S\geq24$, or $U\geq0.5$. The resulting raw indicators are converted to occupancy targets by Algorithm~\ref{alg:targets}.
+
+For correspondence with the code, the disabled auxiliary-loss switches retain the implementation names \texttt{score}, \texttt{will}, \texttt{mark}, \texttt{time-to-start}, \texttt{STGNPP}, and \texttt{offline cluster-head}. These names identify inactive configuration options; the active occurrence loss $\mathcal{L}_{\mathrm{will}}$ in Section~\ref{sec:joint-optimization} remains part of the training objective. The offline cluster-head weight is zero, so the model is not trained to classify the offline clustering assignments.
 
 The prefix-continuation cutoff is $1.5$ windows. Occupancy-run extraction for event union uses probability cutoff $0.45$, with both ongoing and upcoming union enabled; direct occupancy-state evaluation uses cutoff $0.55$. The configured gantry and transport-robot report thresholds are $0.72$ and $0.68$, respectively, alongside the validation-selected global operating point. Threshold selection first prefers candidates satisfying the validation precision requirement and then maximizes the configured station-identification F1; if none satisfies that requirement, it retains the highest-F1 validation candidate. The checkpoint precision/recall gates are applied separately. If no gated checkpoint is obtained throughout training, the retained ungated checkpoint with the best validation selection score is used. Neither fallback uses test predictions or test labels.
 
@@ -1556,11 +1566,11 @@ Evaluation counts refer to forecast-origin--resource pairs, so a persistent even
 
 
 
-For Start$\leq15$, strict report recall is $0.574/0.522/0.433$ for onset distances within 5, 6--10, and beyond 10~min. Across the three cap-specific tasks, exact-onset accuracy among station-matched true positives is $0.896/0.844/0.831$, and onset-bucket accuracy is $0.921/0.918/0.920$. Workstation/gantry/robot F1 is $0.805/0.811/0.771$ at Start$\leq5$ and $0.751/0.840/0.639$ at Start$\leq15$. Aggregate event and timing results are in Table~\ref{tab:comparison-main}.
+For Onset limit~$\leq15$, strict report recall is $0.574/0.522/0.433$ for onset distances within 5, 6--10, and beyond 10~min. Across the three limit-specific tasks, exact-onset accuracy among station-matched true positives is $0.896/0.844/0.831$, and onset-bucket accuracy is $0.921/0.918/0.920$. Workstation/gantry/robot F1 is $0.805/0.811/0.771$ at Onset limit~$\leq5$ and $0.751/0.840/0.639$ at Onset limit~$\leq15$. Aggregate event and timing results are in Table~\ref{tab:comparison-main}.
 
 \subsection{Structural and pattern-modeling comparisons}
 
-Beyond the main structural-ablation results, NoGroup has strict report recall $0.192$ for onsets beyond 10~min. Across caps, resource-type hmean is $0.505$--$0.536$ for Full, $0.360$--$0.384$ for NoGraph, and $0.365$--$0.396$ for NoCross. Figure~\ref{fig:key-device-entity} illustrates the corresponding trajectories: Full identifies both intervals about 5~min before NoInfo and WorkstationOnly, whose duration estimates remain at 6--8~min during the plotted 20-min reference plateau. NoCross reaches 14~min before declining to about 8~min.
+Beyond the main structural-ablation results, NoGroup has strict report recall $0.192$ for onsets beyond 10~min. Across limits, resource-type hmean is $0.505$--$0.536$ for Full, $0.360$--$0.384$ for NoGraph, and $0.365$--$0.396$ for NoCross. Figure~\ref{fig:key-device-entity} illustrates the corresponding trajectories: Full identifies both intervals about 5~min before NoInfo and WorkstationOnly, whose duration estimates remain at 6--8~min during the plotted 20-min reference plateau. NoCross reaches 14~min before declining to about 8~min.
 
 
 
@@ -1593,13 +1603,13 @@ Figure~\ref{fig:attn-prediction} uses a supplementary mixed-condition checkpoint
 \begin{figure}[pos=!htbp]
 \centering
 \includegraphics[width=\columnwidth,height=0.55\textheight,keepaspectratio]{figures/attention_heatmaps/fig08_prediction_heatmaps.pdf}
-\caption{Future-event labels, predicted probabilities, and absolute errors for a mixed-condition episode (Start$\leq5$).}
+\caption{Future-event labels, predicted probabilities, and absolute errors for a mixed-condition episode (Onset limit~$\leq5$).}
 \label{fig:attn-prediction}
 \end{figure}
 
 \paragraph*{Resource-level coverage.}
 
-Table~\ref{tab:complete-6-1} provides per-resource counts and errors under the onset-qualified matching rule used in Table~\ref{tab:comparison-main}. Zero-support resources \texttt{robot\_2} and \texttt{robot\_3} are omitted.
+Table~\ref{tab:complete-6-1} provides per-resource counts and errors under the onset-qualified matching rule used in Table~\ref{tab:comparison-main}. Zero-support resources \texttt{robot\_2} and \texttt{robot\_3} are omitted. In this table, $n_{\mathrm{true}}$ and $n_{\mathrm{pred}}$ count reference and predicted event-positive forecast-origin--resource pairs, $P$ and $R$ denote precision and recall, and Dur MAE and Dur RMSE denote union duration errors in minutes. Device identifiers retain the simulator names so individual resources can be traced across data exports.
 
 % Author confirms overall F1 = 80.4 percent and the same matching criterion as the main table.
 % Per-device server exports are pending synchronization; do not infer replacement device counts from the aggregate score.
@@ -1607,14 +1617,14 @@ Table~\ref{tab:complete-6-1} provides per-resource counts and errors under the o
 
 \section{Prediction quality and computational cost}\label{sec:efficiency}
 
-This experiment evaluates the computational cost of the predictive performance reported in Section~\ref{sec:comparison-event}. All five models run inference on an NVIDIA GeForce RTX~5090 with Python~3.11.15 and CUDA~12.8. The neural models use PyTorch~2.11.0; the seven tree-based prediction heads use XGBoost~3.2.0 with CuPy~14.2.0. Throughput is measured over five complete test passes at batch size 16 after 50 warm-up batches, including data loading. Forward and report latency are measured at batch size 1 over 5,000 timed calls, with CUDA synchronization before and after each measurement. Both latency measures cover model-side computation. Forward latency measures prediction with inputs or prepared features resident on the GPU. Report latency additionally includes input transfer, model-specific feature processing, and event-report generation. For XGBoost, this comprises CPU history-feature construction, host-to-device transfer, seven CUDA prediction heads, and device-to-host output transfer. Table~\ref{tab:efficiency} summarizes the three onset caps, and Figure~\ref{fig:quality-cost} relates report latency to the F1-score values in Table~\ref{tab:comparison-main}.
+Computational cost is measured for the models compared in Section~\ref{sec:comparison-event}. All five models run inference on an NVIDIA GeForce RTX~5090 with Python~3.11.15 and CUDA~12.8. The neural models use PyTorch~2.11.0; the seven tree-based prediction heads use XGBoost~3.2.0 with CuPy~14.2.0. Throughput is measured over five complete test passes at batch size 16 after 50 warm-up batches, including data loading. Forward and report latency are measured at batch size 1 over 5,000 timed calls, with CUDA synchronization before and after each measurement. Both latency measures cover model-side computation. Forward latency measures prediction with inputs or prepared features resident on the GPU. Report latency additionally includes input transfer, model-specific feature processing, and event-report generation. For XGBoost, this comprises CPU history-feature construction, host-to-device transfer, seven CUDA prediction heads, and device-to-host output transfer. Table~\ref{tab:efficiency} summarizes the three onset limits, and Figure~\ref{fig:quality-cost} relates report latency to the F1-score values in Table~\ref{tab:comparison-main}.
 
 % All 15 GPU timing rows are verified against isaac_factory@a5b6c92,
 % including the original PHGST-DM report snapshots. B2 uses the 2026-10-24 CUDA run.
 % See experiments/efficiency_comparison_2026-10-24.md for provenance and checks.
 \begin{table*}[pos=!tbp]
 \centering
-\caption{Inference cost on the RTX~5090. Ranges give the minimum and maximum across Start $\leq5$, $\leq10$, and $\leq15$ min. Throughput uses batch size 16 and report latency uses batch size 1. GPU allocation is the PyTorch allocator peak.}
+\caption{Inference cost on the RTX~5090. Ranges give the minimum and maximum across Onset limit $\leq5$, $\leq10$, and $\leq15$ min. Throughput uses batch size 16 and report latency uses batch size 1. GPU allocation is the PyTorch allocator peak. Report p50, p95, and p99 denote the 50th, 95th, and 99th percentiles of report latency; MiB denotes mebibytes.}
 \label{tab:efficiency}
 \footnotesize
 \setlength{\tabcolsep}{3.3pt}
@@ -1633,20 +1643,20 @@ BSTAN & 287,267 & 239.7 & 6,584\textendash{}6,667 & 1.00\textendash{}1.03 & 1.54
 \par\vspace{3pt}
 \begin{minipage}{\FullWidth}
 \scriptsize
-Timing runs use the source-recorded workloads on a shared server under the same unified 5,354-window re-evaluation as Section~\ref{sec:comparison-overview}. GPU allocation includes resident inference inputs. XGBoost uses its native CUDA allocator, so its PyTorch allocation is unavailable; its separately sampled NVML process peak is 662--670~MiB, including the CUDA context, libraries, and caches.
+Timing runs use the source-recorded workloads on a shared server under the same unified 5,354-window re-evaluation as Section~\ref{sec:comparison-overview}. GPU allocation includes resident inference inputs. XGBoost uses its native CUDA allocator, so its PyTorch allocation is unavailable; its separately sampled NVIDIA Management Library (NVML) process peak is 662--670~MiB, including the CUDA context, libraries, and caches.
 \end{minipage}
 \end{table*}
 
 \begin{figure*}[pos=!tbp]
 \centering
 \includegraphics[width=0.96\textwidth]{figures/fig_quality_cost.pdf}
-\caption{Event-identification quality versus median report latency for each onset cap.}
+\caption{Event-identification quality versus median report latency for each onset limit.}
 \label{fig:quality-cost}
 \end{figure*}
 
-Table~\ref{tab:efficiency} and Figure~\ref{fig:quality-cost} compare quality and model-side reporting cost. PHGST-DM has the highest event F1 across caps, while LSTM, BTGCN, and BSTAN report faster. All timings characterize the evaluated implementations and exclude a complete deployed acquisition-to-action pipeline.
+Table~\ref{tab:efficiency} and Figure~\ref{fig:quality-cost} compare quality and model-side reporting cost. PHGST-DM has the highest event F1 across limits, while LSTM, BTGCN, and BSTAN report faster. All timings characterize the evaluated implementations and exclude a complete deployed acquisition-to-action pipeline.
 
-The three PHGST-DM checkpoints share architecture and input shape. Each has 713,984 parameters and a 2.91-MiB checkpoint; median report latency varies by 0.05~ms across caps. These measurements characterize the tested platform and do not establish field deployment performance.
+The three PHGST-DM checkpoints share architecture and input shape. Each has 713,984 parameters and a 2.91-MiB checkpoint; median report latency varies by 0.05~ms across limits. These measurements characterize the tested platform and do not establish field deployment performance.
 
 \section{Supplementary attention analysis}\label{app:attention-analysis}
 

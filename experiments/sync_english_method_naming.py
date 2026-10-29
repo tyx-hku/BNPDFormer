@@ -18,6 +18,7 @@ FONT_DIR = Path("C:/Windows/Fonts")
 def replacement(text: str) -> str:
     text = text.replace("\u00ad", "-").replace("\u00a0", " ")
     text = re.sub(r"PHGST-(?:PD|DP)", "PHGST-DM", text)
+    text = text.replace("m = 8,  g = 1", "g = 1")
     text = text.replace(
         "Propagation-delay-aware module", "Delay-aware spatiotemporal modeling"
     )
